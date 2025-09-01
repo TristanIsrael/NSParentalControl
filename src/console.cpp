@@ -1,61 +1,52 @@
+#include "console.h"
 #include "switch.h"
 #include "sha256.c"
 #include "structs.h"
+#include "functions.h"
 
-void generateConsoleKey(uint8_t key[32]) {
-    u64 console_id;
-    accountInitialize(AccountServiceType_Application);
-    accountGetUniqueId(&console_id);
-    accountExit();
-
-    sha256((uint8_t*)&console_id, sizeof(console_id), key);
-}
-
-UserSession& getCurrentUser() {
-    u64 account_id;
+UserSession getCurrentUser(UserSessions& sessions) {
+    AccountUid account_id;
     accountInitialize(AccountServiceType_Application);
     accountGetPreselectedUser(&account_id);
     accountExit();
 
-    if (sessions.find(account_id) == sessions.end()) {
+    std::string uid = accountUidToString(account_id);
+
+    if (sessions.find(uid) == sessions.end()) {
         UserSession s;
-        s.account_id = account_id;
+        s.account_id = uid;
         s.last_day = 0;
         s.total_daily_seconds = 0;
-        s.total_daily_limit = 7200; // 2h par défaut
-        sessions[account_id] = s;
+        sessions[uid] = s;
     }
 
-    return sessions[account_id];
+    return sessions[uid];
 }
 
-GameSession& getCurrentTitle(UserSession& user) {
-    u64 titleID = 0;
-    Result rc = appletGetAppletResourceUserId(&titleID);
+GameSession getCurrentGame(UserSession& user) {
+    u64 appId = appletGetAppletResourceUserId();
     
     GameSession g;
+    printf("Current App ID: %016llX\n", appId);
 
-    if (R_SUCCEEDED(rc)) {
-        printf("Current Title ID: %016llX\n", titleID);
-
-        NsApplicationControlData appdata;
-        rc = nsGetApplicationControlData(0, &appdata, sizeof(appdata));
-        if (R_SUCCEEDED(rc)) {
-            NacpStruct nacp;
-            rc = nsGetApplicationControlDataNacp(&appdata, &nacp);
-            if (R_SUCCEEDED(rc)) {
-                g.game_title = std::string(nacp.lang[0].name);
-                printf("Title name: %s\n", nacp.lang[0].name); // Langue 0 = anglais
-            }
-        }
-        
-        g.game_id = titleID;
-        g.daily_seconds = 0;
-        g.daily_limit = 3600; // 1h par défaut
-        user.games[g.game_id] = g;
-    } else {
-        printf("Failed to get Title ID: 0x%x\n", rc);
+    if(appId == 0) {
+        printf("No game loaded.");
+        return g;
     }
+
+    NsApplicationControlData appdata;
+    u64 data_size = 0;
+    Result rc = nsGetApplicationControlData(::NsApplicationControlSource_Storage, appId, &appdata, sizeof(appdata), &data_size);
+
+    if (R_SUCCEEDED(rc)) {        
+        NacpStruct nacp = appdata.nacp;
+        g.game_title = std::string(nacp.lang[0].name);
+        printf("Title name: %s\n", nacp.lang[0].name); // Langue 0 = anglais
+    }
+    
+    g.game_id = appId;
+    g.daily_seconds = 0;
+    user.games[g.game_id] = g;
 
     return g;
 }

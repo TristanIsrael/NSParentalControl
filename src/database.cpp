@@ -1,3 +1,16 @@
+#include <fstream>
+#include <sys/stat.h>
+#include <vector>
+#include "database.h"
+#include "switch.h"
+#include "structs.h"
+#include "json.hpp"
+
+using json = nlohmann::json;
+
+const std::string DB_FILENAME = "/switch/parental_control/sessions.json";
+const std::string SETTINGS_FILENAME = "/switch/parental_control/settings.json";
+
 void ensureDataDirectory() {
     struct stat st;
     if (stat("/switch/parental_control", &st) != 0) {
@@ -5,55 +18,115 @@ void ensureDataDirectory() {
     }
 }
 
-void loadDatabase() {
-    std::ifstream in("/switch/parental_control/sessions.txt", std::ios::binary);
+void loadDatabase(UserSessions& sessions) {    
+    std::ifstream in(DB_FILENAME, std::ios::in);
     if (!in) return;
 
-    size_t count;
-    in.read((char*)&count, sizeof(count));
-    for (size_t i=0; i<count; i++) {
-        UserSession s;
-        size_t games_count;
-        in.read((char*)&s.account_id, sizeof(s.account_id));
-        in.read((char*)&s.last_day, sizeof(s.last_day));
-        in.read((char*)&s.total_daily_seconds, sizeof(s.total_daily_seconds));
-        in.read((char*)&s.total_daily_limit, sizeof(s.total_daily_limit));
-        in.read((char*)&games_count, sizeof(games_count));
-        for (size_t j=0; j<games_count; j++) {
-            GameSession g;
-            size_t id_len;
-            in.read((char*)&id_len, sizeof(id_len));
-            g.game_id.resize(id_len);
-            in.read(&g.game_id[0], id_len);
-            in.read((char*)&g.daily_seconds, sizeof(g.daily_seconds));
-            in.read((char*)&g.daily_limit, sizeof(g.daily_limit));
-            s.games[g.game_id] = g;
+    if (in.is_open()) {
+        json j_data;
+        in >> j_data;
+
+        //Iterate thru the accounts data and ignore those not matching current account
+        for(size_t i = 0 ; i < j_data.size() ; i++) {
+            json account = j_data[i];
+
+            std::string uid = account["account_id"].get<std::string>();
+
         }
-        sessions[s.account_id] = s;
+
+    } else {
+        printf("Error: Could not open database.\n");
     }
+
     in.close();
 }
 
-void saveDatabase() {
-    std::ofstream out("/switch/parental_control/sessions.txt", std::ios::binary);
-    size_t count = sessions.size();
-    out.write((char*)&count, sizeof(count));
+void saveDatabase(std::map<AccountUid, UserSession>& sessions) {
+    std::ofstream of(DB_FILENAME, std::ios::out);
+
+    std::vector<json> accounts;
+
+    //TODO: separate configuration and sessions
+
     for (auto &pair : sessions) {
         UserSession &s = pair.second;
-        size_t games_count = s.games.size();
-        out.write((char*)&s.account_id, sizeof(s.account_id));
-        out.write((char*)&s.last_day, sizeof(s.last_day));
-        out.write((char*)&s.total_daily_seconds, sizeof(s.total_daily_seconds));
-        out.write((char*)&s.total_daily_limit, sizeof(s.total_daily_limit));
-        out.write((char*)&games_count, sizeof(games_count));
+        size_t games_count = s.games.size();        
+
+        std::vector<json> games;
         for (auto &gpair : s.games) {
             GameSession &g = gpair.second;
-            size_t id_len = g.game_id.size();
-            out.write((char*)&id_len, sizeof(id_len));
-            out.write(g.game_id.data(), id_len);
-            out.write((char*)&g.daily_seconds, sizeof(g.daily_seconds));
-            out.write((char*)&g.daily_limit, sizeof(g.daily_limit));
+            json game = json::object({});
+            game["game_id"] = g.game_id;
+            game["game_title"] = g.game_title;
+            game["daily_seconds"] = g.daily_seconds;
+
+            games.push_back(game);
+        }
+
+        json account = json::object( {
+            { "account_id", s.account_id },
+            { "last_day", s.last_day },
+            { "total_daily_seconds", s.total_daily_seconds },
+            { "games", games }
+        });   
+        
+        accounts.push_back(account);
+    }
+
+    json j_accounts = json(accounts);
+    of << j_accounts.dump(); 
+
+    of.close();
+}
+
+Settings loadSettings(Settings& settings) {
+    std::ifstream ifs(SETTINGS_FILENAME, std::ios::in);    
+
+    if(!ifs) {
+        printf("Could not open settings file. Initialise default settings.");
+        settings[DAILY_LIMIT_GAME].int_value = 1*3600; //Default: 1 hour
+        settings[DAILY_LIMIT_GLOBAL].int_value = 1*3600; //Default: 1 hour
+    } else {
+        json j_settings;
+        ifs >> j_settings;
+
+        if(j_settings.contains(DAILY_LIMIT_GAME)) {
+            Setting setting;
+            setting.key = DAILY_LIMIT_GAME;
+            setting.int_value = j_settings[DAILY_LIMIT_GAME].get<int>();
+            settings[DAILY_LIMIT_GAME] = setting;
+        }
+
+        if(j_settings.contains(DAILY_LIMIT_GLOBAL)) {
+            Setting setting;
+            setting.key = DAILY_LIMIT_GLOBAL;
+            setting.int_value = j_settings[DAILY_LIMIT_GLOBAL].get<int>();
+            settings[DAILY_LIMIT_GLOBAL] = setting;
+        }
+
+    }
+
+    ifs.close();
+    return settings;
+}
+
+void saveSettings(Settings& settings, Setting& setting) {
+    //Update settings internal structure
+    settings[setting.key] = setting;
+
+    json j_settings({});
+
+    //Update database file
+    std::ofstream ofs(SETTINGS_FILENAME, std::ios::out);    
+
+    for(const auto& [key, value] : settings) {
+        switch(value.type) {
+            case INTEGER: j_settings[key] = value.int_value; break;
+            case DOUBLE: j_settings[key] = value.double_value; break;
+            case STRING: j_settings[key] = value.string_value; break;
         }
     }
-    out.close();
+
+    ofs << j_settings;
+    ofs.close();
 }

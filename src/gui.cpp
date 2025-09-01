@@ -1,3 +1,5 @@
+#include "switch.h"
+
 bool askPIN() {
     consoleClear();
     printf("Entrez le PIN parental: ");

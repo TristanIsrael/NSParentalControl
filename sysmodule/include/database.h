@@ -8,5 +8,5 @@
 void ensureDataDirectory();
 void loadDatabase(UserSessions& sessions);
 void saveDatabase(UserSessions& sessions);
-Settings loadSettings(Settings& settings);
+Settings loadSettings();
 void saveSettings(Settings& settings, Setting& setting);

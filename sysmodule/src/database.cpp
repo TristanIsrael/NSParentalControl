@@ -79,29 +79,30 @@ void saveDatabase(std::map<AccountUid, UserSession>& sessions) {
     of.close();
 }
 
-Settings loadSettings(Settings& settings) {
+Settings loadSettings() {
     std::ifstream ifs(SETTINGS_FILENAME, std::ios::in);    
+    Settings settings;
 
     if(!ifs) {
         printf("Could not open settings file. Initialise default settings.");
-        settings[DAILY_LIMIT_GAME].int_value = 1*3600; //Default: 1 hour
-        settings[DAILY_LIMIT_GLOBAL].int_value = 1*3600; //Default: 1 hour
+        settings[SETTING_DAILY_LIMIT_GAME].int_value = 1*3600; //Default: 1 hour
+        settings[SETTING_DAILY_LIMIT_GLOBAL].int_value = 1*3600; //Default: 1 hour
     } else {
         json j_settings;
         ifs >> j_settings;
 
-        if(j_settings.contains(DAILY_LIMIT_GAME)) {
+        if(j_settings.contains(SETTING_DAILY_LIMIT_GAME)) {
             Setting setting;
-            setting.key = DAILY_LIMIT_GAME;
-            setting.int_value = j_settings[DAILY_LIMIT_GAME].get<int>();
-            settings[DAILY_LIMIT_GAME] = setting;
+            setting.key = SETTING_DAILY_LIMIT_GAME;
+            setting.int_value = j_settings[SETTING_DAILY_LIMIT_GAME].get<int>();
+            settings[SETTING_DAILY_LIMIT_GAME] = setting;
         }
 
-        if(j_settings.contains(DAILY_LIMIT_GLOBAL)) {
+        if(j_settings.contains(SETTING_DAILY_LIMIT_GLOBAL)) {
             Setting setting;
-            setting.key = DAILY_LIMIT_GLOBAL;
-            setting.int_value = j_settings[DAILY_LIMIT_GLOBAL].get<int>();
-            settings[DAILY_LIMIT_GLOBAL] = setting;
+            setting.key = SETTING_DAILY_LIMIT_GLOBAL;
+            setting.int_value = j_settings[SETTING_DAILY_LIMIT_GLOBAL].get<int>();
+            settings[SETTING_DAILY_LIMIT_GLOBAL] = setting;
         }
 
     }

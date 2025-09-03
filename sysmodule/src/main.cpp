@@ -1,0 +1,132 @@
+#include <switch.h>
+#include <cstring>
+#include <iostream>
+#include <thread>
+#include "structs.h"
+#include "algo.h"
+#include "database.h"
+#include "console.h"
+#include "gui/ovl_alert.h"
+#include "tesla.hpp"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Service initialization
+void __appInit(void)
+{
+    Result rc;
+
+    // Open a service manager session.
+    rc = smInitialize();
+    if (R_FAILED(rc))
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
+
+    // Retrieve the current version of Horizon OS.
+    rc = setsysInitialize();
+    if (R_SUCCEEDED(rc)) {
+        SetSysFirmwareVersion fw;
+        rc = setsysGetFirmwareVersion(&fw);
+        if (R_SUCCEEDED(rc))
+            hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
+        setsysExit();
+    }
+
+    // Disable this if you don't want to use the filesystem.
+    rc = fsInitialize();
+    if (R_FAILED(rc))
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
+
+    // Disable this if you don't want to use the SD card filesystem.
+    fsdevMountSdmc();
+
+    // Close the service manager session.
+    smExit();
+}
+
+// Service deinitialization.
+void __appExit(void)
+{
+    fsdevUnmountAll(); // Disable this if you don't want to use the SD card filesystem.
+    fsExit(); // Disable this if you don't want to use the filesystem.
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+void showAlert() {    
+    ParentalControlState state = getParentalControlState();
+
+    if(state.alert_type == ALERT_NO_ALERT) return;
+    if(state.active) return;
+
+    std::thread overlayThread([](){
+        tsl::loop<OverlayAlert>(0, nullptr);
+    });
+    overlayThread.detach();
+}
+
+int main(int argc, char** argv) {
+    
+    // Create data structures
+    UserSessions sessions;
+    UserSession user;
+    GameSession game;
+    Settings settings;
+    u64 user_daily_limit(0);
+    bool limit_reached(true);
+
+    // Load database
+    loadDatabase(sessions);
+    settings = loadSettings();
+    
+    while (true) {
+        // We reload the settings each time because they can have been modified from overlay
+        settings = loadSettings();
+        user_daily_limit = settings[SETTING_DAILY_LIMIT_GLOBAL].int_value;
+
+        // Load global usage information
+        ParentalControlState state = getParentalControlState();
+        initParentalControlState();
+
+        state.today_global_usage_in_secs = user.total_daily_seconds;
+        state.today_time_remaining_in_secs = user_daily_limit - user.total_daily_seconds; 
+
+        // If no profile is loaded, we pass...
+        user = getCurrentUser(sessions);
+        if(user.account_id == "") goto do_nothing;
+
+        // If no game is loaded, we pass...
+        if(game.game_id == 0) goto do_nothing;
+
+        // Verify whether time limit is reached
+        limit_reached = verifyTimeLimit(user, game, sessions, settings);                
+
+        if(limit_reached) {
+            printf("Time limit is reached\n");
+            state.alert_type = ALERT_LIMIT_REACHED;            
+        } else {
+            // After verifying the limit, the user struct has been updated
+            // We verify whether the limit is approaching
+            if(user.total_daily_seconds >= (settings[SETTING_DAILY_LIMIT_GLOBAL].int_value - 5*60)) {
+                printf("Time limit is approaching\n");
+                state.alert_type = ALERT_LIMIT_ALMOST_REACHED;
+            } else {
+                state.alert_type = ALERT_NO_ALERT;
+            }
+        }
+
+        // Update the state
+        setParentalControlState(state);
+
+        // Show the alert overlay if needed
+        showAlert();
+
+do_nothing:
+        svcSleepThread(1e9); // 1000 ms
+    }
+
+    return 0;
+}

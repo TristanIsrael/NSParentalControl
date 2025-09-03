@@ -1,0 +1,38 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: clang++ générer le fichier actif",
+            "command": "/usr/bin/clang++",
+            "args": [
+                "-std=c++20",
+                "-fcolor-diagnostics",
+                "-fansi-escape-codes",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-I${workspaceFolder}/common/include",
+                "-I${workspaceFolder}/libnx/nx/include",
+                "-I${workspaceFolder}/libtesla/include",
+                "-I/opt/homebrew/Cellar/sdl2/2.32.10/include",
+                "-L/opt/homebrew/Cellar/sdl2/2.32.10/lib",
+                "-L/opt/homebrew/Cellar/sdl2_ttf/2.24.0/lib",
+                "-lsdl2",
+                "-lsdl2_ttf"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Tâche générée par le débogueur."
+        }
+    ],
+    "version": "2.0.0"
+}

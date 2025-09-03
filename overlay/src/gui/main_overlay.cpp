@@ -1,6 +1,42 @@
+#include "main_overlay.h"
 #include "switch.h"
+#include "console.h"
+#include "database.h"
+#include <tesla.hpp>
+#include "panel_main_menu.h"
+#include "panel_limit_reached.h"
 
-bool askPIN() {
+MainOverlay::MainOverlay() {
+    user_ = getCurrentUser(sessions_);
+    game_ = getCurrentGame(user_);
+
+    loadDatabase(sessions_);
+}
+
+void MainOverlay::initServices() {
+    hidInitialize();
+    appletInitialize();
+}
+
+void MainOverlay::exitServices() {
+    appletExit();
+    hidExit();
+}    
+
+std::unique_ptr<tsl::Gui> MainOverlay::loadInitialGui() {
+    return initially<MainMenu>(user_, game_, sessions_, settings_, active_); 
+}
+
+/*void BlockerOverlay::onShow() { 
+    if (rootFrame != nullptr && active) {
+        tsl::Overlay::get()->getCurrentGui()->removeFocus();
+        rebuildUI();
+        rootFrame->invalidate();
+        tsl::Overlay::get()->getCurrentGui()->requestFocus(rootFrame, tsl::FocusDirection::None);
+    }
+}*/
+
+/*bool askPIN() {
     consoleClear();
     printf("Entrez le PIN parental: ");
     consoleUpdate(NULL);
@@ -58,4 +94,4 @@ void configureLimits(UserSession &user, GameSession &game) {
 
     int val = atoi(input);
     if (val > 0) game.daily_limit = val * 60;
-}
+}*/

@@ -33,6 +33,15 @@ Libraries linked or code reused:
 
 This section explains how to create and install the binary for NS Parental Control.
 
+### Architecture
+
+This product relies on 3 components:
+1 - a sysmodule that monitors the games usage and notifies when limit is reached.
+2 - an overlay that shows on demand information about the limits and permits setup of the limits.
+3 - an applet that shows an alert when the limit is about to be reached and when it is reached.
+
+The sysmodule and the overlay communicates thru a shared memory. The sysmodule notifies the overlay when time is reached.
+
 ### Pre-requisistes
 
 - Atmosphere installed
@@ -68,3 +77,7 @@ sudo apt install devkitarm-dev devkita64-dev
 - Copy the file `ParentalControl.nro` into the new folder and rename it to `main.nro`.
 - Create a new folder `/atmosphere/contents/0004000000000000/ParentalControl/meta/`.
 - Copy the file `meta.ini` provided into this folder.
+
+## References
+
+https://github.com/switchbrew/switch-examples/tree/master

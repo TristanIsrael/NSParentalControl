@@ -2,7 +2,7 @@ TARGET = parental_control
 BUILD = build
 
 CC = aarch64-none-elf-g++
-CFLAGS = -std=c++17 -Iinclude -I$(DEVKITPRO)/libnx/include
+CFLAGS = -std=c++17 -Iinclude -I$(DEVKITPRO)/libnx/include -DVERSION=1.0
 CXXFLAGS = -std=c++17 -Iinclude -I$(DEVKITPRO)/libnx/include
 LDFLAGS = -lnx -L$(DEVKITPRO)/libnx/lib
 

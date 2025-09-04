@@ -1,20 +1,17 @@
-#include <switch.h>
 #include <cstring>
 #include <iostream>
 #include <thread>
+#define TESLA_INIT_IMPL
+#include "tesla.hpp"
+#include <switch.h>
 #include "structs.h"
 #include "algo.h"
 #include "database.h"
 #include "console.h"
 #include "gui/ovl_alert.h"
-#include "tesla.hpp"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Service initialization
-void __appInit(void)
+/*void __appInit(void)
 {
     Result rc;
 
@@ -50,11 +47,8 @@ void __appExit(void)
 {
     fsdevUnmountAll(); // Disable this if you don't want to use the SD card filesystem.
     fsExit(); // Disable this if you don't want to use the filesystem.
-}
+}*/
 
-#ifdef __cplusplus
-}
-#endif
 
 void showAlert() {    
     ParentalControlState state = getParentalControlState();
@@ -76,7 +70,7 @@ int main(int argc, char** argv) {
     GameSession game;
     Settings settings;
     u64 user_daily_limit(0);
-    bool limit_reached(true);
+    TimeLimitState limit_state(TimeLimitOk);
 
     // Load database
     loadDatabase(sessions);
@@ -102,21 +96,14 @@ int main(int argc, char** argv) {
         if(game.game_id == 0) goto do_nothing;
 
         // Verify whether time limit is reached
-        limit_reached = verifyTimeLimit(user, game, sessions, settings);                
+        limit_state = verifyTimeLimit(user, game, sessions, settings);                
 
-        if(limit_reached) {
-            printf("Time limit is reached\n");
-            state.alert_type = ALERT_LIMIT_REACHED;            
-        } else {
-            // After verifying the limit, the user struct has been updated
-            // We verify whether the limit is approaching
-            if(user.total_daily_seconds >= (settings[SETTING_DAILY_LIMIT_GLOBAL].int_value - 5*60)) {
-                printf("Time limit is approaching\n");
-                state.alert_type = ALERT_LIMIT_ALMOST_REACHED;
-            } else {
-                state.alert_type = ALERT_NO_ALERT;
-            }
+        switch(limit_state) {
+            case TimeLimitWarning: state.alert_type = ALERT_LIMIT_ALMOST_REACHED; break;
+            case TimeLimitReached: state.alert_type = ALERT_LIMIT_REACHED; break;
         }
+
+        printf("Time limit is %i\n", limit_state);
 
         // Update the state
         setParentalControlState(state);

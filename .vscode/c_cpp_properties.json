@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/overlay/**",
-                "${workspaceFolder}/libnx",                
+                "/opt/devkitpro/libnx/include",                
                 "${workspaceFolder}/libtesla/include",
                 "/opt/homebrew/Cellar/sdl2/2.32.10/include"
             ],

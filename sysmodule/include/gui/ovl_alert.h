@@ -1,5 +1,5 @@
-#include "tesla.hpp"
 #include <string>
+#include "tesla.hpp"
 
 class PanelLimitReached : public tsl::Gui {
 public:
@@ -19,13 +19,16 @@ private:
 
 class OverlayAlert : public tsl::Overlay {
 public:    
+    OverlayAlert() {}
+    virtual ~OverlayAlert();
+
     void initServices() override;
     void exitServices() override;
 
-    virtual void onShow() override {}
-    virtual void onHide() override {}
+    void onShow() override {}
+    void onHide() override {}
 
-    virtual std::unique_ptr<tsl::Gui> loadInitialGui() override;
+    std::unique_ptr<tsl::Gui> loadInitialGui() override;
 
     void show();
 

@@ -5,6 +5,8 @@
 
 class MainOverlay : public tsl::Overlay {
 public:    
+    MainOverlay();
+    
     void initServices() override;
     void exitServices() override;
 

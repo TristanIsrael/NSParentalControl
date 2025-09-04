@@ -1,7 +1,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include "aes.c"
+#include "aes.h"
 
 const char* KEY_FILE = "save:/console_key.bin";
 

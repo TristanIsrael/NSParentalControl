@@ -7,7 +7,7 @@
 #include "gui_helpers.h"
 
 MainMenu::MainMenu(UserSession& user, GameSession& game, UserSessions& sessions, Settings& settings, bool& active) :
-    user_(user), game_(game), sessions_(sessions), settings_(settings), active_(active)
+    active_(active), user_(user), game_(game), sessions_(sessions), settings_(settings)
 {
 }
 

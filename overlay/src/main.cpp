@@ -5,14 +5,9 @@
 #include <ctime>
 #include <cstring>
 
-#include "aes.c"
-#include "sha256.c"
-#include "structs.h"
-#include "console.h"
-#include "database.h"
-#include "gui/main_overlay.h"
+#define TESLA_INIT_IMPL
 #include "tesla.hpp"
-#include "algo.h"
+#include "gui/main_overlay.h"
 
 //Examples : https://github.com/masagrator/Status-Monitor-Overlay/blob/master/source/main.cpp
 

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <mutex>
 #ifndef __NO_SWITCH_H
 #include <switch.h>
 #include <tesla.hpp>
@@ -42,7 +43,7 @@ constexpr tsl::Color ColorError = { 0xF, 0x0, 0x0, 0xF };
 struct GameSession {
     u64 game_id;
     std::string game_title;
-    uint32_t daily_seconds;
+    u64 daily_seconds;
 };
 
 struct UserSession {
@@ -50,14 +51,14 @@ struct UserSession {
     std::string profile_name;
     int last_day;
     std::map<u64, GameSession> games;
-    uint32_t total_daily_seconds; // temps total joué aujourd'hui
+    u64 total_daily_seconds; // temps total joué aujourd'hui
 };
 
 using SettingKey = std::string_view;
 struct Setting {
     SettingKey key;
     SettingType type = INTEGER;
-    int int_value = 0;
+    u64 int_value = 0;
     double double_value = 0.0;
     std::string string_value;
 };
@@ -71,30 +72,33 @@ typedef struct {
     u64 today_global_usage_in_secs;    
 } ParentalControlState;
 
-inline std::atomic<ParentalControlState> pcState;
+//inline std::atomic<ParentalControlState> pcState;
+inline std::mutex pcMutex;
+inline ParentalControlState pcState;
 
 inline void initParentalControlState() {
-    ParentalControlState state = pcState.load();
-    state.active = false;
-    state.alert_type = ALERT_NO_ALERT;
-    state.acknowledged = false;
-    state.today_global_usage_in_secs = 0;
-    state.today_time_remaining_in_secs = 0;
-    pcState.store(state);
+    std::lock_guard<std::mutex> lock(pcMutex);
+    pcState.active = false;
+    pcState.alert_type = ALERT_NO_ALERT;
+    pcState.acknowledged = false;
+    pcState.today_global_usage_in_secs = 0;
+    pcState.today_time_remaining_in_secs = 0;    
 }
 
 inline ParentalControlState getParentalControlState() {
-    return pcState.load();
+    std::lock_guard<std::mutex> lock(pcMutex);
+    return pcState;
 }
 
 inline void setParentalControlState(ParentalControlState& state) {
-    return pcState.store(state);
+    std::lock_guard<std::mutex> lock(pcMutex);
+    pcState = state;
 }
 
 using Settings = std::map<SettingKey, Setting>;
 using UserSessions = std::map<std::string, UserSession>;
 
-void initState(ParentalControlState* state) {
+inline void initState(ParentalControlState* state) {
     std::memset(state, 0, sizeof(ParentalControlState));
 
     state->active = false;
@@ -104,3 +108,10 @@ void initState(ParentalControlState* state) {
     state->today_time_remaining_in_secs = 0;    
 }
 
+constexpr int WARNING_DELAY = 5*60;
+
+typedef enum {
+    TimeLimitOk = 0,
+    TimeLimitWarning = 1,
+    TimeLimitReached = 2
+} TimeLimitState;

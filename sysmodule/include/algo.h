@@ -2,4 +2,4 @@
 
 #include "structs.h"
 
-bool verifyTimeLimit(UserSession& user, GameSession& game, UserSessions& sessions, Settings& settings);
+TimeLimitState verifyTimeLimit(UserSession& user, GameSession& game, UserSessions& sessions, Settings& settings);

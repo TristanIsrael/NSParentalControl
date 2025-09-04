@@ -6,6 +6,26 @@ NS Parental Control is a simple app that allows parents to set limits on their c
 
 It can be used freely.
 
+## Current version
+
+1.0.0 (MVP)
+
+## Current features 
+
+Parental control has the following features:
+- Set a daily limit for all users [PIN needed]. 
+  - Each user has its own game time but it is defined the same for all users. 
+  - The time limit is for all games.
+- Set the parental access code (PIN).
+- Show the remaining time (user).
+
+## Coming features
+
+The following features are in the backlog:
+- Set a daily limit for users individually.
+- Set a daily limit for each game, for each user.
+- Show the remaining time for each game, for each user.
+
 ## Licence
 
 The source code and the binaries are under [GPL v3 licence](LICENSE). 
@@ -15,7 +35,7 @@ You can:
 - modify it.
 
 You must:
-- share your changes by committing on this repository or your on fork.
+- share your changes by committing on this repository or your own fork.
 
 You cannot :
 - close the sources,
@@ -27,7 +47,8 @@ You cannot :
 
 Libraries linked or code reused:
 - AES and SHA256 from **Brad Conte** ([GitHub](https://github.com/B-Con/crypto-algorithms)) - no licence.
-- IMGUI
+- Tesla,
+- libNX.
 
 ## Build
 
@@ -38,18 +59,19 @@ This section explains how to create and install the binary for NS Parental Contr
 This product relies on 3 components:
 1 - a sysmodule that monitors the games usage and notifies when limit is reached.
 2 - an overlay that shows on demand information about the limits and permits setup of the limits.
-3 - an applet that shows an alert when the limit is about to be reached and when it is reached.
 
-The sysmodule and the overlay communicates thru a shared memory. The sysmodule notifies the overlay when time is reached.
+The sysmodule and the overlay share a common database file. 
 
 ### Pre-requisistes
 
 - Atmosphere installed
 - Development computer with `devkitPro` and `devkitA64` (see below)
 - `libnx` (Switch homebrew SDK) installed via devkitPto
-- Homebrew menu installed on the Switch
+- Tesla menu installed on the Switch
 
 ### devkitPro and devkitA64 installation
+
+#### Linux Debian
 
 ```
 sudo apt install git make cmake build-essential
@@ -60,16 +82,24 @@ sudo apt install devkitpro-dev
 sudo apt install devkitarm-dev devkita64-dev
 ``` 
 
+#### Mac OS
+ 
+- Download and install the latest pacman release from [GitHub](https://github.com/devkitPro/pacman/releases).
+- Follow the instructions on [this page](https://devkitpro.org/wiki/devkitPro_pacman#macOS) to install the needed packages.
+
 ### Compilation
 
-- Go to the root directory of the project (usually `SwitchParentalControl`)
+- Go to the root directory of the project (usually `NSParentalControl`)
+- Choose the component you want to build by entering its directory (for example `$ cd sysmodule` for the sysmodule)
 - Run `make`
 
 ### Installation
 
-- Copy `ParentalControl.nro` on the SD car in a new directory called `/switch/ParentalControl/`.
-- Launch `Homebrew Menu` on the switch
-- Start `ParentalContro.nro`
+Install the sysmodule:
+*TODO*
+
+Install the overlay:
+*TODO*
 
 ### Auto-start Parental Control
 

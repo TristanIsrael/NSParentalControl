@@ -1,6 +1,6 @@
 #include <string>
-#include "tesla.hpp"
 #include "ovl_alert.h"
+#include "tesla.hpp"
 #include "structs.h"
 
 tsl::elm::Element* PanelLimitReached::createUI() {
@@ -65,9 +65,7 @@ bool PanelLimitReached::handleInput(u64 keysDown, u64 keysHeld, const HidTouchSt
     return false;
 }
 
-
-OverlayAlert::OverlayAlert() {
-}
+OverlayAlert::~OverlayAlert() = default;
 
 void OverlayAlert::initServices() {
     hidInitialize();

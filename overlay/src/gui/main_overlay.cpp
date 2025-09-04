@@ -4,7 +4,6 @@
 #include "database.h"
 #include <tesla.hpp>
 #include "panel_main_menu.h"
-#include "panel_limit_reached.h"
 
 MainOverlay::MainOverlay() {
     user_ = getCurrentUser(sessions_);

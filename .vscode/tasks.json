@@ -13,7 +13,7 @@
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-I${workspaceFolder}/common/include",
-                "-I${workspaceFolder}/libnx/nx/include",
+                "-I/opt/devkitpro/libnx/include",
                 "-I${workspaceFolder}/libtesla/include",
                 "-I/opt/homebrew/Cellar/sdl2/2.32.10/include",
                 "-L/opt/homebrew/Cellar/sdl2/2.32.10/lib",

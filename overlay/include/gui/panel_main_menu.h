@@ -6,7 +6,7 @@
 
 class MainMenu : public tsl::Gui {
 public:
-    MainMenu(UserSession& user, GameSession& game, UserSessions& sessions, Settings& settings, bool& active);
+    MainMenu();
 
     tsl::elm::Element* createUI() override;
     void rebuildUI();
@@ -17,10 +17,11 @@ public:
 
 private:    
     tsl::elm::OverlayFrame* rootFrame_ = nullptr;
-    bool& active_;
-    UserSession& user_;
-    GameSession& game_;
-    UserSessions& sessions_;
-    Settings& settings_; 
+    tsl::elm::List* rootList_ = nullptr;
+    bool active_ = false;
+    UserSession user_;
+    GameSession game_;
+    UserSessions sessions_;
+    Settings settings_; 
     bool is_configuring_ = false;   
 };

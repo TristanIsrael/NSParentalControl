@@ -7,8 +7,8 @@ class MainOverlay : public tsl::Overlay {
 public:    
     MainOverlay();
     
-    void initServices() override;
-    void exitServices() override;
+    void initServices() override {}
+    void exitServices() override {}
 
     virtual void onShow() override {}
     virtual void onHide() override {}
@@ -16,11 +16,7 @@ public:
     virtual std::unique_ptr<tsl::Gui> loadInitialGui() override;
 
 private:
-    bool active_ = false;
-    UserSession user_;
-    GameSession game_;
-    UserSessions sessions_;
-    Settings settings_;
+    
 };
 
 //bool askPIN();

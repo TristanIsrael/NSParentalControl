@@ -3,23 +3,88 @@
 #include "structs.h"
 #include "functions.h"
 
-UserSession getCurrentUser(UserSessions& sessions) {
+std::map<UserId, UserNickName> getUsersList()
+{
+    std::map<UserId, UserNickName> users;
+
+    if (R_SUCCEEDED(accountInitialize(AccountServiceType_Application))) {
+        AccountUid uids[ACC_USER_LIST_SIZE];
+        s32 count = 0;
+
+        if (R_SUCCEEDED(accountListAllUsers(uids, ACC_USER_LIST_SIZE, &count))) {
+            for (s32 i = 0; i < count; i++) {
+                AccountProfile profile;
+                AccountUid uid = uids[i];
+
+                if (R_SUCCEEDED(accountGetProfile(&profile, uid))) {
+                    AccountProfileBase base;
+                    AccountUserData user_data;
+                    accountProfileGet(&profile, &user_data, &base);                    
+
+                    UserId user_id = accountUidToString(uid);
+                    users[user_id] = std::string(base.nickname);
+
+                    accountProfileClose(&profile);
+                }
+            }
+        } else {
+            users["ERR#0002"] = "ERR#0002";
+        }
+
+        accountExit();
+    } else {
+        users["ERR#0001"] = "ERR#0001";
+    }
+    
+    return users;
+}
+
+UserSession getCurrentUser() {
     AccountUid account_id;
-    accountInitialize(AccountServiceType_Application);
-    accountGetPreselectedUser(&account_id);
-    accountExit();
+    Result rc;
+    UserSession user;
 
+    rc = accountInitialize(AccountServiceType_Application);
+    if(R_FAILED(rc)) {
+        user.profile_name = std::format("ERR#0001 (0x{:x})", rc);
+        return user;
+    }
+
+    rc = accountGetPreselectedUser(&account_id);
+    if(R_FAILED(rc)) {
+        user.profile_name = std::format("ERR#0002 (0x{:x})", rc);
+        return user;
+    }
+    
     std::string uid = accountUidToString(account_id);
+    user.account_id = uid;
 
-    if (sessions.find(uid) == sessions.end()) {
-        UserSession s;
+    // Get profile info
+    AccountProfile profile;
+
+    rc = accountGetProfile(&profile, account_id);
+    if(R_FAILED(rc)) {
+        user.profile_name = std::format("ERR#0003 (0x{:x})", rc);
+        return user;
+    }
+    AccountProfileBase base;
+    AccountUserData user_data;
+    accountProfileGet(&profile, &user_data, &base);
+    user.profile_name = std::string(base.nickname);
+    accountProfileClose(&profile);    
+
+    /*if (sessions.find(uid) == sessions.end()) {
         s.account_id = uid;
+        s.profile_name = profile_name;
         s.last_day = 0;
         s.total_daily_seconds = 0;
         sessions[uid] = s;
     }
 
-    return sessions[uid];
+    return sessions[uid];*/
+    accountExit();
+
+    return user;
 }
 
 GameSession getCurrentGame(UserSession& user) {

@@ -5,7 +5,11 @@
 #include "structs.h"
 #include "json.hpp"
 
-void ensureDataDirectory();
+bool dataDirectoryExists();
+bool dataFileExists();
+bool settingsFileExists();
+
+bool createDataDirectory();
 void loadDatabase(UserSessions& sessions);
 void saveDatabase(UserSessions& sessions);
 Settings loadSettings();

@@ -96,7 +96,11 @@ sudo apt install devkitarm-dev devkita64-dev
 ### Installation
 
 Install the sysmodule:
-*TODO*
+```
+/atmosphere/contents/0004000000000000/exefs.nsp
+/atmosphere/contents/0004000000000000/toolbox.json
+/atmosphere/contents/0004000000000000/flags/boot2.flag
+```
 
 Install the overlay:
 *TODO*

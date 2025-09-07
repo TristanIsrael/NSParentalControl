@@ -34,9 +34,15 @@ typedef enum {
     ALERT_LIMIT_REACHED = 2
 } AlertType;
 
+const std::string DATA_DIR = "sdmc:/switch/parental_control";
+const std::string DB_FILENAME = DATA_DIR + "/sessions.json";
+const std::string SETTINGS_FILENAME = DATA_DIR + "/settings.json";
+
 constexpr std::string_view SETTING_DAILY_LIMIT_GAME = "daily_limit_game";
 constexpr std::string_view SETTING_DAILY_LIMIT_GLOBAL = "daily_limit_global";
 constexpr std::string_view SETTING_SHMEM_HANDLE = "shmem_handle";
+using UserId = std::string;
+using UserNickName = std::string;
 
 constexpr tsl::Color ColorError = { 0xF, 0x0, 0x0, 0xF };
 

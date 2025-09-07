@@ -2,7 +2,8 @@
 #include "structs.h"
 
 std::string makeUserProfileLabel(const UserSession& user) {
-    return std::string("User profile: " +(user.account_id == "" ? "No profile" : user.profile_name));
+    return std::string("User profile: " +user.profile_name == "" ? "No profile" : user.profile_name);
+    //return std::string("User profile: " +(user.account_id == "" ? "No profile" : user.profile_name));
 }
 
 std::string makeDailyLimitLabel(Settings& settings) {

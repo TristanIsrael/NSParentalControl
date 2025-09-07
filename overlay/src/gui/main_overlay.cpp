@@ -5,25 +5,11 @@
 #include <tesla.hpp>
 #include "panel_main_menu.h"
 
-MainOverlay::MainOverlay() {
-    user_ = getCurrentUser(sessions_);
-    game_ = getCurrentGame(user_);
-
-    loadDatabase(sessions_);
+MainOverlay::MainOverlay() {    
 }
-
-void MainOverlay::initServices() {
-    hidInitialize();
-    appletInitialize();
-}
-
-void MainOverlay::exitServices() {
-    appletExit();
-    hidExit();
-}    
 
 std::unique_ptr<tsl::Gui> MainOverlay::loadInitialGui() {
-    return initially<MainMenu>(user_, game_, sessions_, settings_, active_); 
+    return initially<MainMenu>(); 
 }
 
 /*void BlockerOverlay::onShow() { 

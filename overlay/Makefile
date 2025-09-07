@@ -39,7 +39,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 
 APP_TITLE			:=		Parental Control
-APP_VERSION 	:= 		1.0.0
+APP_VERSION 	:= 		1.0.2
 
 TARGET		:=	parental_control
 BUILD		:=	build

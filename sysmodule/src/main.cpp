@@ -8,6 +8,8 @@
 #include "algo.h"
 #include "database.h"
 #include "console.h"
+#include "functions.h"
+#include "logger.h"
 #include "gui/ovl_alert.h"
 
 // Service initialization
@@ -49,15 +51,19 @@ void __appExit(void)
     fsExit(); // Disable this if you don't want to use the filesystem.
 }*/
 
+std::atomic<bool> alert_visible = false;
 
-void showAlert() {    
+void showAlert() {        
+    if(alert_visible) return;
+
     ParentalControlState state = getParentalControlState();
 
     if(state.alert_type == ALERT_NO_ALERT) return;
     if(state.active) return;
 
     std::thread overlayThread([](){
-        tsl::loop<OverlayAlert>(0, nullptr);
+        alert_visible = true;
+        tsl::loop<OverlayAlert>(0, nullptr);        
     });
     overlayThread.detach();
 }
@@ -73,23 +79,29 @@ int main(int argc, char** argv) {
     TimeLimitState limit_state(TimeLimitOk);
 
     // Load database
-    loadDatabase(sessions);
-    settings = loadSettings();
+    /*loadDatabase(sessions);
+    settings = loadSettings();*/
     
+    logToFile("Starting NS Parental Control service");
+
     while (true) {
         // We reload the settings each time because they can have been modified from overlay
-        settings = loadSettings();
-        user_daily_limit = settings[SETTING_DAILY_LIMIT_GLOBAL].int_value;
+        /*settings = loadSettings();
+        user_daily_limit = settings[SETTING_DAILY_LIMIT_GLOBAL].int_value;*/
 
-        // Load global usage information
-        ParentalControlState state = getParentalControlState();
+        // Load global usage information        
         initParentalControlState();
+        ParentalControlState state = getParentalControlState();
 
         state.today_global_usage_in_secs = user.total_daily_seconds;
-        state.today_time_remaining_in_secs = user_daily_limit - user.total_daily_seconds; 
+        state.today_time_remaining_in_secs = user_daily_limit - user.total_daily_seconds;
+
+        logToFile("showAlert");
+
+        showAlert();
 
         // If no profile is loaded, we pass...
-        user = getCurrentUser(sessions);
+        /*user = getCurrentUser(sessions);
         if(user.account_id == "") goto do_nothing;
 
         // If no game is loaded, we pass...
@@ -109,7 +121,7 @@ int main(int argc, char** argv) {
         setParentalControlState(state);
 
         // Show the alert overlay if needed
-        showAlert();
+        showAlert();*/
 
 do_nothing:
         svcSleepThread(1e9); // 1000 ms

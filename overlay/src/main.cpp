@@ -14,8 +14,6 @@
 const bool CIPHER_DATABASE = false;
 
 int main(int argc, char** argv) {
-    consoleInit(NULL);
-
     tsl::loop<MainOverlay>(argc, argv);                        
 
     /*const size_t KEY_LEN = 32;

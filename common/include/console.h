@@ -1,6 +1,9 @@
 #pragma once
 
+#include <list>
+#include <switch.h>
 #include "structs.h"
 
-UserSession getCurrentUser(UserSessions& sessions);
+std::map<UserId, UserNickName> getUsersList();
+UserSession getCurrentUser();
 GameSession getCurrentGame(UserSession& user);

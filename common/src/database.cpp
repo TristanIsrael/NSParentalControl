@@ -8,18 +8,51 @@
 
 using json = nlohmann::json;
 
-const std::string DB_FILENAME = "/switch/parental_control/sessions.json";
-const std::string SETTINGS_FILENAME = "/switch/parental_control/settings.json";
+bool dataDirectoryExists()
+{
+    fsdevMountSdmc();
 
-void ensureDataDirectory() {
-    struct stat st;
-    if (stat("/switch/parental_control", &st) != 0) {
-        mkdir("/switch/parental_control", 0777);
-    }
+    bool exists = std::filesystem::exists(DATA_DIR) && std::filesystem::is_directory(DATA_DIR);
+    fsdevUnmountDevice("sdmc");
+
+    return exists;
 }
 
-void loadDatabase(UserSessions& sessions) {    
-    std::ifstream in(DB_FILENAME, std::ios::in);
+bool dataFileExists() 
+{
+    fsdevMountSdmc();
+
+    bool exists = std::filesystem::exists(DB_FILENAME) && std::filesystem::is_regular_file(DB_FILENAME);
+    fsdevUnmountDevice("sdmc");
+
+    return exists;
+}
+
+bool settingsFileExists()
+{
+    fsdevMountSdmc();
+
+    bool exists = std::filesystem::exists(SETTINGS_FILENAME) && std::filesystem::is_regular_file(SETTINGS_FILENAME);
+    fsdevUnmountDevice("sdmc");
+
+    return exists;
+}
+
+bool createDataDirectory() 
+{
+    fsdevMountSdmc();
+
+    bool result = std::filesystem::create_directory(DATA_DIR);
+    fsdevUnmountDevice("sdmc");
+
+    return result;
+}
+
+void loadDatabase(UserSessions& sessions) 
+{    
+    fsdevMountSdmc();
+
+    std::ifstream in(DB_FILENAME, std::ios::in); 
     if (!in) return;
 
     if (in.is_open()) {
@@ -39,9 +72,12 @@ void loadDatabase(UserSessions& sessions) {
     }
 
     in.close();
+    fsdevUnmountDevice("sdmc");
 }
 
-void saveDatabase(UserSessions& sessions) {
+void saveDatabase(UserSessions& sessions) 
+{
+    fsdevMountSdmc();
     std::ofstream of(DB_FILENAME, std::ios::out);
 
     std::vector<json> accounts;
@@ -77,9 +113,11 @@ void saveDatabase(UserSessions& sessions) {
     of << j_accounts.dump(); 
 
     of.close();
+    fsdevUnmountDevice("sdmc");
 }
 
 Settings loadSettings() {
+    fsdevMountSdmc();
     std::ifstream ifs(SETTINGS_FILENAME, std::ios::in);    
     Settings settings;
 
@@ -108,10 +146,12 @@ Settings loadSettings() {
     }
 
     ifs.close();
+    fsdevUnmountDevice("sdmc");
     return settings;
 }
 
 void saveSettings(Settings& settings, Setting& setting) {
+    fsdevMountSdmc();
     //Update settings internal structure
     settings[setting.key] = setting;
 
@@ -130,4 +170,5 @@ void saveSettings(Settings& settings, Setting& setting) {
 
     ofs << j_settings;
     ofs.close();
+    fsdevUnmountDevice("sdmc");
 }

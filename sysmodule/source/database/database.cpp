@@ -16,9 +16,9 @@ using json = nlohmann::json;
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::helpers;
 
-static const char* DATA_DIR = "/switch/parental_control";
-static const char* DB_FILENAME = "/switch/parental_control/sessions.json";
-static const char* SETTINGS_FILENAME = "/switch/parental_control/settings.json";
+static const char* DATA_DIR = "/config/parental_control";
+static const char* DB_FILENAME = "/config/parental_control/sessions.json";
+static const char* SETTINGS_FILENAME = "/config/parental_control/settings.json";
 
 namespace alefbet::pctrl::database {
     static FsFileSystem sdmc;
@@ -27,36 +27,6 @@ namespace alefbet::pctrl::database {
     static FsFile handle_database;
     static std::mutex mutex_database;
     static bool ready = false;
-
-    /*bool dataDirectoryExists()
-    {
-        fsdevMountSdmc();
-
-        bool exists = std::filesystem::exists(DATA_DIR) && std::filesystem::is_directory(DATA_DIR);
-        fsdevUnmountDevice("sdmc");
-
-        return exists;
-    }
-
-    bool dataFileExists() 
-    {
-        fsdevMountSdmc();
-
-        bool exists = std::filesystem::exists(DB_FILENAME) && std::filesystem::is_regular_file(DB_FILENAME);
-        fsdevUnmountDevice("sdmc");
-
-        return exists;
-    }
-
-    bool settingsFileExists()
-    {
-        fsdevMountSdmc();
-
-        bool exists = std::filesystem::exists(SETTINGS_FILENAME) && std::filesystem::is_regular_file(SETTINGS_FILENAME);
-        fsdevUnmountDevice("sdmc");
-
-        return exists;
-    }*/
 
     bool prepare() {
         if(ready) return true;
@@ -71,12 +41,9 @@ namespace alefbet::pctrl::database {
 
     bool createDataDirectory() 
     {
-        //fsdevMountSdmc();
         if(!prepare()) return false;
 
-        //bool result = std::filesystem::create_directory(DATA_DIR);
         bool result = R_SUCCEEDED(fsFsCreateDirectory(&sdmc, DATA_DIR));
-        //fsdevUnmountDevice("sdmc");
 
         return result;
     }
@@ -89,24 +56,31 @@ namespace alefbet::pctrl::database {
 
         if(!prepare()) return History{};
 
-        //bool opened = OpenFile(std::addressof(handle_database), DB_FILENAME.c_str(), OpenMode_Read).IsSuccess();        
         bool opened = R_SUCCEEDED(fsFsOpenFile(&sdmc, DB_FILENAME, FsOpenMode_Read, &handle_database));
         History history;
 
         if(!opened) {
             logToFile("Could not open database file. Try to create a new file.\n");
-            //if(CreateFile(DB_FILENAME.c_str(), 0).IsFailure()) {
+
+            // Verify whether data directory exists
+            FsDirEntryType type;
+            if(R_FAILED(fsFsGetEntryType(&sdmc, DATA_DIR, &type))) {
+                // The directory does not exist
+                if(!createDataDirectory()) {
+                    logToFile("[Database] The data directory could not be created.\n");
+                    return history;
+                }
+            }
+
             if(R_FAILED(fsFsCreateFile(&sdmc, DB_FILENAME, 0, 0))) {
                 logToFile("[Database] Could not create a new database file.\n");
                 return history;
             }
         } else {
             s64 fileSize = 0;
-            //if(GetFileSize(&fileSize, handle_database).IsFailure()) {
             if(R_FAILED(fsFileGetSize(&handle_database, &fileSize))) {
                 logToFile("[Database] Could not get database file size\n");
                 fsFileClose(&handle_database);
-                //CloseFile(handle_database);
                 return history;
             } else {
                 logToFile("[Database] Database file size is %i\n", fileSize);
@@ -114,7 +88,6 @@ namespace alefbet::pctrl::database {
 
             if(fileSize == 0) {
                 logToFile("[Database] Database file is empty\n");
-                //CloseFile(handle_database);
                 fsFileClose(&handle_database);
                 return history;
             }
@@ -122,18 +95,15 @@ namespace alefbet::pctrl::database {
             u8* data_sessions = new u8[fileSize+1];            
             if(data_sessions == nullptr) {
                 logToFile("[Database] Could not create a buffer for sessions\n");
-                //CloseFile(handle_database);
                 fsFileClose(&handle_database);
                 return history;
             } else {
                 logToFile("[Database] sessions buffer ready at @%p\n", (void*)data_sessions);
             }
 
-            //if(ReadFile(handle_database, 0, data_sessions, fileSize).IsFailure()) {
             u64 dataRead = 0;
             if(R_FAILED(fsFileRead(&handle_database, 0, data_sessions, fileSize, FsReadOption_None, &dataRead))) {
                 logToFile("[Database] Could not read the database file\n");
-                //CloseFile(handle_database);
                 fsFileClose(&handle_database);
                 return history;
             } else {
@@ -158,7 +128,6 @@ namespace alefbet::pctrl::database {
                 history.addEntry(entry);
             }
 
-            //CloseFile(handle_database);
             fsFileClose(&handle_database);
             delete[] data_sessions;
         }
@@ -187,12 +156,10 @@ namespace alefbet::pctrl::database {
             { "history", j_entries }
         };
 
-        //if(DeleteFile(DB_FILENAME.c_str()).IsFailure()) {
         if(R_FAILED(fsFsDeleteFile(&sdmc, DB_FILENAME))) {
             logToFile("[Database] Could not delete the current database file\n");            
         }
 
-        //if(CreateFile(DB_FILENAME.c_str(), 0).IsFailure()) {
         if(R_FAILED(fsFsCreateFile(&sdmc, DB_FILENAME, 0, 0))) {
             logToFile("[Database] Could not create the database file\n");
             return;
@@ -200,7 +167,6 @@ namespace alefbet::pctrl::database {
             logToFile("[Database] New database file created\n");
         }
 
-        //if(OpenFile(std::addressof(handle_database), DB_FILENAME.c_str(), OpenMode_Write | OpenMode_AllowAppend).IsFailure()) {
         if(R_FAILED(fsFsOpenFile(&sdmc, DB_FILENAME, FsOpenMode_Write | FsOpenMode_Append, &handle_database))) {
             logToFile("[Database] The database file could not be opened for writing\n");
             return;
@@ -209,13 +175,11 @@ namespace alefbet::pctrl::database {
         const auto data = j_history.dump();
         const auto s_data = data.c_str();
 
-        logToFile("[Database] Writing sessions data %s (size=%i)\n", s_data, std::strlen(s_data));
-        //if(WriteFile(handle_database, 0, s_data, std::strlen(s_data), WriteOption::Flush).IsFailure()) {
+        logToFile("[Database] Writing sessions data %s (size=%i)\n", s_data, std::strlen(s_data));    
         if(R_FAILED(fsFileWrite(&handle_database, 0, s_data, std::strlen(s_data), FsWriteOption_Flush))) {
             logToFile("[Database] Could not write into database file\n");
         }
 
-        //CloseFile(handle_database);
         fsFileClose(&handle_database);
     }    
 
@@ -271,12 +235,21 @@ namespace alefbet::pctrl::database {
 
         if(!prepare()) return Settings{};
 
-        //bool opened = OpenFile(std::addressof(handle_settings), SETTINGS_FILENAME.c_str(), OpenMode_Read).IsSuccess();
         bool opened = R_SUCCEEDED(fsFsOpenFile(&sdmc, SETTINGS_FILENAME, FsOpenMode_Read, &handle_settings));
         Settings settings;
 
         if(!opened) {
             logToFile("Could not open settings file. Initialise default settings.\n");
+
+            // Verify whether data directory exists
+            FsDirEntryType type;
+            if(R_FAILED(fsFsGetEntryType(&sdmc, DATA_DIR, &type))) {
+                // The directory does not exist
+                if(!createDataDirectory()) {
+                    logToFile("[Database] The data directory could not be created.\n");
+                    return settings;
+                }
+            }
 
             saveSetting(settings, Setting {
                 .key = SETTING_DAILY_LIMIT_GAME,
@@ -291,10 +264,8 @@ namespace alefbet::pctrl::database {
             });
         } else {
             s64 fileSize = 0;
-            //if(GetFileSize(&fileSize, handle_settings).IsFailure()) {
             if(R_FAILED(fsFileGetSize(&handle_settings, &fileSize))) {
                 logToFile("[Database] Could not get settings file size\n");
-                //CloseFile(handle_settings);
                 fsFileClose(&handle_settings);
                 return settings;
             } else {
@@ -303,7 +274,6 @@ namespace alefbet::pctrl::database {
 
             if(fileSize == 0) {
                 logToFile("[Database] Settings file is empty\n");
-                //CloseFile(handle_settings);
                 fsFileClose(&handle_settings);
                 return settings;
             }
@@ -311,18 +281,15 @@ namespace alefbet::pctrl::database {
             u8* data_settings = new u8[fileSize+1];            
             if(data_settings == nullptr) {
                 logToFile("[Database] Could not create a buffer for settings\n");
-                //CloseFile(handle_settings);
                 fsFileClose(&handle_settings);
                 return settings;
             } else {
                 logToFile("[Database] settings buffer ready at @%p\n", (void*)data_settings);
             }
 
-            //if(ReadFile(handle_settings, 0, data_settings, fileSize).IsFailure()) {
             u64 dataRead = 0;
             if(R_FAILED(fsFileRead(&handle_settings, 0, data_settings, fileSize, FsReadOption_None, &dataRead))) {
                 logToFile("[Database] Could not read the settings file\n");
-                //CloseFile(handle_settings);
                 fsFileClose(&handle_settings);
                 return settings;
             } else {
@@ -353,30 +320,8 @@ namespace alefbet::pctrl::database {
                         logToFile("[Database] setting is malformed\n");
                     }
                 }
-                /*const auto& j__settings = j_settings["settings"];
-
-                if(j__settings.contains(SETTING_DAILY_LIMIT_GAME)) {                
-                    settings[SETTING_DAILY_LIMIT_GAME] = Setting {
-                        .key = SETTING_DAILY_LIMIT_GAME,
-                        .type = INTEGER,
-                        .int_value = j_settings[SETTING_DAILY_LIMIT_GAME].get<u64>()
-                    };
-                } else {
-                    logToFile("[Database] No daily game limit setting found\n");
-                }
-
-                if(j__settings.contains(SETTING_DAILY_LIMIT_GLOBAL)) {                
-                    settings[SETTING_DAILY_LIMIT_GLOBAL] = Setting {
-                        .key = SETTING_DAILY_LIMIT_GLOBAL,
-                        .type = INTEGER,
-                        .int_value = j_settings[SETTING_DAILY_LIMIT_GLOBAL].get<u64>()
-                    };
-                } else {
-                    logToFile("[Database] No daily global limit setting found\n");
-                }*/
             }
 
-            //CloseFile(handle_settings);
             fsFileClose(&handle_settings);
             delete[] data_settings;
         }
@@ -420,15 +365,13 @@ namespace alefbet::pctrl::database {
             { "settings", j_entries }
         };
 
-
-        //ams::Result res = DeleteFile(SETTINGS_FILENAME.c_str());        
+   
         if(R_FAILED(fsFsDeleteFile(&sdmc, SETTINGS_FILENAME))) {
             logToFile("[Database] Could not delete the settings file\n"); //Error 514?            
         } else {
             logToFile("[Database] Successfully removed current settings\n");
         }
-        
-        //if(CreateFile(SETTINGS_FILENAME.c_str(), 0).IsFailure()) {
+
         if(R_FAILED(fsFsCreateFile(&sdmc, SETTINGS_FILENAME, 0, 0))) {
             logToFile("[Database] Could not create the settings file\n");
             return;
@@ -436,7 +379,6 @@ namespace alefbet::pctrl::database {
             logToFile("[Database] New settings file created\n");
         }
 
-        //if(OpenFile(std::addressof(handle_settings), SETTINGS_FILENAME.c_str(), OpenMode_Write | OpenMode_AllowAppend).IsFailure()) {
         if(R_FAILED(fsFsOpenFile(&sdmc, SETTINGS_FILENAME, FsOpenMode_Write | FsOpenMode_Append, &handle_settings))) {
             logToFile("[Database] The settings file could not be opened for writing\n");
             return;
@@ -447,12 +389,11 @@ namespace alefbet::pctrl::database {
         const auto data = j_settings.dump();
         const auto s_data = data.c_str();
         logToFile("[Database] Writing settings %s (size=%i)\n", s_data, std::strlen(s_data));
-        //if(WriteFile(handle_settings, 0, s_data, std::strlen(s_data), WriteOption::Flush).IsFailure()) {
+
         if(R_FAILED(fsFileWrite(&handle_settings, 0, s_data, std::strlen(s_data), FsWriteOption_Flush))) {
             logToFile("[Database] Could not write into settings file\n");
         }
 
-        //CloseFile(handle_settings);
         fsFileClose(&handle_settings);
     }
 

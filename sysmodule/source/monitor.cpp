@@ -154,7 +154,7 @@ namespace alefbet::pctrl::srv {
             for(int i = 0 ; i < MainLoopDelayInNanos.count() / SubLoopDelayInNanos.count() ; ++i) {
                 pid = getRunningApplicationPid();   
                 if(pid != 0 && helpers::isCurrentTitleBlacklisted()) {
-                    service_->showBlacklistedTitleScreen();
+                    service_->showScreenTitleBlacklisted();
                 }
 
                 svcSleepThread(SubLoopDelayInNanos.count()); // Wait a little

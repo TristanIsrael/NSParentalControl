@@ -1,10 +1,14 @@
 #pragma once
 #include <switch.h>
+#include <string>
 
 class GuiController {
     public:
         void showScreenTimeout();
         void hideScreenTimeout();
+
+        void showScreenTitleBlacklisted();
+        void hideAll();
 
         // Disabled because of the conflict with Tesla... to be solved
         /*void showRemainingTimePanel();
@@ -16,7 +20,8 @@ class GuiController {
         }*/
 
     private:
-        //void showOverlay(u16 width, u16 height, u16 posX, u16 posY);
+        void showOverlay(u16 width, u16 height, u16 posX, u16 posY);
+        int calculateTextWidth(const std::string& text, int fontSize, bool monospace = false);
         void clearScreen();
         
     private:

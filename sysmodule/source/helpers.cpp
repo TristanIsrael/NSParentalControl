@@ -365,7 +365,7 @@ namespace alefbet::pctrl::helpers {
 
                     if(blacklist.empty()) {
                         logDebug("[Helpers] No title blacklisted.\n");
-                        return;
+                        return false;
                     }
 
                     json j_blacklist = json::parse(blacklist);
@@ -385,5 +385,7 @@ namespace alefbet::pctrl::helpers {
                 }
             }
         }
+
+        return false;
     }
 }

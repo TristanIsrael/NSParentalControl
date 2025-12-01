@@ -8,7 +8,7 @@ using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::gfx;
 using namespace alefbet::pctrl::gui;
 
-namespace images {
+/*namespace images {
     #include "inc/chrono_0_pc.inc"    
     #include "inc/chrono_9_pc.inc"
     #include "inc/chrono_17_pc.inc"
@@ -27,7 +27,11 @@ namespace images {
     #include "inc/chrono_3_mn.inc"
     #include "inc/chrono_4_mn.inc"
     #include "inc/chrono_5_mn.inc"
-}
+}*/
+
+constexpr Color backgroundColor =   Color(0x3, 0x3, 0x3, 0xe);    // Deep gray
+constexpr Color textColor =         Color(0xf, 0xf, 0xf, 0xf);    // White
+constexpr Color titleColor =        Color(0x1, 0xc, 0xe, 0xf);    // Light blue
 
 /* There should only be a single transfer memory (for nv). */
 alignas(ams::os::MemoryPageSize) constinit u8 g_nv_transfer_memory[0x40000];
@@ -60,9 +64,64 @@ void GuiController::showScreenTimeout() {
     renderer.endFrame();*/
 }
 
+void GuiController::showScreenTitleBlacklisted() {
+    logDebug("[Gui] Show title blacklisted screen\n");
+
+    width_ = 1216; //Width must be a multiple of 64
+    height_ = 693;
+
+    u16 posX = (ScreenWidth - width_) / 2;
+    u16 posY = (ScreenHeight - height_) / 2;
+
+    showOverlay(width_, height_, posX, posY);
+
+    auto& renderer = Renderer::get();
+    renderer.startFrame();
+        
+    // Draw the background
+    renderer.drawRect(0, 0, width_, height_, backgroundColor);
+
+    // Draw the title
+    std::string str = "Unauthorized";
+    auto width = calculateTextWidth(str, 62);
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 258, 62, textColor);    
+
+    str = "Sorry, you are not allowed to";
+    width = calculateTextWidth(str, 62);
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 551, 62, textColor);    
+
+    str = "play this game.";
+    width = calculateTextWidth(str, 62);
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 618, 62, textColor);    
+
+    // Press any key...
+    str = "Press any key...";
+    width = calculateTextWidth(str, 48);
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, height_ - 48 - 16, 48, textColor);    
+
+    renderer.endFrame();
+}
+
+int GuiController::calculateTextWidth(const std::string& text, int fontSize, bool monospace)
+{
+    auto& renderer = Renderer::get();
+    const auto& dimension = renderer.drawString(text.c_str(), monospace, 0, 100, fontSize, Color(0, 0, 0, 0));
+    return dimension.first;
+}
+
 void GuiController::hideScreenTimeout() {
     logDebug("[Gui] Hide timeout screen\n");
     clearScreen();
+}
+
+void GuiController::hideAll() {
+    logDebug("[Gui] Hide all screens\n");
+
+    auto& renderer = Renderer::get();
+    renderer.startFrame();
+    renderer.clearScreen();
+    renderer.endFrame();
+    renderer.exit();
 }
 
 /*void GuiController::showRemainingTimePanel() {    
@@ -161,7 +220,7 @@ void GuiController::hideRemainingTimePanel() {
     logDebug("[Gui] Hide remaining time panel\n");
     clearScreen();
     remaining_time_visible_ = false;
-}
+}*/
 
 void GuiController::showOverlay(u16 width, u16 height, u16 posX, u16 posY) {
     logDebug("[Gui] show Overlay of size %ix%i\n", width, height);
@@ -171,7 +230,7 @@ void GuiController::showOverlay(u16 width, u16 height, u16 posX, u16 posY) {
     clearScreen();
 
     //requestForeground(true);
-}*/
+}
 
 void GuiController::clearScreen() {
     auto& renderer = Renderer::get();

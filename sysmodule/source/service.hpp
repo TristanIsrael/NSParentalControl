@@ -40,6 +40,7 @@ namespace alefbet::pctrl::srv {
             }
 
             void showScreenTimeout();
+            void showScreenTitleBlacklisted();
 
         private:
             Ipc::Result commandThread(Ipc::Request*);

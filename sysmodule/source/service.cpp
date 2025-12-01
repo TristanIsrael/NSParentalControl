@@ -95,6 +95,59 @@ namespace alefbet::pctrl::srv {
         gpioExit();
     }
 
+    void Service::showScreenTitleBlacklisted() {
+        logDebug("[Service] Requested to show title blacklisted screen\n");
+
+        gui_.showScreenTitleBlacklisted();
+
+        // Terminate the game
+        helpers::terminateCurrentApplication();
+
+        // Wait for any button
+        hidInitialize();
+        hidsysInitialize();
+
+        // Allow only Player 1 and handheld mode
+        HidNpadIdType id_list[2] = { HidNpadIdType_No1, HidNpadIdType_Handheld };
+        
+        // Configure HID system to only listen to these IDs
+        hidSetSupportedNpadIdType(id_list, 2);
+        
+        // Configure input for up to 2 supported controllers (P1 + Handheld)
+        padConfigureInput(2, HidNpadStyleSet_NpadStandard | HidNpadStyleTag_NpadSystemExt);
+        
+        PadState pad_p1_;
+        PadState pad_handheld_;
+
+        // Initialize separate pad states for both controllers    
+        padInitialize(&pad_p1_, HidNpadIdType_No1);
+        padInitialize(&pad_handheld_, HidNpadIdType_Handheld);
+                
+        // Clear any stale input from both controllers
+        padUpdate(&pad_p1_);
+        padUpdate(&pad_handheld_);
+
+        while(true) {
+            padUpdate(&pad_p1_);
+            padUpdate(&pad_handheld_);
+
+            const u64 kDown_p1 = padGetButtonsDown(&pad_p1_);
+            const u64 kDown_handheld = padGetButtonsDown(&pad_handheld_);
+
+            u64 keysDown = kDown_p1 | kDown_handheld;
+
+            if(keysDown != 0) {
+                logDebug("[Service] The user pressed a button. Exiting screen\n");
+
+                gui_.hideAll();
+
+                return;
+            }
+
+        }
+        
+    }
+
     Ipc::Result Service::getRunningApplication(Ipc::Request* request) {
         auto process_id = helpers::getRunningApplicationPid();
         if(process_id > 0) {

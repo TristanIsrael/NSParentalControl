@@ -20,7 +20,7 @@ namespace alefbet::pctrl::database {
     /* Settings management */
     Settings& loadSettings();
     void saveSettings();
-    void saveSetting(Setting setting);
+    void saveSetting(Setting setting);    
 
     bool upgradeNeeded();
     bool isTampered();

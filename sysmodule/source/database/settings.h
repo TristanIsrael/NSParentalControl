@@ -36,4 +36,5 @@ constexpr const char* SETTING_WORKING_MODE = "working_mode";
 constexpr const char* SETTING_SHOW_REMAINING_TIME = "show_remaining_time";
 constexpr const char* SETTING_ENABLED = "enabled";
 constexpr const char* SETTING_LOGLEVEL = "log_level";
+constexpr const char* SETTING_BLACKLIST = "blacklist";
 

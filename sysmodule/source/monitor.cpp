@@ -6,7 +6,6 @@
 #include "notifications_controller.h"
 #include <chrono>
 #include <list>
-//#include "pctrl_screen.hpp"
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::helpers;
@@ -15,7 +14,7 @@ using namespace std::chrono_literals;
 
 constexpr std::chrono::minutes MainLoopDelayInMinutes = 1min;
 constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(MainLoopDelayInMinutes); 
-constexpr std::chrono::milliseconds SubLoopDelayInMillis = 1000ms;
+constexpr std::chrono::milliseconds SubLoopDelayInMillis = 5s;
 constexpr std::chrono::nanoseconds SubLoopDelayInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(SubLoopDelayInMillis); 
 
 namespace alefbet::pctrl::srv {
@@ -151,8 +150,18 @@ namespace alefbet::pctrl::srv {
                 svcSleepThread(SubLoopDelayInNanos.count()); // Wait a little
             }*/
 
+            // Sub-loop to monitor blacklisted games
+            for(int i = 0 ; i < MainLoopDelayInNanos.count() / SubLoopDelayInNanos.count() ; ++i) {
+                pid = getRunningApplicationPid();   
+                if(pid != 0 && helpers::isCurrentTitleBlacklisted()) {
+                    service_->showBlacklistedTitleScreen();
+                }
+
+                svcSleepThread(SubLoopDelayInNanos.count()); // Wait a little
+            }
+
             logDebug("[Monitoring] loop\n");
-            svcSleepThread(MainLoopDelayInNanos.count()); //Wait 1 minute
+            //svcSleepThread(MainLoopDelayInNanos.count()); // Wait 1 minute
         }
 
         logInfo("[Monitor] Stopped monitoring.\n");

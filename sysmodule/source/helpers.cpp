@@ -4,15 +4,20 @@
 #include <cinttypes>
 #include <iostream>
 #include <vector>
+#include <list>
 #include <string_view>
 #include <ranges>
 #include <codecvt>
 #include <switch.h>
 #include "logger.h"
+#include "database/database.h"
 #include "ams_bpc.h"
+#include "database/json.hpp"
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::structs;
+using namespace alefbet::pctrl::database;
+using namespace nlohmann;
 using std::operator""sv;
 
 namespace alefbet::pctrl::helpers {
@@ -342,5 +347,43 @@ namespace alefbet::pctrl::helpers {
         }
 
         return true;
+    }
+
+    bool isCurrentTitleBlacklisted() {
+        logDebug("[Helpers] Checking whether the current title is blacklisted\n");
+
+        const auto& user = getCurrentUser();
+        u64 pid = getRunningApplicationPid();
+
+        if(pid > 0) {
+            u64 titleId = getRunningApplicationTitleId(pid);
+            if(titleId > 0) {
+                auto& settings = loadSettings();
+
+                if(settings.contains(SETTING_BLACKLIST)) {
+                    const auto& blacklist = settings[SETTING_BLACKLIST].string_value;
+
+                    if(blacklist.empty()) {
+                        logDebug("[Helpers] No title blacklisted.\n");
+                        return;
+                    }
+
+                    json j_blacklist = json::parse(blacklist);
+
+                    if(j_blacklist.contains(user.nickname)) {
+                        std::list<std::string> j_titlesList = j_blacklist[user.nickname];
+
+                        const auto& strTitleId = titleIdToString(titleId);
+                        const auto& val = std::find_if(j_titlesList.begin(), j_titlesList.end(), [strTitleId](const std::string& title) {
+                            return title == strTitleId;
+                        });
+
+                        return val != j_titlesList.end();
+                    } else {
+                        logDebug("[Helpers] No blacklist for user %s\n", user.nickname.c_str());
+                    }
+                }
+            }
+        }
     }
 }

@@ -37,5 +37,7 @@ namespace alefbet::pctrl {
         bool rebootToPayload();
 
         bool terminateCurrentApplication();
+
+        bool isCurrentTitleBlacklisted();
     }
 }   

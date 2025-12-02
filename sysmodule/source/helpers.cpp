@@ -358,6 +358,7 @@ namespace alefbet::pctrl::helpers {
 
         if(pid > 0) {
             const auto& titleId = getRunningApplicationTitleId(pid);
+
             if(titleId > 0) {
                 const auto& userId = accountUidToString(user.uid);
                 const auto& blacklist = getBlacklistedTitlesForUser(userId);
@@ -424,17 +425,18 @@ namespace alefbet::pctrl::helpers {
                 // Replace existing blacklist for the user
                 j_setting[userId] = userBlacklist;
 
-                setting.string_value = j_setting;
+                setting.string_value = j_setting.dump();
             }
         } else {
+            // Create a new entry
             json j_setting;
             j_setting[userId] = userBlacklist;
 
             setting = {
                 .key = SETTING_BLACKLIST,
-                .type = STRING,                
-                .string_value = j_setting.dump(j_setting)
-            };            
+                .type = STRING,
+                .string_value = j_setting.dump()
+            };
         }
 
         saveSetting(setting);
@@ -465,7 +467,7 @@ namespace alefbet::pctrl::helpers {
                 // Replace existing blacklist for the user
                 j_setting[userId] = userBlacklist;
 
-                setting.string_value = j_setting;
+                setting.string_value = j_setting.dump();
             }
         } else {
             json j_setting;
@@ -474,7 +476,7 @@ namespace alefbet::pctrl::helpers {
             setting = {
                 .key = SETTING_BLACKLIST,
                 .type = STRING,                
-                .string_value = j_setting.dump(j_setting)
+                .string_value = j_setting.dump()
             };            
         }
 

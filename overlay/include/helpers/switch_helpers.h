@@ -25,7 +25,7 @@ namespace alefbet {
             UserUid accountUidToString(AccountUid uid);
             AccountUid accountUidFromString(const UserUid& uid);
 
-            //std::string getTitleName(u64 titleId);
+            std::string getTitleName(u64 titleId);
         }
     }
 }

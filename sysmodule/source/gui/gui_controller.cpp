@@ -8,8 +8,8 @@ using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::gfx;
 using namespace alefbet::pctrl::gui;
 
-/*namespace images {
-    #include "inc/chrono_0_pc.inc"    
+namespace images {
+    /*#include "inc/chrono_0_pc.inc"    
     #include "inc/chrono_9_pc.inc"
     #include "inc/chrono_17_pc.inc"
     #include "inc/chrono_25_pc.inc"
@@ -26,8 +26,9 @@ using namespace alefbet::pctrl::gui;
     #include "inc/chrono_2_mn.inc"
     #include "inc/chrono_3_mn.inc"
     #include "inc/chrono_4_mn.inc"
-    #include "inc/chrono_5_mn.inc"
-}*/
+    #include "inc/chrono_5_mn.inc"*/
+    #include "inc/logo.inc"
+}
 
 constexpr Color backgroundColor =   Color(0x3, 0x3, 0x3, 0xe);    // Deep gray
 constexpr Color textColor =         Color(0xf, 0xf, 0xf, 0xf);    // White
@@ -81,10 +82,16 @@ void GuiController::showScreenTitleBlacklisted() {
     // Draw the background
     renderer.drawRect(0, 0, width_, height_, backgroundColor);
 
+    /* Draw the logo in the center of the screen */
+    /*size_t imgSize = images::LogoWidth * images::LogoHeight;
+    u8 logo4444[imgSize*2];    
+    rgb565ToRgb4444(images::pctrl_logo, imgSize, logo4444, 0x800);
+    renderer.drawBitmap((width_ - images::LogoWidth) / 2, (height_ - images::LogoHeight)/2, images::LogoWidth, images::LogoHeight, logo4444);*/
+
     // Draw the title
     std::string str = "Unauthorized";
     auto width = calculateTextWidth(str, 62);
-    renderer.drawString(str.c_str(), false, (width_ - width)/2, 258, 62, textColor);    
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 258, 62, titleColor);    
 
     str = "Sorry, you are not allowed to";
     width = calculateTextWidth(str, 62);
@@ -97,7 +104,7 @@ void GuiController::showScreenTitleBlacklisted() {
     // Press any key...
     str = "Press any key...";
     width = calculateTextWidth(str, 48);
-    renderer.drawString(str.c_str(), false, (width_ - width)/2, height_ - 48 - 16, 48, textColor);    
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, height_ - 48 - 16, 32, textColor);    
 
     renderer.endFrame();
 }
@@ -270,3 +277,24 @@ void GuiController::clearScreen() {
 
     hidsysEnableAppletToGetInput(true, 0);
 }*/
+
+void GuiController::rgb565ToRgb4444(const u16* source, size_t size, u8* dest, const u16 alpha) {
+    const u16 alphaval = alpha << 12;
+
+    for(size_t i = 0 ; i < size ; i++) {        
+        u16 pix = source[i];
+
+        u8 r5 = (pix >> 11) & 0x1f;
+        u8 g6 = (pix >> 5)  & 0x3f;
+        u8 b5 = pix         & 0x1f;
+
+        u8 r4 = r5 >> 1;
+        u8 g4 = g6 >> 2;
+        u8 b4 = b5 >> 1;
+
+        u16 pixout = alphaval | (r4 << 8) | (g4 << 4) | b4;
+
+        dest[i*2] = (u8)(pixout & 0xff);        // LSB
+        dest[i*2+1] = (u8)((pixout >> 8) & 0xff); // MSB
+    }
+}

@@ -1,11 +1,13 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <switch.h>
 
 namespace alefbet::pctrl {
 
     using UserUid = std::string;
     using UserNickname = std::string;
+    constexpr u16 USERID_MAXSIZE = 129; //64*2+1    
 
     namespace structs {
 
@@ -38,6 +40,10 @@ namespace alefbet::pctrl {
 
         bool terminateCurrentApplication();
 
+        // Blacklist management
         bool isCurrentTitleBlacklisted();
+        std::vector<u64> getBlacklistedTitlesForUser(const std::string& userId);
+        void addToBlacklist(const std::string& userId, u64 titleId);
+        void removeFromBlacklist(const std::string& userId, u64 titleId);
     }
 }   

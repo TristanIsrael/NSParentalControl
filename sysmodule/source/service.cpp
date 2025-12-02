@@ -594,6 +594,119 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    Ipc::Result Service::getBlacklistedTitlesCount(Ipc::Request* request) {
+        char userId[] = {0};
+        Ipc::Result res = request->readRequestValue(userId);
+
+        if(res != Ipc::Result::Ok) {
+            logError("[Service] Could not read blacklisted titles count user id argument\n");
+            return Ipc::Result::BadInput;
+        }
+        
+        logDebug("[Service] Getting blacklisted titles count for user %s\n", userId);
+
+        // Get the blacklist for the user
+        const auto& blacklist = getBlacklistedTitlesForUser(std::string(userId));
+
+        request->appendReplyValue(blacklist.size());
+
+        return Ipc::Result::Ok;
+    }
+
+    /*!
+        \brief Returns the blacklisted titles names for a user
+    */
+    Ipc::Result Service::getBlacklistedTitle(Ipc::Request* request) {
+        typedef struct {
+            u8 index;
+            char userid[80];            
+        } Args;
+
+        Args args{0};
+
+        Ipc::Result res = request->readRequestData(args);
+        if(res != Ipc::Result::Ok) {
+            logError("[Service] Could not read blacklisted titles request argument\n");
+            return Ipc::Result::BadInput;
+        }
+
+        if(strlen(args.userid) == 0) {
+            logError("[Service] The user id received is empty.\n");
+            return Ipc::Result::BadInput;
+        }
+        
+        logDebug("[Service] Getting blacklisted title at index %i for the user %s\n", args.index, args.userid);
+
+        // Get the blacklist for the user
+        const auto& blacklist = getBlacklistedTitlesForUser(std::string(args.userid));
+
+        if(blacklist.size() > args.index) {
+            const auto& titleId = blacklist[args.index];
+            //const auto& titleName = getApplicationName(titleId);            
+            request->appendReplyValue(titleId);
+        } else {
+            logError("[Service] The index of title is incorrect (%i/%i)\n", args.index, blacklist.size());
+            return Ipc::Result::BadInput;
+        }
+
+        return Ipc::Result::Ok;
+    }
+
+    Ipc::Result Service::addTitleToBlacklist(Ipc::Request* request) {
+        typedef struct {
+            u64 titleId;
+            char userid[80];            
+        } Args;
+
+        Args args{0};
+        Ipc::Result res = request->readRequestData(args);
+
+        if(res != Ipc::Result::Ok) {
+            logError("[Service] Could not read request value for addTitleToBlacklist\n");
+            return Ipc::Result::BadInput;
+        }
+
+        std::string userId(args.userid);
+        if(args.titleId == 0 || userId.empty()) {
+            logError("[Service] Invalid arguments for addTitleToBlacklist (titleId=%ull, userId=%s)\n", args.titleId, userId.c_str());
+            return Ipc::Result::BadInput;
+        }
+
+        logDebug("[Service] Adding title %ull to %s blacklist\n", args.titleId, userId.c_str());
+        helpers::addToBlacklist(userId, args.titleId);
+
+        return Ipc::Result::Ok;
+    }
+
+    Ipc::Result Service::removeTitleFromBlacklist(Ipc::Request* request) {
+        typedef struct {
+            u64 titleId;
+            char userid[80];            
+        } Args;
+
+        Args args{0};
+        Ipc::Result res = request->readRequestData(args);
+
+        if(res != Ipc::Result::Ok) {
+            logError("[Service] Could not read request value for removeTitleFromBlacklist\n");
+            return Ipc::Result::BadInput;
+        }
+
+        std::string userId(args.userid);
+        if(args.titleId == 0 || userId.empty()) {
+            logError("[Service] Invalid arguments for addTitleToBremoveTitleFromBlacklistlacklist (titleId=%ull, userId=%s)\n", args.titleId, userId.c_str());
+            return Ipc::Result::BadInput;
+        }
+
+        logDebug("[Service] Removing title %ull to %s blacklist\n", args.titleId, userId.c_str());
+        helpers::removeFromBlacklist(userId, args.titleId);
+
+        return Ipc::Result::Ok;
+    }
+
+
+
+
     void delayedTimeout(void* arg) {
         logDebug("[Service] Delayed task\n");
         Service* svc = static_cast<Service*>(arg);
@@ -615,8 +728,10 @@ namespace alefbet::pctrl::srv {
                 threadCreate(&t, delayedTimeout, this, NULL, 0x4000, 0x2c, -2);
                 threadStart(&t);*/                
                 //NotificationsController::notifyRemainingTime(15);
-                helpers::terminateCurrentApplication();
-
+                //helpers::terminateCurrentApplication();
+                                
+                showScreenTitleBlacklisted();                
+                return Ipc::Result::Ok;
                 break;
             }
             case Ipc::Command::GetCurrentUserUid: {
@@ -681,6 +796,18 @@ namespace alefbet::pctrl::srv {
             } 
             case Ipc::Command::MustUpgradeDatabase: {
                 return isMustUpgradeDatabase(request);
+            }
+            case Ipc::Command::GetBlacklistedTitle: {
+                return getBlacklistedTitle(request);
+            }
+            case Ipc::Command::GetBlacklistedTitlesCount: {
+                return getBlacklistedTitlesCount(request);
+            }
+            case Ipc::Command::AddTitleToBlacklist: {
+                return addTitleToBlacklist(request);
+            }
+            case Ipc::Command::RemoveTitleFromBlacklist: {
+                return removeTitleFromBlacklist(request);
             }
             default: {
                 logError("[Service] command %i not handled.\n", request->cmd());                

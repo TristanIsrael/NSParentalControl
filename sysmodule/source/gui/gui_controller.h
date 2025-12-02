@@ -23,6 +23,7 @@ class GuiController {
         void showOverlay(u16 width, u16 height, u16 posX, u16 posY);
         int calculateTextWidth(const std::string& text, int fontSize, bool monospace = false);
         void clearScreen();
+        void rgb565ToRgb4444(const u16* source, size_t size, u8* dest, const u16 alpha = 0xffff);
         
     private:
         u16 width_ = 0;

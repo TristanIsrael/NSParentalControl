@@ -9,6 +9,7 @@
 #include "panel_setuppin.h"
 #include "panel_main_menu.h"
 #include "panel_setup_limits.h"
+#include "panel_blacklist_main.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
@@ -115,6 +116,18 @@ void AdminMenuPanel::rebuildUI() {
             return true;
         }
         
+        return false;
+    });
+    
+    // Blacklist
+    auto entryBlacklist = new tsl::elm::ListItem("Blacklist");
+    rootList_->addItem(entryBlacklist);
+    entryBlacklist->setClickListener([](u64 keys) -> bool {
+        if(keys & HidNpadButton_A) {
+            tsl::changeTo<SetupBlacklistPanel>();
+            return true;
+        }
+
         return false;
     });
 

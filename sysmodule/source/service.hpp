@@ -68,6 +68,10 @@ namespace alefbet::pctrl::srv {
             Ipc::Result getLogLevel(Ipc::Request*);
             Ipc::Result isDatabaseTampered(Ipc::Request*);
             Ipc::Result isMustUpgradeDatabase(Ipc::Request*);
+            Ipc::Result getBlacklistedTitlesCount(Ipc::Request*);
+            Ipc::Result getBlacklistedTitle(Ipc::Request*);
+            Ipc::Result addTitleToBlacklist(Ipc::Request*);
+            Ipc::Result removeTitleFromBlacklist(Ipc::Request*);
 
         private:
             bool is_ready_ = false;

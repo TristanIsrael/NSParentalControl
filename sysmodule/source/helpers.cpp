@@ -9,6 +9,7 @@
 #include <ranges>
 #include <codecvt>
 #include <switch.h>
+#include <algorithm>
 #include "logger.h"
 #include "database/database.h"
 #include "ams_bpc.h"
@@ -356,36 +357,128 @@ namespace alefbet::pctrl::helpers {
         u64 pid = getRunningApplicationPid();
 
         if(pid > 0) {
-            u64 titleId = getRunningApplicationTitleId(pid);
+            const auto& titleId = getRunningApplicationTitleId(pid);
             if(titleId > 0) {
-                auto& settings = loadSettings();
+                const auto& userId = accountUidToString(user.uid);
+                const auto& blacklist = getBlacklistedTitlesForUser(userId);
+                //std::string strTitleId = titleIdToString(titleId);
 
-                if(settings.contains(SETTING_BLACKLIST)) {
-                    const auto& blacklist = settings[SETTING_BLACKLIST].string_value;
+                const auto& val = std::find_if(blacklist.begin(), blacklist.end(), [titleId](const u64& title) {
+                    return titleId == title;
+                });
 
-                    if(blacklist.empty()) {
-                        logDebug("[Helpers] No title blacklisted.\n");
-                        return false;
-                    }
-
-                    json j_blacklist = json::parse(blacklist);
-
-                    if(j_blacklist.contains(user.nickname)) {
-                        std::list<std::string> j_titlesList = j_blacklist[user.nickname];
-
-                        const auto& strTitleId = titleIdToString(titleId);
-                        const auto& val = std::find_if(j_titlesList.begin(), j_titlesList.end(), [strTitleId](const std::string& title) {
-                            return title == strTitleId;
-                        });
-
-                        return val != j_titlesList.end();
-                    } else {
-                        logDebug("[Helpers] No blacklist for user %s\n", user.nickname.c_str());
-                    }
-                }
+                return val != blacklist.end();
             }
         }
 
         return false;
     }
+
+    /*!
+        \brief Returns the list of blacklisted titles for a user
+    */
+    std::vector<u64> getBlacklistedTitlesForUser(const std::string& userId) {
+        std::vector<u64> titles;
+
+        auto& settings = loadSettings();
+        if(settings.contains(SETTING_BLACKLIST)) {
+            const auto& blacklist = settings[SETTING_BLACKLIST].string_value;
+
+            if(blacklist.empty()) {
+                logDebug("[Helpers] No title blacklisted for user %s\n", userId.c_str());
+                return titles;
+            }
+
+            json j_blacklist = json::parse(blacklist);
+
+            if(j_blacklist.contains(userId)) {
+                std::vector<u64> j_titlesList = j_blacklist[userId];                
+                return j_titlesList;
+            } else {
+                logDebug("[Helpers] No blacklist for user %s\n", userId.c_str());
+            }
+        }
+
+        return titles;
+    }
+
+    void addToBlacklist(const std::string& userId, u64 titleId) {
+        auto userBlacklist = getBlacklistedTitlesForUser(userId);
+
+        const auto& title = std::find_if(userBlacklist.begin(), userBlacklist.end(), [titleId](u64 title) {
+            return title == titleId;
+        });
+
+        if(title == userBlacklist.end()) {
+            userBlacklist.push_back(titleId);
+        }
+
+        auto& settings = loadSettings();
+        Setting setting{0};
+
+        if(settings.contains(SETTING_BLACKLIST)) {
+            const auto& strsetting = settings[SETTING_BLACKLIST].string_value;            
+            if(!strsetting.empty()) {
+                auto j_setting = json::parse(strsetting);
+
+                // Replace existing blacklist for the user
+                j_setting[userId] = userBlacklist;
+
+                setting.string_value = j_setting;
+            }
+        } else {
+            json j_setting;
+            j_setting[userId] = userBlacklist;
+
+            setting = {
+                .key = SETTING_BLACKLIST,
+                .type = STRING,                
+                .string_value = j_setting.dump(j_setting)
+            };            
+        }
+
+        saveSetting(setting);
+
+    }
+        
+    void removeFromBlacklist(const std::string& userId, u64 titleId) {
+        auto userBlacklist = getBlacklistedTitlesForUser(userId);
+
+        const auto& title = std::find_if(userBlacklist.begin(), userBlacklist.end(), [titleId](u64 title) {
+            return title == titleId;
+        });
+
+        if(title == userBlacklist.end()) {
+            return; // Title is not in the blacklist
+        } else {
+            userBlacklist.erase(std::remove(userBlacklist.begin(), userBlacklist.end(), titleId), userBlacklist.end());
+        }
+
+        auto& settings = loadSettings();
+        Setting setting{0};
+
+        if(settings.contains(SETTING_BLACKLIST)) {
+            const auto& strsetting = settings[SETTING_BLACKLIST].string_value;            
+            if(!strsetting.empty()) {
+                auto j_setting = json::parse(strsetting);
+
+                // Replace existing blacklist for the user
+                j_setting[userId] = userBlacklist;
+
+                setting.string_value = j_setting;
+            }
+        } else {
+            json j_setting;
+            j_setting[userId] = userBlacklist;
+
+            setting = {
+                .key = SETTING_BLACKLIST,
+                .type = STRING,                
+                .string_value = j_setting.dump(j_setting)
+            };            
+        }
+
+        saveSetting(setting);
+    }
+    
 }

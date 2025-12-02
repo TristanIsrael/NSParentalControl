@@ -27,7 +27,11 @@ namespace Ipc {
         SetLogLevel,                /*! Sets the log level */
         GetLogLevel,                /*! Returns the current log level */
         IsTampered,                 /*! Returns true if the database or the settings have been modified externally */
-        MustUpgradeDatabase         /*! Returns true if the database must be upgraded */
+        MustUpgradeDatabase,        /*! Returns true if the database must be upgraded */
+        GetBlacklistedTitlesCount,  /*! Returns the number of blacklisted titles for a user */
+        GetBlacklistedTitle,        /*! Returns the blacklisted title ID at index (starting at 0) for a user */
+        AddTitleToBlacklist,        /*! Adds a title to a users's blacklist */
+        RemoveTitleFromBlacklist    /*! Removes a title from a users's blacklist */
     };
 
 };

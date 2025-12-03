@@ -245,10 +245,55 @@ namespace alefbet {
                      * @param h Height
                      * @param color Color
                      */
-                    inline void drawRect(s32 x, s32 y, s32 w, s32 h, Color color) {
-                        for (s32 x1 = x; x1 < (x + w); x1++)
+                    inline void drawRect(s32 x, s32 y, s32 w, s32 h, Color color, u16 radius = 0) {
+                        /*for (s32 x1 = x; x1 < (x + w); x1++)
                             for (s32 y1 = y; y1 < (y + h); y1++)
-                                this->setPixelBlendDst(x1, y1, color);
+                                this->setPixelBlendDst(x1, y1, color);*/
+                        
+                        // minimum radius
+                        if (radius < 0) radius = 0;
+                        if (radius > w/2) radius = w/2;
+                        if (radius > h/2) radius = h/2;
+
+                        const s32 r2 = radius * radius; // rayon² to avoid sqrt()
+
+                        for (s32 px = x; px < x + w; px++) {
+                            for (s32 py = y; py < y + h; py++) {
+
+                                bool draw = true;
+
+                                // upper-left corner
+                                if (px < x + radius && py < y + radius) {
+                                    s32 dx = (x + radius) - px;
+                                    s32 dy = (y + radius) - py;
+                                    if (dx*dx + dy*dy > r2) draw = false;
+                                }
+
+                                // upper-right corner
+                                if (px >= x + w - radius && py < y + radius) {
+                                    s32 dx = px - (x + w - radius - 1);
+                                    s32 dy = (y + radius) - py;
+                                    if (dx*dx + dy*dy > r2) draw = false;
+                                }
+
+                                // bottom-left corner
+                                if (px < x + radius && py >= y + h - radius) {
+                                    s32 dx = (x + radius) - px;
+                                    s32 dy = py - (y + h - radius - 1);
+                                    if (dx*dx + dy*dy > r2) draw = false;
+                                }
+
+                                // bottom-right corner
+                                if (px >= x + w - radius && py >= y + h - radius) {
+                                    s32 dx = px - (x + w - radius - 1);
+                                    s32 dy = py - (y + h - radius - 1);
+                                    if (dx*dx + dy*dy > r2) draw = false;
+                                }
+
+                                if (draw)
+                                    this->setPixelBlendDst(px, py, color);
+                            }
+                        }
                     }
 
                     void drawCircle(s32 centerX, s32 centerY, u16 radius, bool filled, Color color) {

@@ -236,8 +236,7 @@ namespace alefbet::pctrl::database {
 
         if(!prepare()) return;
 
-        bool opened = R_SUCCEEDED(fsFsOpenFile(&sdmc_, DB_FILENAME, FsOpenMode_Read, &handle_database_));
-        History history;
+        bool opened = R_SUCCEEDED(fsFsOpenFile(&sdmc_, DB_FILENAME, FsOpenMode_Read, &handle_database_));        
 
         if(!opened) {
             logError("Could not open database file. Try to create a new file.\n");
@@ -308,7 +307,7 @@ namespace alefbet::pctrl::database {
 
             std::vector<json> j_entries = j_data["history"].get<std::vector<json>>();            
 
-            for(const auto& j_entry: j_entries) {
+            for(const auto& j_entry: j_entries) {                
                 auto uidAsString = j_entry["uid"].get<std::string>();
                 auto date = j_entry["date"].get<std::string>();
                 auto titleId = j_entry["title_id"].get<u64>();
@@ -316,23 +315,23 @@ namespace alefbet::pctrl::database {
                 auto uid = accountUidFromString(uidAsString);
 
                 HistoryEntry entry(uid, date, titleId, durationInMinutes);
-                history.addEntry(entry);
+                history_.addEntry(entry);
             }
 
             fsFileClose(&handle_database_);
             delete[] data;
-        }
 
-        data_synchronized_ = true;
+            data_synchronized_ = true;
+        }        
     }
 
-    void saveDatabase(const History& history) {
+    void saveDatabase() {
         std::lock_guard<std::mutex> lock(mutex_database_);
 
         if(!prepare()) return;
 
         json j_entries;
-        for(const auto& entry: history.entries()) {
+        for(const auto& entry: history_.entries()) {
             json j_entry = json::object( {
                 { "uid", entry.uidAsString() },
                 { "date", entry.date() },
@@ -428,7 +427,7 @@ namespace alefbet::pctrl::database {
             result = entry;
         }
 
-        saveDatabase(history_);
+        saveDatabase();
         return result;
     }
 

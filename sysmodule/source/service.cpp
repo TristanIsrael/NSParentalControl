@@ -232,7 +232,7 @@ namespace alefbet::pctrl::srv {
         }
 
         const auto history = getHistory(user.uid, date);
-        auto usage_time_in_minutes = (u16)0;        
+        u16 usage_time_in_minutes = 0;
 
         // Compute the total usage for today 
         for(const auto& entry: history) {

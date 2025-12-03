@@ -39,7 +39,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 
 APP_TITLE			:=		Parental Control
-APP_VERSION 	:= 		1.2
+APP_VERSION 	:= 		1.3
 
 TARGET		:=	parental_control
 BUILD		:=	build
@@ -56,12 +56,12 @@ include $(TOPDIR)/../libultrahand/ultrahand.mk
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -O2 -ffunction-sections -fdata-sections -flto \
+CFLAGS	:=	-g -Wall -O2 -ffunction-sections -fdata-sections -flto -DVERSION=\"v$(APP_VERSION)\" \
 			$(ARCH) $(DEFINES)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++20 -ffunction-sections -fdata-sections -flto
+CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++20 -ffunction-sections -fdata-sections -flto 
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,--gc-sections,-Map,$(notdir $*.map) -flto

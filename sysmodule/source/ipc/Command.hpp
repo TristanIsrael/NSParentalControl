@@ -63,6 +63,8 @@ namespace Ipc {
             case Command::MustUpgradeDatabase: return "MustUpgradeDatabase";
             case Command::GetBlacklistedTitlesCount: return "GetBlacklistedTitlesCount";
             case Command::GetBlacklistedTitle: return "GetBlacklistedTitle";
+            case Command::AddTitleToBlacklist: return "AddTitleToBlacklist";
+            case Command::RemoveTitleFromBlacklist: return "RemoveTitleFromBlacklist";
             default: return "Unknown";
         }
     };

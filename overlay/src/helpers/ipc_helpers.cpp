@@ -542,9 +542,9 @@ namespace alefbet::pctrl::ipc {
     std::vector<u64> getBlacklistedTitles(const UserUid& userId) {
         std::vector<u64> titles;
         
-        logDebug("[IPC] Getting blacklisted titles list for user %s\n", userId);
+        logDebug("[IPC] Getting blacklisted titles list for user %s\n", userId.c_str());
         char chUserId[80] = {0};
-        std::memcpy(chUserId, userId.data(), userId.size());
+        std::memcpy(chUserId, userId.data(), userId.size());        
         
         logDebug("[IPC] Getting blacklisted titles count\n");
         u8 titlesCount = 0;
@@ -567,10 +567,11 @@ namespace alefbet::pctrl::ipc {
             Args args {
                 .index = i
             };
-            std::memcpy(args.userid, userId.data(), sizeof(Args)-sizeof(args.index));
+            //std::memcpy(args.userid, userId.data(), sizeof(Args)-sizeof(args.index));
+            std::snprintf(args.userid, sizeof(args.userid), "%s", userId.c_str());
 
             u64 titleId = 0;
-            res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetBlacklistedTitle, titleId, args);
+            res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetBlacklistedTitle, args, titleId);
             if(R_FAILED(res)) {
                 logError("[IPC] An error occured while getting the blacklist title at index %i.\n", i);
             } else {
@@ -583,7 +584,7 @@ namespace alefbet::pctrl::ipc {
     }
 
     bool addTitleToBlacklist(const UserData& user, u64 titleId) {
-        logDebug("[IPC] add title %ull to blacklist for user %s\n", titleId, user.nickname.c_str());
+        logDebug("[IPC] add title %llu to blacklist for user %s\n", titleId, user.nickname.c_str());
 
         typedef struct {
             u64 titleId;
@@ -594,7 +595,8 @@ namespace alefbet::pctrl::ipc {
             .titleId = titleId,            
         };
         const auto& userId = accountUidToString(user.uid);
-        std::memcpy(args.userid, userId.data(), sizeof(args)-sizeof(args.titleId));
+        //std::memcpy(args.userid, userId.data(), sizeof(args)-sizeof(args.titleId));
+        std::snprintf(args.userid, sizeof(args.userid), "%s", userId.c_str());
 
         auto& service = getAppContext().pctrl_service;        
         u8 ok = 0;
@@ -609,7 +611,7 @@ namespace alefbet::pctrl::ipc {
     }
 
     bool removeTitleFromBlacklist(const UserData& user, u64 titleId) {
-        logDebug("[IPC] remove title %ull from blacklist for user %s\n", titleId, user.nickname.c_str());
+        logDebug("[IPC] remove title %llu from blacklist for user %s\n", titleId, user.nickname.c_str());
 
         typedef struct {
             u64 titleId;
@@ -620,14 +622,15 @@ namespace alefbet::pctrl::ipc {
             .titleId = titleId,            
         };
         const auto& userId = accountUidToString(user.uid);
-        std::memcpy(args.userid, userId.data(), sizeof(args)-sizeof(args.titleId));
+        //std::memcpy(args.userid, userId.data(), sizeof(args)-sizeof(args.titleId));
+        std::snprintf(args.userid, sizeof(args.userid), "%s", userId.c_str());
 
         auto& service = getAppContext().pctrl_service;        
         u8 ok = 0;
 
         Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::RemoveTitleFromBlacklist, args, ok);
         if(R_FAILED(res)) {
-            logError("[IPC] An error occured when adding title to blacklist\n");
+            logError("[IPC] An error occured when removing title to blacklist\n");
             return false;
         }
 

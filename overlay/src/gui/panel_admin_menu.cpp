@@ -132,7 +132,7 @@ void AdminMenuPanel::rebuildUI() {
     });
 
     rootList_->addItem(new tsl::elm::CategoryHeader("Versions"));
-    rootList_->addItem(new tsl::elm::ListItem("Overlay", "v" +std::string(VERSION)));
+    rootList_->addItem(new tsl::elm::ListItem("Overlay", std::string(VERSION)));
     rootList_->addItem(new tsl::elm::ListItem("Sysmodule", ipc::getVersion()));        
 
     rootFrame_->setContent(rootList_);

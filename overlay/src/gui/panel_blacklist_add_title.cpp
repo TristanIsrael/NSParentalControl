@@ -14,81 +14,85 @@ using namespace std::chrono;
 
 SetupBlacklistAddTitlePanel::SetupBlacklistAddTitlePanel(const UserData& user) {    
     user_ = user;
+
+    rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Add title to blacklist");
+    rootList_ = new tsl::elm::List();
+    //rootList_->addItem(new tsl::elm::ListItem("Loading titles list..."));
+    rootFrame_->setContent(rootList_);
+
+    lastTick_ = armGetSystemTick();
+    cpuFreq_ = armGetSystemTickFreq();
 }
 
 SetupBlacklistAddTitlePanel::~SetupBlacklistAddTitlePanel() {      
 }
 
-tsl::elm::Element* SetupBlacklistAddTitlePanel::createUI() {
-    rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Add title to blacklist");
-    rootList_ = new tsl::elm::List();
-    
-    rebuildUI();        
+tsl::elm::Element* SetupBlacklistAddTitlePanel::createUI() {        
+    if(!loaded_) {
+        bool ok = R_SUCCEEDED(nsInitialize());
 
+        if(!ok) {
+            logError("[Blacklist] Could not initialize NS service\n");
+            rootList_->addItem(new tsl::elm::ListItem("Error #11"));
+        }
+
+        s32 count = 0;
+        NsApplicationRecord records[100]; 
+        if(ok) {               
+            ok = R_SUCCEEDED(nsListApplicationRecord(records, sizeof(records), 0, &count));
+        } 
+
+        if(!ok) {
+            logError("[Blacklist] Could not get application record count\n");
+            rootList_->addItem(new tsl::elm::ListItem("Error #12"));
+            nsExit();
+        }
+
+        NsApplicationControlData nacp;
+        NacpLanguageEntry* langEntry = nullptr;
+        tsl::elm::ListItem* entryTitle = nullptr;
+
+        if(ok) {
+            rootList_->addItem(new tsl::elm::CategoryHeader("Installed titles"));
+            
+            for (s32 i = 0; i < count; i++) {
+                const auto& record = records[i];
+                const auto& appId = record.application_id;
+                u64 actual_size = 0;
+                
+                ok = R_SUCCEEDED(nsGetApplicationControlData(NsApplicationControlSource_Storage, appId, &nacp, sizeof(nacp), &actual_size));
+                if(!ok) {
+                    logError("[Blacklist] Could not get application information for %ull\n", appId);
+                    rootList_->addItem(new tsl::elm::ListItem("Error #13"));                
+                } else {                
+                    if(R_SUCCEEDED(nacpGetLanguageEntry(&nacp.nacp, &langEntry)) && langEntry != nullptr) {
+                        entryTitle = new tsl::elm::ListItem(langEntry->name);
+                        rootList_->addItem(entryTitle);
+                        entryTitle->setClickListener([this, appId](u64 keys) {
+                            if(keys & HidNpadButton_A) {
+                                // Add title to blacklist
+                                ipc::addTitleToBlacklist(user_, appId);                                 
+                                return true;
+                            }
+
+                            return false;
+                        });
+                    } else {
+                        rootList_->addItem(new tsl::elm::ListItem("Error #14"));
+                    }                
+                }
+            }
+
+            nsExit();
+            //rootFrame_->setContent(rootList_);
+        }        
+    }
+        
     return rootFrame_;
 }
 
-void SetupBlacklistAddTitlePanel::rebuildUI() {
-    rootList_->addItem(new tsl::elm::CategoryHeader("Installed titles"));    
-
-    bool ok = true;
-
-    ok = R_SUCCEEDED(nsInitialize());
-    if(!ok) {
-        logError("[Blacklist] Could not initialize NS service\n");
-        rootList_->addItem(new tsl::elm::ListItem("Error #11"));
-    }
-
-    s32 count = 0;
-    NsApplicationRecord records[100]; 
-    if(ok) {               
-        ok = R_SUCCEEDED(nsListApplicationRecord(records, sizeof(records), 0, &count));
-    } 
-
-    if(!ok) {
-        logError("[Blacklist] Could not get application record count\n");
-        rootList_->addItem(new tsl::elm::ListItem("Error #12"));
-        nsExit();
-    }
-
-    NsApplicationControlData nacp;
-    NacpLanguageEntry* langEntry = nullptr;
-    tsl::elm::ListItem* entryTitle = nullptr;
-
-    if(ok) {
-        for (s32 i = 0; i < count; i++) {
-            const auto& record = records[i];
-            const auto& appId = record.application_id;
-            u64 actual_size = 0;
-            
-            ok = R_SUCCEEDED(nsGetApplicationControlData(NsApplicationControlSource_Storage, appId, &nacp, sizeof(nacp), &actual_size));
-            if(!ok) {
-                logError("[Blacklist] Could not get application information for %ull\n", appId);
-                rootList_->addItem(new tsl::elm::ListItem("Error #13"));                
-            } else {                
-                if(R_SUCCEEDED(nacpGetLanguageEntry(&nacp.nacp, &langEntry)) && langEntry != nullptr) {
-                    entryTitle = new tsl::elm::ListItem(langEntry->name);
-                    rootList_->addItem(entryTitle);
-                    entryTitle->setClickListener([this, appId](u64 keys) {
-                        if(keys & HidNpadButton_A) {
-                            // Add title to blacklist
-                            ipc::addTitleToBlacklist(user_, appId); 
-                            return true;
-                        }
-
-                        return false;
-                    });
-                } else {
-                    rootList_->addItem(new tsl::elm::ListItem("Error #14"));
-                }                
-            }
-        }
-    }
-
-    rootFrame_->setContent(rootList_);
-}
-
-void SetupBlacklistAddTitlePanel::update() {    
+void SetupBlacklistAddTitlePanel::update() {
+    
 }
 
 // Called once every frame to handle inputs not handled by other UI elements

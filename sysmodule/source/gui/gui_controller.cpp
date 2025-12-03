@@ -80,7 +80,7 @@ void GuiController::showScreenTitleBlacklisted() {
     renderer.startFrame();
         
     // Draw the background
-    renderer.drawRect(0, 0, width_, height_, backgroundColor);
+    renderer.drawRect(0, 0, width_, height_, backgroundColor, height_/10);
 
     /* Draw the logo in the center of the screen */
     /*size_t imgSize = images::LogoWidth * images::LogoHeight;
@@ -91,19 +91,19 @@ void GuiController::showScreenTitleBlacklisted() {
     // Draw the title
     std::string str = "Unauthorized";
     auto width = calculateTextWidth(str, 62);
-    renderer.drawString(str.c_str(), false, (width_ - width)/2, 258, 62, titleColor);    
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 138, 62, titleColor);    
 
     str = "Sorry, you are not allowed to";
-    width = calculateTextWidth(str, 62);
-    renderer.drawString(str.c_str(), false, (width_ - width)/2, 551, 62, textColor);    
+    width = calculateTextWidth(str, 50);
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 366, 50, textColor);    
 
     str = "play this game.";
-    width = calculateTextWidth(str, 62);
-    renderer.drawString(str.c_str(), false, (width_ - width)/2, 618, 62, textColor);    
+    width = calculateTextWidth(str, 50);
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 420, 50, textColor);    
 
     // Press any key...
     str = "Press any key...";
-    width = calculateTextWidth(str, 48);
+    width = calculateTextWidth(str, 32);
     renderer.drawString(str.c_str(), false, (width_ - width)/2, height_ - 48 - 16, 32, textColor);    
 
     renderer.endFrame();

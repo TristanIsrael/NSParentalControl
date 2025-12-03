@@ -3,6 +3,7 @@
 #include "switch.h"
 #include "ipc_helpers.h"
 #include <tesla.hpp>
+#include <list>
 
 using namespace alefbet::pctrl::helpers;
 
@@ -21,5 +22,9 @@ public:
 private:    
     tsl::elm::OverlayFrame* rootFrame_ = nullptr;
     tsl::elm::List* rootList_ = nullptr;
+    //tsl::elm::List* titlesList_ = nullptr;
     UserData user_;
+    std::vector<tsl::elm::ListItem*> removedItems_;
+    //bool needsRefresh_ = false;  
+    //bool isClosing_ = false;
 };

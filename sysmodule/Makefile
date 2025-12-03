@@ -42,7 +42,7 @@ BUILD		:=	build.nosync
 SOURCES		:=	source source/database source/ipc source/gui
 DATA		:=	data
 INCLUDES	:=	source source/database source/ipc source/gui
-APP_VERSION	:=	1.2
+APP_VERSION	:=	1.3
 
 #ifeq ($(RELEASE),)
 #	APP_VERSION	:=	$(APP_VERSION)-$(shell git describe --dirty --always)

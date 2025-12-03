@@ -526,7 +526,10 @@ namespace alefbet::pctrl::database {
                             case INTEGER: setting.int_value = j_setting["value"].get<u64>(); break;
                             case DOUBLE: setting.double_value = j_setting["value"].get<double>(); break;
                             case STRING: {
-                                setting.encrypted = j_setting["encrypted"].get<bool>();
+                                if(j_setting.contains("encrypted")) {
+                                    setting.encrypted = j_setting["encrypted"].get<bool>();                                    
+                                }
+                                   
                                 const auto& val = j_setting["value"].get<std::string>();
                                 if(setting.encrypted) {
                                     const auto& decrypted = crypto::decodeValue(val);

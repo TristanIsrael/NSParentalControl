@@ -291,8 +291,7 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
-    Ipc::Result Service::setUserLimits(Ipc::Request* request) {
-        // Now the limit is global not per user so we don't use the first argument
+    Ipc::Result Service::setUserLimits(Ipc::Request* request) {        
         u16 limit_in_minutes;
         Ipc::Result rc = request->readRequestData(limit_in_minutes);
         if(rc != Ipc::Result::Ok) {
@@ -595,7 +594,7 @@ namespace alefbet::pctrl::srv {
     }
 
     Ipc::Result Service::getBlacklistedTitlesCount(Ipc::Request* request) {
-        char userId[] = {0};
+        char userId[80] = {0};
         Ipc::Result res = request->readRequestValue(userId);
 
         if(res != Ipc::Result::Ok) {
@@ -624,9 +623,9 @@ namespace alefbet::pctrl::srv {
 
         Args args{0};
 
-        Ipc::Result res = request->readRequestData(args);
+        Ipc::Result res = request->readRequestValue(args);
         if(res != Ipc::Result::Ok) {
-            logError("[Service] Could not read blacklisted titles request argument\n");
+            logError("[Service] Could not read blacklisted title request argument\n");
             return Ipc::Result::BadInput;
         }
 
@@ -659,7 +658,7 @@ namespace alefbet::pctrl::srv {
         } Args;
 
         Args args{0};
-        Ipc::Result res = request->readRequestData(args);
+        Ipc::Result res = request->readRequestValue(args);
 
         if(res != Ipc::Result::Ok) {
             logError("[Service] Could not read request value for addTitleToBlacklist\n");
@@ -668,11 +667,11 @@ namespace alefbet::pctrl::srv {
 
         std::string userId(args.userid);
         if(args.titleId == 0 || userId.empty()) {
-            logError("[Service] Invalid arguments for addTitleToBlacklist (titleId=%ull, userId=%s)\n", args.titleId, userId.c_str());
+            logError("[Service] Invalid arguments for addTitleToBlacklist (titleId=%llu, userId=%s)\n", args.titleId, userId.c_str());
             return Ipc::Result::BadInput;
         }
 
-        logDebug("[Service] Adding title %ull to %s blacklist\n", args.titleId, userId.c_str());
+        logDebug("[Service] Adding title %llu to user %s blacklist\n", args.titleId, userId.c_str());
         helpers::addToBlacklist(userId, args.titleId);
 
         return Ipc::Result::Ok;
@@ -685,7 +684,7 @@ namespace alefbet::pctrl::srv {
         } Args;
 
         Args args{0};
-        Ipc::Result res = request->readRequestData(args);
+        Ipc::Result res = request->readRequestValue(args);
 
         if(res != Ipc::Result::Ok) {
             logError("[Service] Could not read request value for removeTitleFromBlacklist\n");
@@ -694,11 +693,11 @@ namespace alefbet::pctrl::srv {
 
         std::string userId(args.userid);
         if(args.titleId == 0 || userId.empty()) {
-            logError("[Service] Invalid arguments for addTitleToBremoveTitleFromBlacklistlacklist (titleId=%ull, userId=%s)\n", args.titleId, userId.c_str());
+            logError("[Service] Invalid arguments for addTitleToBremoveTitleFromBlacklistlacklist (titleId=%llu, userId=%s)\n", args.titleId, userId.c_str());
             return Ipc::Result::BadInput;
         }
 
-        logDebug("[Service] Removing title %ull to %s blacklist\n", args.titleId, userId.c_str());
+        logDebug("[Service] Removing title %llu from %s blacklist\n", args.titleId, userId.c_str());
         helpers::removeFromBlacklist(userId, args.titleId);
 
         return Ipc::Result::Ok;

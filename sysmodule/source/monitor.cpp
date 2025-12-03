@@ -38,6 +38,7 @@ namespace alefbet::pctrl::srv {
         logDebug("[Monitor] Starting monitoring loop\n");        
         //WorkingMode workingMode = WorkingModeInfo;        
         u64 pid = 0;
+        structs::UserData user;
 
         while(true) {
             if(!running_) {
@@ -74,7 +75,7 @@ namespace alefbet::pctrl::srv {
 
             if(pid != 0) { 
                 const auto title_id = getRunningApplicationTitleId(pid);
-                const auto user = getCurrentUser();
+                user = getCurrentUser();
 
                 if(user.isValid()) {
                     logInfo("[Monitor] Title %i is currently in used by %s. Updating history.\n", title_id, user.nickname.c_str());                    

@@ -412,7 +412,7 @@ namespace alefbet::pctrl::ipc {
         return std::string(version);
     }
 
-    u16 getDailyLimit() {
+    u16 getDailyLimit(const UserData& user) {
         logDebug("[IPC] Getting daily limit\n");
 
         if(!isAvailable()) {
@@ -420,10 +420,14 @@ namespace alefbet::pctrl::ipc {
             return 0;
         }
 
-        u16 limit = 0;
+        u16 limit = 0;        
+        char chUserId[80] = {0};
+
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::memcpy(chUserId, userId.data(), userId.size()); 
 
         auto& service = getAppContext().pctrl_service;
-        Result res = serviceDispatchOut(&service, (u32)Ipc::Command::GetDailyLimit, limit);
+        Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetUserDailyLimit, chUserId, limit);
 
         if(R_FAILED(res)) {
             logError("[IPC] An error occured while getting the daily limit.\n");
@@ -434,7 +438,7 @@ namespace alefbet::pctrl::ipc {
         return limit;
     }
 
-    bool setDailyLimit(const u16& limit) {
+    bool setDailyLimit(const UserData& user, u16 limit) {
         logDebug("[IPC] Setting the daily limit\n");
 
         if(!isAvailable()) {
@@ -442,8 +446,20 @@ namespace alefbet::pctrl::ipc {
             return false;
         }
 
+        typedef struct {
+            u16 limit_in_minutes;
+            char userId[80];
+        } Args;
+
+        Args args {
+            .limit_in_minutes = limit,            
+        };
+
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(args.userId, sizeof(args.userId), "%s", userId.c_str());
+
         auto& service = getAppContext().pctrl_service;
-        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetDailyLimit, limit);
+        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetUserDailyLimit, args);
 
         if(R_FAILED(res)) {
             logError("[IPC] An error occured while setting the daily limit.\n");

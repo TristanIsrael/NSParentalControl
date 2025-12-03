@@ -49,10 +49,11 @@ namespace alefbet::pctrl::srv {
             Ipc::Result getRunningApplication(Ipc::Request*);
             Ipc::Result getCurrentUserUid(Ipc::Request*);
             Ipc::Result getCurrentUserNickname(Ipc::Request*);
-            Ipc::Result getUsersList(Ipc::Request*);
+            //Ipc::Result getUsersList(Ipc::Request*);
             Ipc::Result getUserUsageTime(Ipc::Request*);
             Ipc::Result getUserRemainingTime(Ipc::Request*);
-            Ipc::Result setUserLimits(Ipc::Request*);
+            Ipc::Result setUserDailyLimit(Ipc::Request*);
+            Ipc::Result getUserDailyLimit(Ipc::Request*);
             Ipc::Result setAdminPin(Ipc::Request*);
             Ipc::Result verifyAdminPin(Ipc::Request*);
             Ipc::Result setWorkingMode(Ipc::Request*);
@@ -62,8 +63,8 @@ namespace alefbet::pctrl::srv {
             Ipc::Result isEnabled(Ipc::Request*);
             Ipc::Result setEnabled(Ipc::Request*);
             Ipc::Result getCurrentVersion(Ipc::Request*);
-            Ipc::Result getDailyLimit(Ipc::Request*);
-            Ipc::Result setDailyLimit(Ipc::Request*);
+            //Ipc::Result getDailyLimit(Ipc::Request*);
+            //Ipc::Result setDailyLimit(Ipc::Request*);
             Ipc::Result setLogLevel(Ipc::Request*);
             Ipc::Result getLogLevel(Ipc::Request*);
             Ipc::Result isDatabaseTampered(Ipc::Request*);
@@ -71,7 +72,7 @@ namespace alefbet::pctrl::srv {
             Ipc::Result getBlacklistedTitlesCount(Ipc::Request*);
             Ipc::Result getBlacklistedTitle(Ipc::Request*);
             Ipc::Result addTitleToBlacklist(Ipc::Request*);
-            Ipc::Result removeTitleFromBlacklist(Ipc::Request*);
+            Ipc::Result removeTitleFromBlacklist(Ipc::Request*);                        
 
         private:
             bool is_ready_ = false;

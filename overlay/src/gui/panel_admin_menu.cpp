@@ -8,7 +8,7 @@
 #include "helpers/ipc_helpers.h"
 #include "panel_setuppin.h"
 #include "panel_main_menu.h"
-#include "panel_setup_limits.h"
+#include "panel_setup_limits_main.h"
 #include "panel_blacklist_main.h"
 
 using namespace alefbet::pctrl;

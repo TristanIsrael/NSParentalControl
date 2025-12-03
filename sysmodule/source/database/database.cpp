@@ -361,7 +361,7 @@ namespace alefbet::pctrl::database {
             logError("[Database] Could not create the database file\n");
             return;
         } else {
-            logInfo("[Database] New database file created\n");
+            logDebug("[Database] New database file created\n");
         }
 
         if(R_FAILED(fsFsOpenFile(&sdmc_, DB_FILENAME, FsOpenMode_Write | FsOpenMode_Append, &handle_database_))) {
@@ -455,7 +455,7 @@ namespace alefbet::pctrl::database {
                 }
             }
 
-            saveSetting(Setting {
+            /*saveSetting(Setting {
                 .key = SETTING_DAILY_LIMIT_GAME,
                 .type = INTEGER,
                 .int_value = 1*60 //Default: 1 hour
@@ -465,6 +465,11 @@ namespace alefbet::pctrl::database {
                 .key = SETTING_DAILY_LIMIT_GLOBAL,
                 .type = INTEGER,
                 .int_value = 1*60 //Default: 1 hour
+            });*/
+            saveSetting(Setting {
+                .key = SETTING_ENABLED,
+                .type = INTEGER,
+                .int_value = 1
             });
         } else {
             s64 fileSize = 0;

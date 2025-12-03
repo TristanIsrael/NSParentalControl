@@ -8,7 +8,7 @@
 #include "panel_debug_menu.h"
 #include "panel_admin_menu.h"
 #include "panel_verifypin.h"
-#include "panel_setup_limits.h"
+#include "panel_setup_limits_main.h"
 #include "panel_history_main.h"
 #include "AppContext.h"
 #include "helpers/ipc_helpers.h"

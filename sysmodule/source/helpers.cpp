@@ -279,7 +279,6 @@ namespace alefbet::pctrl::helpers {
     }
 
     #define IRAM_PAYLOAD_MAX_SIZE 0x24000
-    //static u8 g_reboot_payload[IRAM_PAYLOAD_MAX_SIZE];
     bool rebootToPayload() {
         logInfo("[Helpers] Try to reboot to payload\n");
       
@@ -362,7 +361,6 @@ namespace alefbet::pctrl::helpers {
             if(titleId > 0) {
                 const auto& userId = accountUidToString(user.uid);
                 const auto& blacklist = getBlacklistedTitlesForUser(userId);
-                //std::string strTitleId = titleIdToString(titleId);
 
                 const auto& val = std::find_if(blacklist.begin(), blacklist.end(), [titleId](const u64& title) {
                     return titleId == title;
@@ -416,36 +414,6 @@ namespace alefbet::pctrl::helpers {
         }
 
         auto& settings = loadSettings();
-        /*Setting setting;
-
-        if(settings.contains(SETTING_BLACKLIST)) {
-            logDebug("[Database] Modify current setting\n");
-            const auto& strsetting = settings[SETTING_BLACKLIST].string_value;            
-            if(!strsetting.empty()) {
-                auto j_setting = json::parse(strsetting);
-
-                // Replace existing blacklist for the user
-                j_setting[userId] = userBlacklist;
-
-                setting.string_value = j_setting.dump();
-            }
-        } else {
-            // Create a new entry
-            logDebug("[Database] Create new setting\n");
-            json j_setting;
-            j_setting[userId] = userBlacklist;
-
-            setting = {
-                .key = SETTING_BLACKLIST,
-                .type = STRING,
-                .string_value = j_setting.dump()
-            };
-
-            logDebug("[Database] setting=%s\n", setting.string_value.c_str());
-        }
-            
-        saveSetting(setting);
-        */
 
         if(settings.contains(SETTING_BLACKLIST)) { // The setting exists
             auto& setting = settings[SETTING_BLACKLIST];
@@ -469,7 +437,6 @@ namespace alefbet::pctrl::helpers {
 
             saveSetting(setting);
         }
-
     }
         
     void removeFromBlacklist(const std::string& userId, u64 titleId) {
@@ -482,8 +449,7 @@ namespace alefbet::pctrl::helpers {
         if(title == userBlacklist.end()) {
             logDebug("[Helpers] Title %llu not found in blacklist\n", titleId);
             return; // Title is not in the blacklist
-        } else {            
-            //userBlacklist.erase(std::remove(userBlacklist.begin(), userBlacklist.end(), titleId), userBlacklist.end());
+        } else {           
             userBlacklist.erase(std::remove_if(userBlacklist.begin(), userBlacklist.end(), [titleId](u64 title) {
                 if(title == titleId) {
                     logDebug("[Helpers]  Remove title\n");
@@ -493,35 +459,7 @@ namespace alefbet::pctrl::helpers {
         }
 
         auto& settings = loadSettings();
-        /*Setting setting;
-
-        if(settings.contains(SETTING_BLACKLIST)) {
-            // The setting exists
         
-            const auto& strsetting = settings[SETTING_BLACKLIST].string_value;            
-            if(!strsetting.empty()) { // The setting has values, 
-                logDebug("[Helpers] setting found\n");
-                
-                setting = settings[SETTING_BLACKLIST];
-                auto j_setting = json::parse(strsetting);
-
-                // Replace existing blacklist for the user
-                j_setting[userId] = userBlacklist;
-
-                setting.string_value = j_setting.dump();
-            } 
-        } else {
-            logDebug("[Helpers] setting not found\n");
-            json j_setting;
-            j_setting[userId] = userBlacklist;
-
-            setting = {
-                .key = SETTING_BLACKLIST,
-                .type = STRING,                
-                .string_value = j_setting.dump()
-            };            
-        }*/
-
         if(settings.contains(SETTING_BLACKLIST)) { // The setting exists
             auto& setting = settings[SETTING_BLACKLIST];
 
@@ -545,6 +483,57 @@ namespace alefbet::pctrl::helpers {
             saveSetting(setting);
         }
         
+    }
+
+    u16 getDailyLimitForUser(const std::string& userId) {
+        auto& settings = loadSettings();
+
+        if(settings.contains(SETTING_DAILY_LIMIT_USERS)) {
+            const auto& limits = settings[SETTING_DAILY_LIMIT_USERS].string_value;
+
+            if(limits.empty()) {
+                logDebug("[Helpers] No daily limit for user %s\n", userId.c_str());
+                return 0;
+            }
+
+            json j_limits = json::parse(limits);
+
+            if(j_limits.contains(userId)) {
+                u16 limit = j_limits[userId].get<u16>();
+                return limit;
+            } else {
+                logDebug("[Helpers] No daily limit for user %s\n", userId.c_str());
+            }
+        }
+
+        return 0;
+    }
+
+    void setDailyLimitForUser(const std::string& userId, u16 limit_in_minutes) {
+        auto& settings = loadSettings();
+
+        if(settings.contains(SETTING_DAILY_LIMIT_USERS)) { // The setting exists
+            auto& setting = settings[SETTING_DAILY_LIMIT_USERS];
+
+            // We replace the value for the user
+            auto j_setting = json::parse(setting.string_value);
+            j_setting[userId] = limit_in_minutes;            
+            
+            setting.string_value = j_setting.dump();
+
+            saveSetting(setting);
+        } else { // The setting does not exist 
+            json j_setting;
+            j_setting[userId] = limit_in_minutes; 
+
+            Setting setting {
+                .key = SETTING_DAILY_LIMIT_USERS,
+                .type = STRING,
+                .string_value = j_setting.dump()
+            };
+
+            saveSetting(setting);
+        }
     }
     
 }

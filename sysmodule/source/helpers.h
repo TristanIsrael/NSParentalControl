@@ -45,5 +45,9 @@ namespace alefbet::pctrl {
         std::vector<u64> getBlacklistedTitlesForUser(const std::string& userId);
         void addToBlacklist(const std::string& userId, u64 titleId);
         void removeFromBlacklist(const std::string& userId, u64 titleId);
+
+        // Limits management
+        u16 getDailyLimitForUser(const std::string& userId);
+        void setDailyLimitForUser(const std::string& userId, u16 limit_in_minutes);
     }
 }   

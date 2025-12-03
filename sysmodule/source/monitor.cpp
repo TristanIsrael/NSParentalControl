@@ -69,16 +69,17 @@ namespace alefbet::pctrl::srv {
             logDebug("[Monitor] Update usages\n");
             // Query the active application and user
             // and update the database
-            pid = getRunningApplicationPid();            
+            pid = getRunningApplicationPid();  
+            u16 daily_limit = 0;          
             
-            const auto daily_limit = settings[SETTING_DAILY_LIMIT_GLOBAL].int_value;
+            //const auto daily_limit = settings[SETTING_DAILY_LIMIT_GLOBAL].int_value;            
 
             if(pid != 0) { 
                 const auto title_id = getRunningApplicationTitleId(pid);
-                user = getCurrentUser();
+                user = getCurrentUser();                
 
                 if(user.isValid()) {
-                    logInfo("[Monitor] Title %i is currently in used by %s. Updating history.\n", title_id, user.nickname.c_str());                    
+                    logDebug("[Monitor] Title %i is currently in used by %s. Updating history.\n", title_id, user.nickname.c_str());                    
 
                     //Update working mode
                     //Show remaining time is disabled
@@ -102,6 +103,9 @@ namespace alefbet::pctrl::srv {
                     if(!entry.isValid()) {
                         continue;
                     }                    
+
+                    const auto& userId = accountUidToString(user.uid);
+                    daily_limit = getDailyLimitForUser(userId);
 
                     //const auto uid_str = accountUidToString(user.uid);
                     u16 remainingTimeInMinutes = daily_limit > entry.durationInMinutes() ? daily_limit - entry.durationInMinutes() : 0;

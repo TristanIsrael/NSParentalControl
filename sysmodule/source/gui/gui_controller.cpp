@@ -129,20 +129,54 @@ void GuiController::showPanelTitleBlacklisted() {
 }
 
 void GuiController::showPanelAuthentication() {
-    logDebug("[Gui] Show the authentication screen\n");
+    logDebug("[Gui] Show the authentication panel\n");
 
-    while(true) {        
-        if(isVisible()) {
-            if(needsRefresh_) {                    
-                refreshAuthenticationPanel();
-                needsRefresh_ = false;
-            }
-            
-            verifyUserInput();
+    keysDown_.clear();
+    enteredPin_.clear();
+    user_.clear();
+
+    // Verify whether a PIN has been set for the user
+    user_ = getCurrentUser();
+    auto passwords = loadPasswords();
+    const auto& uid = accountUidToString(user_.uid);
+    const auto& password = passwords[uid];
+    logDebug("[Gui] Password is %s\n", password.c_str());
+    
+    // If there is no password for the user we need a setup
+    pinStage_ = password.empty() ? PinSetup : PinVerification;
+    
+    width_ = 1216; // Width must be a multiple of 64
+    height_ = 768;
+
+    u16 posX = (ScreenWidth - width_) / 2;   // Centered
+    u16 posY = (ScreenHeight - height_) / 2; // Centered
+
+    showOverlay(width_, height_, posX, posY);    
+
+    needsRefresh_ = true;
+    
+    initUserInput();
+    requestForeground(true);
+    
+    authenticationRunning_ = true;
+
+    while(authenticationRunning_) {
+        if(needsRefresh_) {                    
+            refreshAuthenticationPanel();
+            needsRefresh_ = false;
         }
+        
+        verifyUserInput();
                 
-        svcSleepThread(100'000'000); // Wait 20 ms
+        // Verify whether an application is running
+        if(getRunningApplicationPid() == 0) {
+            break;
+        }
+
+        svcSleepThread(100'000'000); // Wait 100 ms
     }
+
+    hideAll();
 
     logDebug("[Gui] Ended authentication\n");
 }
@@ -157,46 +191,48 @@ void GuiController::refreshAuthenticationPanel() {
     clearScreen(false);
         
     // Draw the background
-    renderer.drawRect(0, 0, width_, height_, colors::authenticator::backgroundColor);
+    renderer.drawRect(0, 0, width_, height_, colors::authenticator::backgroundColor, height_/10);
 
     // Draw the title
-    renderer.drawString("Authentication", false, 384, 116, 62, colors::authenticator::titleColor, height_/10);
+    std::string str = "Authentication";
+    const auto& width = calculateTextWidth(str, 62);
+    renderer.drawString(str.c_str(), false, (width_ - width)/2, 116, 62, colors::authenticator::titleColor);
     
     switch(pinStage_) {
         case PinSetup: {
             // If the user does not already have a code we ask him to create one
-            std::string str = user_.nickname + ", please enter a new PIN.";
+            str = user_.nickname + ", please enter a new PIN.";
             const auto& width = calculateTextWidth(str, 62);
             renderer.drawString(str.c_str(), false, (width_ - width)/2, 348, 62, colors::authenticator::textColor);            
             break;
         }
         case PinSetupVerification: {
-            std::string str = "Please re-enter your PIN.";
+            str = "Please re-enter your PIN.";
             const auto& width = calculateTextWidth(str, 62);
             renderer.drawString(str.c_str(), false, (width_ - width)/2, 348, 62, colors::authenticator::textColor);
             break;
         }
         case PinsDontMatch: {
-            std::string str = "The PINs don't match. Try again.";
+            str = "The PINs don't match. Try again.";
             const auto& width = calculateTextWidth(str, 62);
             renderer.drawString(str.c_str(), false, (width_ - width)/2, 348, 62, colors::authenticator::errorColor);
             break;
         }
         case PinError: {
-            std::string str = "Wrong PIN.";
+            str = "Wrong PIN.";
             const auto& width = calculateTextWidth(str, 62);
             renderer.drawString(str.c_str(), false, (width_ - width)/2, 348, 62, colors::authenticator::errorColor);
             break;
         }
         case PinOk: {
-            std::string str = "Correct PIN.";
+            str = "Correct PIN.";
             const auto& width = calculateTextWidth(str, 62);
             renderer.drawString(str.c_str(), false, (width_ - width)/2, 348, 62, colors::authenticator::successColor);
             break;
         }
         case PinVerification: {
             // Otherwise we ask the user password
-            std::string str = user_.nickname + ", please enter your PIN.";
+            str = user_.nickname + ", please enter your PIN.";
             const auto& width = calculateTextWidth(str, 62);
             renderer.drawString(str.c_str(), false, (width_ - width)/2, 348, 62, colors::authenticator::textColor);  
             break;  
@@ -248,7 +284,7 @@ void GuiController::hideAll() {
     renderer.exit();
 
     std::lock_guard<std::mutex> mutex(s_mutexVisible);
-    visible_ = false;
+    //visible_ = false;
 }
 
 /*void GuiController::showRemainingTimePanel() {    
@@ -410,6 +446,7 @@ void GuiController::handlePinInput() {
         if(pinStage_ == PinOk) {
             const auto& uid = accountUidToString(user_.uid);
             savePassword(uid, verifPin);
+            authenticationRunning_ = false;
         }
         
         needsRefresh_ = true;
@@ -419,8 +456,8 @@ void GuiController::handlePinInput() {
  void GuiController::initUserInput() {
     logDebug("[Gui] Initialize user input\n");
 
-    hidInitialize();
-    hidsysInitialize();
+    /*hidInitialize();
+    hidsysInitialize();*/
 
     // Allow only Player 1 and handheld mode
     HidNpadIdType id_list[2] = { HidNpadIdType_No1, HidNpadIdType_Handheld };
@@ -444,7 +481,7 @@ void GuiController::handlePinInput() {
 }
 
 void GuiController::verifyUserInput() {
-    if(!visible_) return;  
+    //if(!visible_) return;  
     
     padUpdate(&pad_p1_);
     padUpdate(&pad_handheld_);
@@ -487,7 +524,47 @@ void GuiController::rgb565ToRgb4444(const u16* source, size_t size, u8* dest, co
     }
 }
 
-bool GuiController::isVisible() const {
+/*bool GuiController::isVisible() const {
     std::lock_guard<std::mutex> mutex(s_mutexVisible);
     return visible_;
+}*/
+
+/**
+ * @brief libnx hid:sys shim that gives or takes away frocus to or from the process with the given aruid
+ *
+ * @param enable Give focus or take focus
+ * @param aruid Aruid of the process to focus/unfocus
+ * @return Result Result
+ */
+Result GuiController::hidsysEnableAppletToGetInput(bool enable, u64 aruid) {
+    const struct {
+        u8 permitInput;
+        u64 appletResourceUserId;
+    } in = { enable != 0, aruid };
+
+    return serviceDispatchIn(hidsysGetServiceSession(), 503, in);
+}
+
+void GuiController::requestForeground(bool enabled) {
+    u64 applicationAruid = 0, appletAruid = 0;
+
+    //logToFile("[Gui] Request foreground\n");
+    Result rc = 0;
+    for (u64 programId = 0x0100000000001000UL; programId < 0x0100000000001020UL; programId++) {
+        rc = pmdmntGetProcessId(&appletAruid, programId);
+        //logToFile("[Gui] programId=%i, appletAruid=%i, result=%i:%i\n", programId, appletAruid, R_MODULE(rc), R_DESCRIPTION(rc));
+
+        if (appletAruid != 0) {
+            rc = hidsysEnableAppletToGetInput(!enabled, appletAruid);
+            //logToFile("[Gui] hidsysEnableAppletToGetInput -> false, result=%i:%i\n", R_MODULE(rc), R_DESCRIPTION(rc));
+        }
+    }
+
+    rc = pmdmntGetApplicationProcessId(&applicationAruid);
+    //logToFile("[Gui] pmdmntGetApplicationProcessId, applicationAruid=%i, result=%i:%i\n", applicationAruid, R_MODULE(rc), R_DESCRIPTION(rc));
+    rc = hidsysEnableAppletToGetInput(!enabled, applicationAruid);
+    //logToFile("[Gui] hidsysEnableAppletToGetInput -> false, applicationAruid=%i, result=%i:%i\n", applicationAruid, R_MODULE(rc), R_DESCRIPTION(rc));
+
+    rc = hidsysEnableAppletToGetInput(true, 0);
+    //logToFile("[Gui] hidsysEnableAppletToGetInput -> true (0), result=%i:%i\n", R_MODULE(rc), R_DESCRIPTION(rc));
 }

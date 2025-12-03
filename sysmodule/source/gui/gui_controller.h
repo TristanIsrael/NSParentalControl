@@ -13,10 +13,7 @@ class GuiController {
         void showPanelAuthentication();
         void showPanelTitleBlacklisted();
         void hideAll();        
-        bool isVisible() const;
-
-        
-
+        //bool isVisible() const;
 
         // Disabled because of the conflict with Tesla... to be solved
         /*void showRemainingTimePanel();
@@ -37,7 +34,9 @@ class GuiController {
         void refreshAuthenticationPanel();
         void initUserInput();
         void verifyUserInput();
-        void handlePinInput();        
+        void handlePinInput(); 
+        Result hidsysEnableAppletToGetInput(bool enable, u64 aruid);       
+        void requestForeground(bool enabled);
 
         typedef enum {
             PinSetup,
@@ -52,7 +51,7 @@ class GuiController {
         u16 width_ = 0;
         u16 height_ = 0;
         bool remaining_time_visible_ = false;
-        bool visible_ = false;
+        //bool visible_ = false;
         bool needsRefresh_ = false;
         PadState pad_p1_;
         PadState pad_handheld_;
@@ -60,4 +59,5 @@ class GuiController {
         PinStage pinStage_ = PinSetup;
         std::string enteredPin_;
         UserData user_;
+        bool authenticationRunning_ = false;
 };

@@ -80,7 +80,7 @@ void AdminMenuPanel::rebuildUI() {
 
     // Enable authentication
     const auto& authenticationEnabled = ipc::isAuthenticationEnabled();
-    auto entryAuthentication = new tsl::elm::ToggleListItem("Authentication", getAppContext().is_enabled, "Enabled", "Disabled");
+    auto entryAuthentication = new tsl::elm::ToggleListItem("Authentication", authenticationEnabled, "Enabled", "Disabled");
     rootList_->addItem(entryAuthentication);
     entryAuthentication->setStateChangedListener([entryAuthentication](bool enabled) -> bool {
         bool res = ipc::setAuthenticationState(enabled);

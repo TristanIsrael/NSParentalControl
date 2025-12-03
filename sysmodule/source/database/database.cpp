@@ -24,7 +24,7 @@ using namespace alefbet::pctrl::helpers;
 static const char* DATA_DIR = "/config/parental_control";
 static const char* DB_FILENAME = "/config/parental_control/sessions.json";
 static const char* SETTINGS_FILENAME = "/config/parental_control/settings.json";
-static const char* PWD_FILENAME = "/config/authenticator/passwords.json";
+static const char* PWD_FILENAME = "/config/parental_control/passwords.json";
 
 namespace alefbet::pctrl::database {
     static FsFileSystem sdmc_;
@@ -695,18 +695,18 @@ namespace alefbet::pctrl::database {
                 return passwords_;
             }
 
-            u8* data_sessions = new u8[fileSize+1];            
-            if(data_sessions == nullptr) {
+            u8* data_passwords = new u8[fileSize+1];            
+            if(data_passwords == nullptr) {
                 logError("[Database] Could not create a buffer for sessions\n");
                 
                 fsFileClose(&handle_passwords_);
                 return passwords_;
             } else {
-                logDebug("[Database] sessions buffer ready at @%p\n", (void*)data_sessions);
+                logDebug("[Database] sessions buffer ready at @%p\n", (void*)data_passwords);
             }
             
             u64 dataRead = 0;
-            if(R_FAILED(fsFileRead(&handle_passwords_, 0, data_sessions, fileSize, FsReadOption_None, &dataRead))) {
+            if(R_FAILED(fsFileRead(&handle_passwords_, 0, data_passwords, fileSize, FsReadOption_None, &dataRead))) {
                 logError("[Database] Could not read the passwords file\n");
 
                 fsFileClose(&handle_passwords_);
@@ -715,8 +715,8 @@ namespace alefbet::pctrl::database {
                 logDebug("[Database] Passwords database read\n");
             }
 
-            data_sessions[fileSize] = '\0';
-            json j_settings = json::parse(data_sessions);
+            data_passwords[fileSize] = '\0';
+            json j_settings = json::parse(data_passwords);
 
             std::vector<json> j_entries = j_settings["passwords"].get<std::vector<json>>();
 
@@ -729,7 +729,7 @@ namespace alefbet::pctrl::database {
             }
 
             fsFileClose(&handle_passwords_);
-            delete[] data_sessions;
+            delete[] data_passwords;
         }
 
         return passwords_;

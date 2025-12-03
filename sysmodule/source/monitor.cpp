@@ -74,9 +74,7 @@ namespace alefbet::pctrl::srv {
             
             //const auto daily_limit = settings[SETTING_DAILY_LIMIT_GLOBAL].int_value;            
 
-            if(pid != 0) { 
-                handleAuthentication(pid);
-
+            if(pid != 0) {
                 const auto title_id = getRunningApplicationTitleId(pid);
                 user = getCurrentUser();                
 
@@ -168,9 +166,14 @@ namespace alefbet::pctrl::srv {
             // Sub-loop to monitor blacklisted games
             for(int i = 0 ; i < MainLoopDelayInNanos.count() / SubLoopDelayInNanos.count() ; ++i) {
                 pid = getRunningApplicationPid();   
-                if(pid != 0 && helpers::isCurrentTitleBlacklisted()) {
-                    service_->showPanelTitleBlacklisted();
-                }
+
+                if(pid != 0) {
+                    handleAuthentication(pid);
+
+                    if(helpers::isCurrentTitleBlacklisted()) {
+                        service_->showPanelTitleBlacklisted();
+                    }
+                }                
 
                 svcSleepThread(SubLoopDelayInNanos.count()); // Wait a little
             }
@@ -194,6 +197,8 @@ namespace alefbet::pctrl::srv {
     }
 
     void Monitor::handleAuthentication(u64 pid) {
+        logDebug("[Monitor] Handle authentication\n");
+
         auto settings = loadSettings();
         if(!settings.contains(SETTING_AUTHENTICATION)) {
             // The authentication is an optional feature
@@ -217,6 +222,7 @@ namespace alefbet::pctrl::srv {
 
             logDebug("[Monitor] The current game and/or user has changed\n");
             
+            // This call is blocking until the user has finished with the authentication
             service_->showPanelAuthentication();
         }
     }

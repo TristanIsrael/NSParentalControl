@@ -672,7 +672,7 @@ namespace alefbet::pctrl::ipc {
         logDebug("[IPC] Setting authentication state to %s\n", active ? "active" : "inactive");
 
         auto& service = getAppContext().pctrl_service;        
-        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::IsAuthenticationActive, active);
+        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetAuthenticationActive, active);
         if(R_FAILED(res)) {
             logError("[IPC] An error occured when checking authentication state\n");
             return false;            

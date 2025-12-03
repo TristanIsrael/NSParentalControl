@@ -24,11 +24,14 @@ namespace alefbet::pctrl::srv {
         private:            
             //s16 remainingTimeInMinutes(const HistoryEntry& entry);
             bool shouldSendNotification(int remainingTimeInMinutes);
+            void handleAuthentication(u64 pid);
 
         private:
             alefbet::pctrl::srv::Service* service_ = nullptr;
             bool running_ = false;
             bool notified_ = false;
+            u64 currentTitle_ = 0;
+            UserData currentUser_;
     };    
 
 };

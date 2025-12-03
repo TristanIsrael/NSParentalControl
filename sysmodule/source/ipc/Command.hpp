@@ -29,7 +29,9 @@ namespace Ipc {
         GetBlacklistedTitle,        /*! Returns the blacklisted title ID at index (starting at 0) for a user */
         AddTitleToBlacklist,        /*! Adds a title to a users's blacklist */
         RemoveTitleFromBlacklist,   /*! Removes a title from a users's blacklist */
-        GetUserDailyLimit           /*! Gets a users limits. */
+        GetUserDailyLimit,          /*! Gets a users limits. */
+        SetAuthenticationActive,    /*! Sets the authentication active or not */
+        IsAuthenticationActive      /*! Returns true if authentication is enabled */
     };
 
     std::string commandToString(const Command& cmd) {
@@ -60,6 +62,8 @@ namespace Ipc {
             case Command::AddTitleToBlacklist: return "AddTitleToBlacklist";
             case Command::RemoveTitleFromBlacklist: return "RemoveTitleFromBlacklist";
             case Command::GetUserDailyLimit: return "GetUserDailyLimit";
+            case Command::SetAuthenticationActive: return "SetAuthenticationActive";
+            case Command::IsAuthenticationActive: return "IsAuthenticationActive";
             default: return "Unknown";
         }
     };

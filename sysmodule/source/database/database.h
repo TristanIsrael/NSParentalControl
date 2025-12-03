@@ -4,6 +4,9 @@
 #include <switch.h>
 #include "settings.h"
 #include "history.h"
+#include "helpers.h"
+
+using namespace alefbet::pctrl::structs;
 
 namespace alefbet::pctrl::database {
 
@@ -24,4 +27,11 @@ namespace alefbet::pctrl::database {
 
     bool upgradeNeeded();
     bool isTampered();
+
+    /* Authentication management */
+    using Password = std::string;
+    using Passwords = std::map<UserUid, Password>;
+
+    Passwords& loadPasswords();
+    void savePassword(UserUid account, Password password);
 }

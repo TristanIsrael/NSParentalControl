@@ -75,6 +75,8 @@ namespace alefbet::pctrl::srv {
             //const auto daily_limit = settings[SETTING_DAILY_LIMIT_GLOBAL].int_value;            
 
             if(pid != 0) { 
+                handleAuthentication(pid);
+
                 const auto title_id = getRunningApplicationTitleId(pid);
                 user = getCurrentUser();                
 
@@ -140,7 +142,15 @@ namespace alefbet::pctrl::srv {
                 /*if(service_->gui().isRemainingTimePanelVisible()) { // DISABLED
                     service_->gui().hideRemainingTimePanel();
                 }*/
-                logDebug("[Monitor] ok\n");
+                if(currentTitle_ > 0) {
+                    logDebug("[Monitor] The game has been closed\n");
+
+                    // Hide the panel                    
+                    service_->hideAllScreens();
+
+                    currentTitle_ = 0;
+                    currentUser_.clear();
+                }
             }
 
             // DISABLED
@@ -159,7 +169,7 @@ namespace alefbet::pctrl::srv {
             for(int i = 0 ; i < MainLoopDelayInNanos.count() / SubLoopDelayInNanos.count() ; ++i) {
                 pid = getRunningApplicationPid();   
                 if(pid != 0 && helpers::isCurrentTitleBlacklisted()) {
-                    service_->showScreenTitleBlacklisted();
+                    service_->showPanelTitleBlacklisted();
                 }
 
                 svcSleepThread(SubLoopDelayInNanos.count()); // Wait a little
@@ -181,5 +191,33 @@ namespace alefbet::pctrl::srv {
     bool Monitor::shouldSendNotification(int remainingTimeInMinutes) {
         // Remaining time notitications are sent every 15 minutes and every minute during the last 5 minutes
         return remainingTimeInMinutes % 15 == 0 || remainingTimeInMinutes <= 5;
+    }
+
+    void Monitor::handleAuthentication(u64 pid) {
+        auto settings = loadSettings();
+        if(!settings.contains(SETTING_AUTHENTICATION)) {
+            // The authentication is an optional feature
+            logDebug("[Monitor] Authentication is not set\n");
+            return; 
+        }
+
+        if(settings[SETTING_AUTHENTICATION].int_value == 0) {
+            logDebug("[Monitor] Authentication is disabled\n");
+            return;
+        }
+
+        const auto& currentTitle = getRunningApplicationTitleId(pid);
+        const auto& currentUser = getCurrentUser();
+
+        if(currentTitle != currentTitle_ && currentUser != currentUser_) {
+            logDebug("[Monitor] handle running app %i\n", pid);
+
+            currentTitle_ = currentTitle;
+            currentUser_ = currentUser;
+
+            logDebug("[Monitor] The current game and/or user has changed\n");
+            
+            service_->showPanelAuthentication();
+        }
     }
 }

@@ -95,10 +95,10 @@ namespace alefbet::pctrl::srv {
         gpioExit();
     }
 
-    void Service::showScreenTitleBlacklisted() {
+    void Service::showPanelTitleBlacklisted() {
         logDebug("[Service] Requested to show title blacklisted screen\n");
 
-        gui_.showScreenTitleBlacklisted();
+        gui_.showPanelTitleBlacklisted();
 
         // Terminate the game
         helpers::terminateCurrentApplication();
@@ -143,9 +143,15 @@ namespace alefbet::pctrl::srv {
 
                 return;
             }
-
         }
-        
+    }
+
+    void Service::showPanelAuthentication() {
+        gui_.showPanelAuthentication();
+    }
+            
+    void Service::hideAllScreens() {
+        gui_.hideAll();
     }
 
     Ipc::Result Service::getRunningApplication(Ipc::Request* request) {
@@ -721,6 +727,42 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    Ipc::Result Service::setAuthenticationActive(Ipc::Request* request) {
+        u8 active = 0;
+
+        Ipc::Result res = request->readRequestValue(active);
+        if(res != Ipc::Result::Ok) {
+            logError("[Service] Could not read request value\n");
+            return Ipc::Result::BadInput;
+        }
+
+        logDebug("[Service] Setting authentication %sactive\n", active > 0 ? "" : "in");
+
+        Setting setting {
+            .key = SETTING_AUTHENTICATION,
+            .type = INTEGER,
+            .int_value = active
+        };
+
+        saveSetting(setting);
+
+        return Ipc::Result::Ok;
+    }
+
+    Ipc::Result Service::isAuthenticationActive(Ipc::Request* request) {
+        logDebug("[Service] Getting authentication state\n");
+
+        auto settings = loadSettings();
+        bool enabled = false;
+        
+        if(settings.contains(SETTING_AUTHENTICATION)) {
+            enabled = settings[SETTING_AUTHENTICATION].int_value > 0;
+        }
+
+        request->appendReplyValue(enabled ? 1 : 0);
+
+        return Ipc::Result::Ok;
+    }
 
 
 
@@ -747,7 +789,7 @@ namespace alefbet::pctrl::srv {
                 //NotificationsController::notifyRemainingTime(15);
                 //helpers::terminateCurrentApplication();
                                 
-                showScreenTitleBlacklisted();                
+                showPanelTitleBlacklisted();                
                 return Ipc::Result::Ok;
                 break;
             }
@@ -819,6 +861,12 @@ namespace alefbet::pctrl::srv {
             }
             case Ipc::Command::RemoveTitleFromBlacklist: {
                 return removeTitleFromBlacklist(request);
+            }
+            case Ipc::Command::SetAuthenticationActive: {
+                return setAuthenticationActive(request);
+            }
+            case Ipc::Command::IsAuthenticationActive: {
+                return isAuthenticationActive(request);
             }
             default: {
                 logError("[Service] command %i not handled.\n", request->cmd());                

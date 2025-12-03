@@ -60,7 +60,8 @@
         "any": "cpp",
         "span": "cpp",
         "valarray": "cpp",
-        "sha256.c": "cpp"
+        "sha256.c": "cpp",
+        "cstddef": "cpp"
     },
     "makefile.configureOnOpen": true
 }

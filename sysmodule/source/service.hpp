@@ -40,7 +40,9 @@ namespace alefbet::pctrl::srv {
             }
 
             void showScreenTimeout();
-            void showScreenTitleBlacklisted();
+            void showPanelTitleBlacklisted();
+            void showPanelAuthentication();
+            void hideAllScreens();
 
         private:
             Ipc::Result commandThread(Ipc::Request*);
@@ -72,7 +74,9 @@ namespace alefbet::pctrl::srv {
             Ipc::Result getBlacklistedTitlesCount(Ipc::Request*);
             Ipc::Result getBlacklistedTitle(Ipc::Request*);
             Ipc::Result addTitleToBlacklist(Ipc::Request*);
-            Ipc::Result removeTitleFromBlacklist(Ipc::Request*);                        
+            Ipc::Result removeTitleFromBlacklist(Ipc::Request*);
+            Ipc::Result setAuthenticationActive(Ipc::Request*);
+            Ipc::Result isAuthenticationActive(Ipc::Request*);
 
         private:
             bool is_ready_ = false;

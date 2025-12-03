@@ -36,7 +36,7 @@ tsl::elm::Element* AdminMenuPanel::createUI() {
 void AdminMenuPanel::rebuildUI() {
 
     // Enable parental control
-    auto entryEnabled = new tsl::elm::ToggleListItem("Enabled", getAppContext().is_enabled, "Enabled", "Disabled");
+    auto entryEnabled = new tsl::elm::ToggleListItem("State", getAppContext().is_enabled, "Enabled", "Disabled");
     rootList_->addItem(entryEnabled);        
     entryEnabled->setStateChangedListener([entryEnabled] (bool enabled) -> bool {
         bool res = ipc::setEnabled(enabled);
@@ -74,6 +74,18 @@ void AdminMenuPanel::rebuildUI() {
         bool res = ipc::setShowRemainingTime(enabled);
         if(!res) {
             entryShowRemainingTime->setState(!entryShowRemainingTime->getState());
+        }
+        return true;        
+    });
+
+    // Enable authentication
+    const auto& authenticationEnabled = ipc::isAuthenticationEnabled();
+    auto entryAuthentication = new tsl::elm::ToggleListItem("Authentication", getAppContext().is_enabled, "Enabled", "Disabled");
+    rootList_->addItem(entryAuthentication);
+    entryAuthentication->setStateChangedListener([entryAuthentication](bool enabled) -> bool {
+        bool res = ipc::setAuthenticationState(enabled);
+        if(!res) {
+            entryAuthentication->setState(!entryAuthentication->getState());
         }
         return true;        
     });

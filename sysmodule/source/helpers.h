@@ -11,14 +11,25 @@ namespace alefbet::pctrl {
 
     namespace structs {
 
-        typedef struct {
+        struct UserData {
             AccountUid uid;
             UserNickname nickname;
 
             bool isValid() const {
                 return accountUidIsValid(&uid) && nickname.substr(0, 4) != "ERR#";
             }
-        } UserData;
+
+            bool operator==(const UserData& other) const {
+                return uid.uid[0] == other.uid.uid[0] && uid.uid[1] == other.uid.uid[1];
+            }
+
+            void clear() {
+                uid.uid[0] = 0;
+                uid.uid[1] = 0;
+                nickname.clear();
+            }
+            
+        };
 
     }
 
@@ -49,5 +60,9 @@ namespace alefbet::pctrl {
         // Limits management
         u16 getDailyLimitForUser(const std::string& userId);
         void setDailyLimitForUser(const std::string& userId, u16 limit_in_minutes);
+
+        // Authentication management
+        std::string encodePassword(const std::vector<u64>&);
+        std::vector<u64> decodePassword(const std::string&);
     }
 }   

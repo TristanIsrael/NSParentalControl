@@ -24,18 +24,23 @@ using namespace alefbet::pctrl::helpers;
 static const char* DATA_DIR = "/config/parental_control";
 static const char* DB_FILENAME = "/config/parental_control/sessions.json";
 static const char* SETTINGS_FILENAME = "/config/parental_control/settings.json";
+static const char* PWD_FILENAME = "/config/authenticator/passwords.json";
 
 namespace alefbet::pctrl::database {
     static FsFileSystem sdmc_;
     static FsFile handle_settings_;
-    static std::mutex mutex_settings_;
     static FsFile handle_database_;
+    static FsFile handle_passwords_;
+    static std::mutex mutex_settings_;    
     static std::mutex mutex_database_;
+    static std::mutex mutex_passwords_;
     static bool ready_ = false;
     static bool data_synchronized_ = false; // The data are synchronized between the cache and the file
     static bool settings_synchronized_ = false; 
+    static bool passwords_synchronized_ = false; 
     static History history_;
     static Settings settings_;
+    static Passwords passwords_;
     static bool mustUpgrade_ = false;
     static bool isTampered_ = false;
 
@@ -642,6 +647,140 @@ namespace alefbet::pctrl::database {
         }
 
         fsFileClose(&handle_settings_);
+    }
+
+    Passwords& loadPasswords() 
+    {
+        if(passwords_synchronized_) return passwords_;
+
+        std::lock_guard<std::mutex> lock(mutex_passwords_);
+
+        logDebug("[Database] Loading passwords at %s\n", PWD_FILENAME);
+
+        if(!prepare()) return passwords_;
+        
+        bool opened = R_SUCCEEDED(fsFsOpenFile(&sdmc_, PWD_FILENAME, FsOpenMode_Read, &handle_passwords_));        
+
+        if(!opened) {
+            logError("Could not open database file. Try to create a new file.\n");
+            
+            // Verify whether data directory exists
+            FsDirEntryType type;
+            if(R_FAILED(fsFsGetEntryType(&sdmc_, DATA_DIR, &type))) {
+                // The directory does not exist
+                if(!createDataDirectory()) {
+                    logError("[Database] The data directory could not be created.\n");
+                    return passwords_;
+                }
+            }
+
+            if(R_FAILED(fsFsCreateFile(&sdmc_, PWD_FILENAME, 0, 0))) {
+                logError("[Database] Could not create a new database file.\n");
+                return passwords_;
+            }
+        } else {
+            s64 fileSize = 0;
+            
+            if(R_FAILED(fsFileGetSize(&handle_passwords_, &fileSize))) {
+                logError("[Database] Could not get database file size\n");
+                fsFileClose(&handle_passwords_);
+                return passwords_;
+            } else {
+                logDebug("[Database] Passwords file size is %i\n", fileSize);
+            }
+
+            if(fileSize == 0) {
+                logInfo("[Database] Database file is empty\n");
+                fsFileClose(&handle_passwords_);
+                return passwords_;
+            }
+
+            u8* data_sessions = new u8[fileSize+1];            
+            if(data_sessions == nullptr) {
+                logError("[Database] Could not create a buffer for sessions\n");
+                
+                fsFileClose(&handle_passwords_);
+                return passwords_;
+            } else {
+                logDebug("[Database] sessions buffer ready at @%p\n", (void*)data_sessions);
+            }
+            
+            u64 dataRead = 0;
+            if(R_FAILED(fsFileRead(&handle_passwords_, 0, data_sessions, fileSize, FsReadOption_None, &dataRead))) {
+                logError("[Database] Could not read the passwords file\n");
+
+                fsFileClose(&handle_passwords_);
+                return passwords_;
+            } else {
+                logDebug("[Database] Passwords database read\n");
+            }
+
+            data_sessions[fileSize] = '\0';
+            json j_settings = json::parse(data_sessions);
+
+            std::vector<json> j_entries = j_settings["passwords"].get<std::vector<json>>();
+
+            for(const auto& j_entry: j_entries) {
+                auto uidAsString = j_entry["uid"].get<std::string>();
+                auto password = j_entry["password"].get<std::string>();
+                //auto uid = accountUidFromString(uidAsString);
+
+                passwords_[uidAsString] = password;
+            }
+
+            fsFileClose(&handle_passwords_);
+            delete[] data_sessions;
+        }
+
+        return passwords_;
+    }
+
+    void savePassword(UserUid account, Password newPassword)
+    {   
+        std::lock_guard<std::mutex> lock(mutex_passwords_);
+
+        if(!prepare()) return;
+
+        json j_entries;
+        for(const auto& [uid, password]: passwords_) {
+            json j_entry = json::object( {
+                { "uid", uid },                
+                { "password", uid == account ? newPassword : password }
+            });
+
+            j_entries.push_back(j_entry);
+        }
+
+        json j_passwords = json{
+            { "passwords", j_entries }
+        };
+        
+        if(R_FAILED(fsFsDeleteFile(&sdmc_, PWD_FILENAME))) {
+            logError("[Database] Could not delete the current database file\n");            
+        }
+
+        if(R_FAILED(fsFsCreateFile(&sdmc_, PWD_FILENAME, 0, 0))) {
+            logError("[Database] Could not create the database file\n");
+            return;
+        } else {
+            logInfo("[Database] New passwords file created\n");
+        }
+
+        if(R_FAILED(fsFsOpenFile(&sdmc_, PWD_FILENAME, FsOpenMode_Write | FsOpenMode_Append, &handle_passwords_))) {
+            logError("[Database] The passwords file could not be opened for writing\n");
+            return;
+        }
+
+        const auto data = j_passwords.dump();
+        const auto s_data = data.c_str();
+        logDebug("[Database] Save passwords: %s\n", s_data);
+
+        logDebug("[Database] Writing passwords data %s (size=%i)\n", s_data, std::strlen(s_data));
+        if(R_FAILED(fsFileWrite(&handle_passwords_, 0, s_data, std::strlen(s_data), FsWriteOption_Flush))) {
+            logError("[Database] Could not write into database file\n");
+        }
+
+        fsFileClose(&handle_passwords_);
     }
 
 }

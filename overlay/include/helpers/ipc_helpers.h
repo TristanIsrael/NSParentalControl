@@ -56,4 +56,7 @@ namespace alefbet::pctrl::ipc {
     std::vector<u64> getBlacklistedTitles(const UserUid&);
     bool addTitleToBlacklist(const UserData& user, u64 titleId);
     bool removeTitleFromBlacklist(const UserData& user, u64 titleId);
+
+    bool isAuthenticationEnabled();
+    bool setAuthenticationState(bool);
 }

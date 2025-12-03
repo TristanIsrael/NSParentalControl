@@ -652,4 +652,32 @@ namespace alefbet::pctrl::ipc {
 
         return true;
     }
+
+    bool isAuthenticationEnabled() {
+        logDebug("[IPC] Checking authentication state\n");
+
+        u8 enabled = 0;
+
+        auto& service = getAppContext().pctrl_service;        
+        Result res = serviceDispatchOut(&service, (u32)Ipc::Command::IsAuthenticationActive, enabled);
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured when checking authentication state\n");
+            return false;
+        }
+
+        return enabled > 0;
+    }
+
+    bool setAuthenticationState(bool active) {
+        logDebug("[IPC] Setting authentication state to %s\n", active ? "active" : "inactive");
+
+        auto& service = getAppContext().pctrl_service;        
+        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::IsAuthenticationActive, active);
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured when checking authentication state\n");
+            return false;            
+        }
+
+        return true;
+    }
 }

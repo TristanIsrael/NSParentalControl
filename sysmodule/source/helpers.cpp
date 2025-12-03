@@ -535,5 +535,38 @@ namespace alefbet::pctrl::helpers {
             saveSetting(setting);
         }
     }
+
+    std::string encodePassword(const std::vector<u64>& password) {
+        std::string pin;
+
+        if(password.size() != 4) {
+            logError("[Helpers] The PIN size is wrong.");
+            return pin;
+        }
+
+        pin = std::to_string(password[0]) +"," +std::to_string(password[1]) +"," +std::to_string(password[2]) +"," +std::to_string(password[3]);        
+
+        return pin;    
+    }
+
+    std::vector<u64> decodePassword(const std::string& str) {
+        std::vector<u64> password;
+        password.reserve(4);
+
+        std::stringstream ss(str);
+        std::string part;
+
+        while (std::getline(ss, part, ',')) {
+            password.push_back(static_cast<u64>(std::stoull(part)));
+        }
+
+        if (password.size() != 4) {
+            // Incorrect format
+            logError("[Helpers] The PIN size is wrong.");
+            return {};
+        }
+
+        return password;
+    }
     
 }

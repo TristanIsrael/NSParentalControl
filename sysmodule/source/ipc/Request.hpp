@@ -4,7 +4,7 @@
 #include <cstring>
 #include "Result.hpp"
 #include <string>
-#include <switch.h>
+#include "types.h"
 #include <vector>
 #include "Buffer.hpp"
 

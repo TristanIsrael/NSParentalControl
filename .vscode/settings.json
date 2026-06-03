@@ -62,5 +62,9 @@
         "valarray": "cpp",
         "sha256.c": "cpp"
     },
-    "makefile.configureOnOpen": true
+    "makefile.configureOnOpen": true,
+    "cmake.sourceDirectory": "/Users/tristanisrael/Documents/Sources/NSParentalControl/sysmodule/tests",
+    "cmake.debugConfig": {
+        "MIMode": "lldb"
+    }
 }

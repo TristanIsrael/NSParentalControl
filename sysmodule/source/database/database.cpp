@@ -4,7 +4,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <switch.h>
+#include "types.h"
 #include <filesystem>
 #include <mutex>
 #include <vector>
@@ -15,6 +15,9 @@
 #include "json.hpp"
 #include "../logger.h"
 #include "../helpers.h"
+#include "stream_writer.h"
+#include "stream_reader.h"
+#include "byte_array.h"
 //#include "aes.hpp"
 
 using json = nlohmann::json;
@@ -22,8 +25,11 @@ using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::helpers;
 
 static const char* DATA_DIR = "/config/parental_control";
-static const char* DB_FILENAME = "/config/parental_control/sessions.json";
+static const char* DB_FILENAME = "/config/parental_control/sessions.dat";
+static const char* DB_FILENAME_TMP = "/config/parental_control/sessions.dat.tmp";
+static const char* DB_FILENAME_BKP = "/config/parental_control/sessions.dat.bkp";
 static const char* SETTINGS_FILENAME = "/config/parental_control/settings.json";
+constexpr u8 HistoryEntrySize = 38;
 
 namespace alefbet::pctrl::database {
     static FsFileSystem sdmc_;
@@ -201,7 +207,7 @@ namespace alefbet::pctrl::database {
         if(!opened) {
             logError("Could not open database file. Try to create a new file.\n");
 
-            // Verify whether data directory exists
+            // Verify whether the data directory exists
             FsDirEntryType type;
             if(R_FAILED(fsFsGetEntryType(&sdmc_, DATA_DIR, &type))) {
                 // The directory does not exist
@@ -251,19 +257,19 @@ namespace alefbet::pctrl::database {
 
             data[fileSize] = '\0';                
 
-            logDebug("[Database] Sessions data: %s\n", data);
+            //logDebug("[Database] Sessions data: %s\n", data);
             logDebug("[Database] Parse sessions file\n");
-            json j_data = json::parse(data);
+            //json j_data = json::parse(data);
 
             // Verify database integrity
-            logInfo("[Database] Verifying database integrity\n");
+            /*logInfo("[Database] Verifying database integrity\n");
             if(j_data.contains("hash")) {                                
                 isTampered_ = !crypto::verifyHash(j_data);                
                 logInfo("[Database] Database file integrity is %s. %s\n", (!isTampered_ ? "verified" : "compromized"), isTampered_ ? "The hash is corrupted." : "");
             } else {
                 isTampered_ = true;
                 logInfo("[Database] Database file integrity is compromized. The hash is missing\n");
-            }            
+            }
 
             std::vector<json> j_entries = j_data["history"].get<std::vector<json>>();            
 
@@ -275,6 +281,26 @@ namespace alefbet::pctrl::database {
                 auto uid = accountUidFromString(uidAsString);
 
                 HistoryEntry entry(uid, date, titleId, durationInMinutes);
+                history_.addEntry(entry);
+            }*/
+
+            // Now we decode the data
+            // The file size should be a multiple of HistoryEntrySize
+            if(fileSize % HistoryEntrySize > 0) {
+                logger::logError("The database has an incorrect size (%i)", fileSize);
+                return;
+            }
+
+            u32 offset = 0;
+            for(u16 i = 0 ; i < fileSize / HistoryEntrySize ; i++) {
+                // We read each entry one by one
+                offset = i*HistoryEntrySize;
+
+                ByteArray entryData(HistoryEntrySize);
+                std::memcpy(entryData.data(), data+offset, HistoryEntrySize);
+                StreamReader st(entryData);
+
+                HistoryEntry entry = HistoryEntry::fromByteArray(entryData);
                 history_.addEntry(entry);
             }
 
@@ -290,60 +316,64 @@ namespace alefbet::pctrl::database {
 
         if(!prepare()) return;
 
-        json j_entries;
-        for(const auto& entry: history_.entries()) {
-            json j_entry = json::object( {
-                { "uid", entry.uidAsString() },
-                { "date", entry.date() },
-                { "title_id", entry.titleId() },
-                { "duration_in_min", entry.durationInMinutes() }
-            });
+        ByteArray data;
+        int oldSize = 0;
 
-            j_entries.push_back(j_entry);
+        //json j_entries;
+        for(const auto& entry: history_.entries()) {
+            const auto& entryData = entry.toByteArray();
+            
+            // First we write the bytearray size
+            oldSize = data.size();
+            data.resize(data.size()+entryData.size());
+
+            // Then the data
+            std::memcpy(data.data() + oldSize, entryData.data(), entryData.size());
         }
 
-        json j_history = json{
+        /*json j_history = json{
             { "history", j_entries }
-        };
+        };*/
 
         // Calculate data hash
-        const auto& hash = crypto::calculateHash(j_history);
+        //const auto& hash = crypto::calculateHash(j_history);
 
         // Add the hash
-        j_history["hash"] = hash;
+        //j_history["hash"] = hash;
 
-        if(R_FAILED(fsFsDeleteFile(&sdmc_, DB_FILENAME))) {
+        /*if(R_FAILED(fsFsDeleteFile(&sdmc_, DB_FILENAME))) {
             logError("[Database] Could not delete the current database file\n");            
         }
 
         if(R_FAILED(fsFsCreateFile(&sdmc_, DB_FILENAME, 0, 0))) {
             logError("[Database] Could not create the database file\n");
             return;
-        } /*else {
-            logDebug("[Database] New database file created\n");
         }*/
 
-        if(R_FAILED(fsFsOpenFile(&sdmc_, DB_FILENAME, FsOpenMode_Write | FsOpenMode_Append, &handle_database_))) {
+        // Backup current file
+        if(R_FAILED(fsFsRenameFile(&sdmc_, DB_FILENAME, DB_FILENAME_BKP))) {
+            logError("[Database] The database could not be backed up\n");
+            return;
+        }
+
+        // Write to a temporary file
+        if(R_FAILED(fsFsOpenFile(&sdmc_, DB_FILENAME_TMP, FsOpenMode_Write | FsOpenMode_Append, &handle_database_))) {
             logError("[Database] The database file could not be opened for writing\n");
             return;
         }
 
-        const auto stdstr_data = j_history.dump();
-        //const auto str_data = stdstr_data.c_str();
-        u64 lenstr = stdstr_data.length();
-        void* s_data = malloc(lenstr+1);
-        memset(s_data, 0, lenstr);
-        //memcpy(s_data, str_data, lenstr);
-        std::snprintf((char*)s_data, lenstr, "%s", stdstr_data.c_str());
-
-        logDebug("[Database] Writing sessions data %s (size=%i)\n", s_data, lenstr);    
-
-        if(R_FAILED(fsFileWrite(&handle_database_, 0, s_data, lenstr, FsWriteOption_Flush))) {
+        if(R_FAILED(fsFileWrite(&handle_database_, 0, data.data(), data.size(), FsWriteOption_Flush))) {
             logError("[Database] Could not write into database file\n");
         }
 
         fsFileClose(&handle_database_);
-        free(s_data);
+
+        // Rename the temporary file
+        if(R_FAILED(fsFsRenameFile(&sdmc_, DB_FILENAME_TMP, DB_FILENAME))) {
+            logError("[Database] The database could not be committed\n");
+            return;
+        }
+        
     }    
 
     std::vector<HistoryEntry> getHistory(AccountUid uid, std::string date) {
@@ -395,6 +425,39 @@ namespace alefbet::pctrl::database {
         }
 
         saveDatabase();
+
+        // Add entry to the history on the disk
+        /*if(!prepare()) return result; 
+
+        // Open the file in append mode
+        if(R_FAILED(fsFsOpenFile(&sdmc_, DB_FILENAME, FsOpenMode_Write | FsOpenMode_Append, &handle_database_))) {
+            logError("[Database] The database file could not be opened for writing\n");
+            return result;
+        }
+
+        s64 fileSize = 0;
+        if(R_FAILED(fsFileGetSize(&handle_database_, &fileSize))) {
+            logError("[Database] Could not get database file size\n");
+            fsFileClose(&handle_database_);
+            return result;
+        } else {
+            logDebug("[Database] Database current file size is %i\n", fileSize);
+        }
+
+        const auto& data = result.toByteArray();
+
+        // Add the entry to the file
+        if(R_FAILED(fsFileWrite(&handle_database_, fileSize, data.data(), data.size(), FsWriteOption_Flush))) {
+            logError("[Database] Could not write into database file\n");
+            return result;
+        } else {
+            logDebug("[Database] Database updated\n");
+        }
+
+        fsFileClose(&handle_database_);
+
+        data_synchronized_ = true;*/
+
         return result;
     }
 

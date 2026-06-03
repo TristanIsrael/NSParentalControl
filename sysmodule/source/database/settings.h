@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include <string_view>
-#include <switch.h>
+#include "types.h"
 
 using SettingKey = std::string;
 

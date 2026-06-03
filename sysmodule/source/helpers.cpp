@@ -8,7 +8,6 @@
 #include <string_view>
 #include <ranges>
 #include <codecvt>
-#include <switch.h>
 #include <algorithm>
 #include "logger.h"
 #include "database/database.h"
@@ -115,7 +114,7 @@ namespace alefbet::pctrl::helpers {
         AccountUid uid;
         rc = accountGetPreselectedUser(&uid);
         //logToFile("rc=%i, Uid=%i.%i\n", rc, uid.uid[0], uid.uid[1]);
-        rc = accountGetLastOpenedUser(&uid);            
+        rc = accountGetLastOpenedUser(&uid);
         if(R_FAILED(rc)) {
             logError("[Helpers] Could not get preselected user: %i:%i\n", R_MODULE(rc), R_DESCRIPTION(rc));
             accountExit();

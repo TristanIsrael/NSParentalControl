@@ -1,5 +1,5 @@
 #pragma once
-#include <switch.h>
+#include "types.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 #include <algorithm>

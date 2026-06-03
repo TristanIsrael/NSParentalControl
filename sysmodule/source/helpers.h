@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <switch.h>
+#include "types.h"
 #include "logger.h"
 
 namespace alefbet::pctrl {

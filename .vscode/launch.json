@@ -1,0 +1,19 @@
+{
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        /*{
+            "name": "Tests sysmodule",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/opt/homebrew/bin/ctest",
+            "args": ["-V"],               // verbose mode
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/sysmodule/tests/build",
+            "environment": [],
+            "MIMode": "lldb"              // macOS, ou gdb/linux, cppvsdbg/windows
+        }*/        
+    ]
+}

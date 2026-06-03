@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <switch.h>
+#include "types.h"
 #include <vector>
 #include "ipc/Server.hpp"
 #include "gui_controller.h"

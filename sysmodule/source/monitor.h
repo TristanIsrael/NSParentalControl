@@ -1,5 +1,5 @@
 #pragma once
-#include <switch.h>
+#include "types.h"
 #include "database/history.h"
 #include "service.h"
 

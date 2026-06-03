@@ -2,7 +2,7 @@
 #include <ctime>
 #include <cstring>
 #include <format>
-#include <switch.h>
+#include "types.h"
 #include <json.hpp>
 #include "logger.h"
 

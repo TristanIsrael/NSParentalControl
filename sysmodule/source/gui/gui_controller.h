@@ -1,5 +1,5 @@
 #pragma once
-#include <switch.h>
+#include "types.h"
 
 class GuiController {
     public:

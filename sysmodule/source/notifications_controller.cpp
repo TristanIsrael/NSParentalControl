@@ -1,6 +1,6 @@
 #include "notifications_controller.h"
 #include "ultrahand_interface.h"
-#include <switch.h>
+#include "types.h"
 #include <chrono>
 
 using namespace std::chrono;

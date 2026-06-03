@@ -1,5 +1,5 @@
 #pragma once
-#include <switch.h>
+#include "types.h"
 
 constexpr inline u64 operator ""_KB(unsigned long long n) {
     return static_cast<u64>(n) * UINT64_C(1024);

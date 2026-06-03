@@ -1,7 +1,7 @@
 #pragma once
 
 #include <map>
-#include <switch.h>
+#include "types.h"
 #include "settings.h"
 #include "history.h"
 

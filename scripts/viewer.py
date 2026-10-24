@@ -32,7 +32,7 @@ def read_history(path):
         print("Error: file too small for header")
         sys.exit(1)
 
-    magic, version, entry_count = struct.unpack("<IIIQ", data[:16])
+    magic, version, entry_count = struct.unpack("<IIQ", data[:16])
     magic_str = struct.pack("<I", magic).decode("ascii", errors="replace")
 
     print(f"History Database: {path}")
@@ -51,12 +51,12 @@ def read_history(path):
 
     offset = 16
     for i in range(entry_count):
-        if offset + 28 > len(data):
+        if offset + 30 > len(data):
             print(f"  Warning: truncated entry at index {i}")
             break
 
         uid_low, uid_high, date_length, title_id, duration = struct.unpack(
-            "<QQIQQ", data[offset:offset + 28]
+            "<QQIQH", data[offset:offset + 30]
         )
         offset += 28
 

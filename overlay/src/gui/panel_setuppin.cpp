@@ -126,7 +126,6 @@ bool SetupPinPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState 
         if(keysDown & HidNpadButton_A) {
             verifyPin_.clear();
             newPin_.clear();
-            verifyPin_.clear();
             error_ = NO_ERROR;
             return true;
         } 

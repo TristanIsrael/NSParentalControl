@@ -35,7 +35,6 @@
 
 using namespace alefbet::pctrl::logger;
 
-const bool CIPHER_DATABASE = false;
 constexpr SmServiceName service_name = smEncodeName("pctrl");
 
 /*! @brief Connects to the pctrl service and initializes the service session.

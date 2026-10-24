@@ -193,7 +193,7 @@ namespace alefbet::pctrl::ipc {
             
             char _uid[40] = {0};
             std::memcpy(_uid, uid.data(), uid.length());
-            logDebug("Query usage time for uid %i\n", _uid);
+            logDebug("Query usage time for uid %s\n", _uid);
             res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetUserRemainingTime, _uid, remainingTime);
         }
 
@@ -232,6 +232,11 @@ namespace alefbet::pctrl::ipc {
     bool verifyPin(const std::vector<u64>& pin) {
         logDebug("[IPC] Verify Admin PIN\n");
 
+        if(pin.size() < 4) {
+            logWarning("[IPC] The pin size is incorrect\n");
+            return false;
+        }
+
         if(!isAvailable()) {
             logError("[IPC] service not available\n");
             return false;
@@ -259,6 +264,11 @@ namespace alefbet::pctrl::ipc {
      * @return true if successful, false otherwise. */
     bool setupPin(const std::vector<u64>& pin) {
         logDebug("[IPC] Setup new PIN\n");
+
+        if(pin.size() < 4) {
+            logWarning("[IPC] The pin size is incorrect\n");
+            return false;
+        }
 
         if(!isAvailable()) {
             logError("[IPC] service not available\n");
@@ -519,7 +529,7 @@ namespace alefbet::pctrl::ipc {
 
         if(!isAvailable()) {
             logError("[IPC] service not available\n");
-            return 0;
+            return false;
         }
 
         u16 level = 0;
@@ -528,7 +538,7 @@ namespace alefbet::pctrl::ipc {
         Result res = serviceDispatchOut(&service, (u32)Ipc::Command::GetLogLevel, level);
 
         if(R_FAILED(res)) {
-            logError("[IPC] An error occured while getting the daily limit.\n");
+            logError("[IPC] An error occured while getting the log level.\n");
         } 
 
         logDebug("[IPC] Log level is %i\n", level);
@@ -566,7 +576,7 @@ namespace alefbet::pctrl::ipc {
 
         if(!isAvailable()) {
             logError("[IPC] service not available\n");
-            return 0;
+            return false;
         }
 
         u8 tampered = 0;
@@ -590,7 +600,7 @@ namespace alefbet::pctrl::ipc {
 
         if(!isAvailable()) {
             logError("[IPC] service not available\n");
-            return 0;
+            return false;
         }
 
         u8 mustUpgrade = 0;

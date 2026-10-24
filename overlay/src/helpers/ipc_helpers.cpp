@@ -233,7 +233,7 @@ namespace alefbet::pctrl::ipc {
         logDebug("[IPC] Verify Admin PIN\n");
 
         if(pin.size() < 4) {
-            logWarning("[IPC] The pin size is incorrect\n");
+            logError("[IPC] The pin size is incorrect\n");
             return false;
         }
 
@@ -266,7 +266,7 @@ namespace alefbet::pctrl::ipc {
         logDebug("[IPC] Setup new PIN\n");
 
         if(pin.size() < 4) {
-            logWarning("[IPC] The pin size is incorrect\n");
+            logError("[IPC] The pin size is incorrect\n");
             return false;
         }
 

@@ -377,6 +377,12 @@ namespace alefbet::pctrl::gui {
         ::Result res = this->PrepareScreenForDrawing();
         if(R_FAILED(res)) {
             logError("[Screen] PrepareScreenForDrawing failed\n");
+
+            if(g_framebuffer_pointer != nullptr) {
+                free(g_framebuffer_pointer);
+                g_framebuffer_pointer = nullptr;
+            }
+            
             return res;
         }
 

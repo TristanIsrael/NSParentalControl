@@ -178,6 +178,7 @@ namespace alefbet::pctrl::srv {
             user = helpers::getCurrentUser();
             if(!user.isValid()) {
                 logDebug("[Service] There is no user\n");
+                request->appendReplyValue((u16)0);
                 return Ipc::Result::Ok;
             }
         } else {
@@ -185,6 +186,12 @@ namespace alefbet::pctrl::srv {
             logDebug("[Service] user Uid received: %s\n", user_uid);
             const auto& account_uid = accountUidFromString(UserUid(user_uid));
             user = getUserFromAccountUid(account_uid);
+
+            if(!user.isValid()) {
+                logDebug("[Service] Invalid user uid: %s\n", user_uid);
+                request->appendReplyValue((u16)0);
+                return Ipc::Result::Ok;
+            }
         }
 
         logDebug("[Service] Get usage time for user %s\n", user.nickname.c_str());
@@ -703,8 +710,8 @@ namespace alefbet::pctrl::srv {
                 return isMustUpgradeDatabase(request);
             }
             default: {
-                logError("[Service] command %i not handled.\n", request->cmd());                
-                return Ipc::Result::UnknownCommand;
+                logError("[Service] command %i not supported.\n", request->cmd());                
+                return Ipc::Result::BadInput;
             }
         }        
 

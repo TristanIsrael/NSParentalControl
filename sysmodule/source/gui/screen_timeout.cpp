@@ -24,7 +24,6 @@
 #include <cstring>
 
 using namespace alefbet::pctrl::logger;
-using namespace alefbet::pctrl::database;
 using namespace ams;
 
 namespace alefbet::pctrl::gui {    

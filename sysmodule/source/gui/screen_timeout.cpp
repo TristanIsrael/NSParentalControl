@@ -395,16 +395,16 @@ namespace alefbet::pctrl::gui {
         if(m_display_prepared) {
             viSetDisplayAlpha(&m_display, 0.0f);
             
-            viDestroyLayer(&m_layer);
+            viCloseLayer(&m_layer);
             viCloseDisplay(&m_display);
             viExit();
 
-            nwindowFinalize(&m_win);
+            nwindowClose(&m_win);
         }
 
-        nvFenceFinalize();
+        nvFenceExit();
         nvMapClose(&m_map);
-        nvMapFinalize();
+        nvMapExit();
         nvExit();
 
         if(g_framebuffer_pointer != nullptr) {

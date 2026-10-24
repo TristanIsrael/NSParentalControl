@@ -55,12 +55,12 @@ tsl::elm::Element* SetupLimitsUserPanel::createUI() {
     rootList_ = new tsl::elm::List();
     
     // Load settings
-    const auto& dailyLimitInMinutes = ipc::getDailyLimit(user_);
-    const auto& duration = minutes{dailyLimitInMinutes};
+    const u16 dailyLimitInMinutes = ipc::getDailyLimit(user_);
+    const auto duration = minutes{dailyLimitInMinutes};
     auto hoursPart = duration_cast<hours>(duration);
     auto minutesPart = duration_cast<minutes>(duration - hoursPart);
-    dailyLimitHours_ = hoursPart.count();
-    dailyLimitMinutes_ = minutesPart.count();
+    dailyLimitHours_ = std::min(hoursPart.count(), 12ULL);
+    dailyLimitMinutes_ = std::min(minutesPart.count(), 59ULL);
 
     rebuildUI();
 

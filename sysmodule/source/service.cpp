@@ -280,9 +280,9 @@ namespace alefbet::pctrl::srv {
 
         Args args{0};
 
-        Ipc::Result rc = request->readRequestData(args);
+        Ipc::Result rc = request->readRequestValue(args);
         if(rc != Ipc::Result::Ok) {
-            logError("[Service] Could not read request data (limit)\n");
+            logError("[Service] Could not read request value (limit)\n");
             return rc;
         }
 

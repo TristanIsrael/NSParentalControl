@@ -36,7 +36,7 @@ using namespace alefbet::pctrl::database::settings;
 extern "C" {
 #endif
 
-    constexpr size_t TotalHeapSize = ams::util::AlignUp(500_KB, ams::os::MemoryHeapUnitSize);
+    constexpr size_t TotalHeapSize = ams::util::AlignUp(512_KB, ams::os::MemoryHeapUnitSize);
 
     constexpr size_t ThreadServiceStackRequiredSizeBytes = ams::util::AlignUp(256_KB, 128);
     constexpr size_t ThreadServiceStackRequiredSizeAligned = ams::util::AlignUp(ThreadServiceStackRequiredSizeBytes, ams::os::MemoryPageSize);

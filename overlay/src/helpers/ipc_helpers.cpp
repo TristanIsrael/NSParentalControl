@@ -499,10 +499,20 @@ namespace alefbet::pctrl::ipc {
             return false;
         }
 
+        typedef struct __attribute__((packed)) {
+            u16 limit_in_minutes;
+            char userId[80];
+        } Args;
+
+        Args args {
+            .limit_in_minutes = limit,            
+        };
+
         const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(args.userId, sizeof(args.userId), "%s", userId.c_str());
 
         auto& service = getAppContext().pctrl_service;
-        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetUserDailyLimit, limit, userId);
+        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetUserDailyLimit, args);
 
         if(R_FAILED(res)) {
             logError("[IPC] An error occured while setting the daily limit.\n");

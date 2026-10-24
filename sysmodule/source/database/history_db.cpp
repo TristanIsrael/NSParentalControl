@@ -16,32 +16,43 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <fstream>
 #include <sys/stat.h>
-#include <vector>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
 #include <switch.h>
-#include <filesystem>
 #include <mutex>
-#include <vector>
-#include <algorithm>
-#include <mbedtls/sha512.h>
-#include <iomanip>
+#include <cstring>
+#include <memory>
 #include "history_db.h"
-#include "json.hpp"
+#include "history.h"
 #include "../logger.h"
 #include "../helpers.h"
 
-using json = nlohmann::json;
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::helpers;
 
 static const char* DATA_DIR = "/config/parental_control";
-static const char* DB_FILENAME = "/config/parental_control/sessions.json";
+static const char* DB_FILENAME = "/config/parental_control/sessions.bin";
 
 namespace alefbet::pctrl::database {
+
+    // Binary format constants and structures (see history_db.h for full spec)
+    static constexpr u32 DB_MAGIC = 0x4E535043; // "NSPC"
+    static constexpr u32 DB_VERSION = 1;
+
+    struct BinHeader {
+        u32 magic;
+        u32 version;
+        u64 entryCount;
+    } __attribute__((packed));
+
+    struct BinEntry {
+        u64 uidLow;
+        u64 uidHigh;
+        u32 dateLength;
+        u64 titleId;
+        u16 durationInMinutes;
+        // date string follows immediately after the struct
+    } __attribute__((packed));
+
     static FsFileSystem sdmc_;
     static FsFile handle_database_;
     static std::mutex mutex_database_;
@@ -50,118 +61,6 @@ namespace alefbet::pctrl::database {
     static History history_;
     static bool mustUpgrade_ = false;
     static bool isTampered_ = false;
-
-    namespace crypto {
-        static const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-        std::string base64Encode(const std::vector<uint8_t>& data)
-        {
-            std::string out;
-            uint32_t val = 0;
-            int valb = -6;
-
-            for (uint8_t c : data) {
-                val = (val << 8) + c;
-                valb += 8;
-                while (valb >= 0) {
-                    out.push_back(b64_table[(val >> valb) & 0x3F]);
-                    valb -= 6;
-                }
-            }
-            if (valb > -6) out.push_back(b64_table[((val << 8) >> (valb + 8)) & 0x3F]);
-            while (out.size() % 4) out.push_back('=');
-
-            return out;
-        }
-
-        std::vector<uint8_t> base64Decode(const std::string& s)
-        {
-            std::vector<int> T(256, -1);
-            for (int i = 0; i < 64; i++) T[b64_table[i]] = i;
-
-            std::vector<uint8_t> out;
-            uint32_t val = 0;
-            int valb = -8;
-
-            for (uint8_t c : s) {
-                if (T[c] == -1) break;
-                val = (val << 6) + T[c];
-                valb += 6;
-                if (valb >= 0) {
-                    out.push_back((val >> valb) & 0xFF);
-                    valb -= 8;
-                }
-            }
-            return out;
-        }
-
-        void xorAndPermute(std::vector<uint8_t>& data, uint8_t key) {
-            for (auto& b : data)
-                b ^= key;
-
-            for (size_t i = 0; i + 3 < data.size(); i += 4) {
-                std::swap(data[i],   data[i+2]);
-                std::swap(data[i+1], data[i+3]);
-            }
-        }
-
-        void unpermuteAndXor(std::vector<uint8_t>& data, uint8_t key) {
-            for (size_t i = 0; i + 3 < data.size(); i += 4) {
-                std::swap(data[i],   data[i+2]);
-                std::swap(data[i+1], data[i+3]);
-            }
-
-            for (auto& b : data)
-                b ^= key;
-        }
-
-        std::string encodeValue(const std::string input) {
-            std::vector<u8> buf(input.begin(), input.end());
-            u8 key = 0x31;
-
-            xorAndPermute(buf, key);
-            return std::string(buf.begin(), buf.end());
-        }
-
-        std::string decodeValue(const std::string input) {
-            std::vector<u8> buf(input.begin(), input.end());
-            u8 key = 0x31;
-
-            unpermuteAndXor(buf, key);
-            return std::string(buf.begin(), buf.end());
-        }
-
-        std::string calculateHash(const json& j_entries) {
-            mbedtls_sha512_context ctx;
-
-            const auto& str_data = j_entries.dump();
-            u8 hash[64];
-
-            mbedtls_sha512_init(&ctx);
-            mbedtls_sha512_starts_ret(&ctx, 0); // 0 = SHA-512
-            mbedtls_sha512_update_ret(&ctx, reinterpret_cast<const u8*>(str_data.data()), str_data.size());
-            mbedtls_sha512_finish_ret(&ctx, hash);
-            mbedtls_sha512_free(&ctx);
-
-            std::ostringstream oss;
-            for(int i = 0 ; i < 64 ; i++) {
-                oss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
-            }
-
-            return oss.str();
-        }
-
-        bool verifyHash(const json& j_entries) {
-            // The hash is calculated without the "hash" entry
-            const auto& hash = j_entries["hash"].get<std::string>();
-            auto j_copy = j_entries; // Copy JSON data
-            j_copy.erase("hash");
-
-            const auto& calculated_hash = calculateHash(j_copy);
-
-            return calculated_hash == hash;
-        }
-    }
 
     bool upgradeNeeded() {
         return mustUpgrade_;
@@ -197,9 +96,56 @@ namespace alefbet::pctrl::database {
         return result;
     }
 
+    static bool loadEntriesFromBinary(const u8* data, s64 fileSize) {
+        if(fileSize < static_cast<s64>(sizeof(BinHeader))) {
+            logError("[Database] Database file too small for header\n");
+            return false;
+        }
+
+        const BinHeader* header = reinterpret_cast<const BinHeader*>(data);
+
+        if(header->magic != DB_MAGIC) {
+            logError("[Database] Invalid database magic: %08X\n", header->magic);
+            return false;
+        }
+
+        if(header->version != DB_VERSION) {
+            logError("[Database] Unsupported database version: %u (expected %u)\n", 
+                     header->version, DB_VERSION);
+            return false;
+        }
+
+        s64 offset = sizeof(BinHeader);
+        for(u64 i = 0; i < header->entryCount; i++) {
+            if(offset + static_cast<s64>(sizeof(BinEntry)) > fileSize) {
+                logError("[Database] Entry %llu exceeds file bounds\n", i);
+                return false;
+            }
+
+            const BinEntry* entry = reinterpret_cast<const BinEntry*>(data + offset);
+            offset += sizeof(BinEntry);
+
+            if(offset + entry->dateLength > fileSize) {
+                logError("[Database] Date string exceeds file bounds\n");
+                return false;
+            }
+
+            std::string dateStr(reinterpret_cast<const char*>(data + offset), entry->dateLength);
+            offset += entry->dateLength;
+
+            AccountUid uid;
+            uid.uid[0] = entry->uidLow;
+            uid.uid[1] = entry->uidHigh;
+
+            HistoryEntry he(uid, dateStr, entry->titleId, entry->durationInMinutes);
+            history_.addEntry(he);
+        }
+
+        return true;
+    }
+
     void loadDatabase()
     {
-        // We load the file only when the data are not up to date
         if(data_synchronized_) return;
 
         std::lock_guard<std::mutex> lock(mutex_database_);
@@ -211,12 +157,10 @@ namespace alefbet::pctrl::database {
         bool opened = R_SUCCEEDED(fsFsOpenFile(&sdmc_, DB_FILENAME, FsOpenMode_Read, &handle_database_));
 
         if(!opened) {
-            logError("Could not open database file. Try to create a new file.\n");
+            logError("Could not open database file. Creating new database.\n");
 
-            // Verify whether data directory exists
             FsDirEntryType type;
             if(R_FAILED(fsFsGetEntryType(&sdmc_, DATA_DIR, &type))) {
-                // The directory does not exist
                 if(!createDataDirectory()) {
                     logError("[Database] The data directory could not be created.\n");
                     return;
@@ -227,74 +171,48 @@ namespace alefbet::pctrl::database {
                 logError("[Database] Could not create a new database file.\n");
                 return;
             }
-        } else {
-            s64 fileSize = 0;
-            if(R_FAILED(fsFileGetSize(&handle_database_, &fileSize))) {
-                logError("[Database] Could not get database file size\n");
-                fsFileClose(&handle_database_);
-                return ;
-            } else {
-                logDebug("[Database] Database file size is %i\n", fileSize);
-            }
-
-            if(fileSize == 0) {
-                logError("[Database] Database file is empty\n");
-                fsFileClose(&handle_database_);
-                return;
-            }
-
-            u8* data = new u8[fileSize+1];
-            if(data == nullptr) {
-                logError("[Database] Could not create a buffer for sessions\n");
-                fsFileClose(&handle_database_);
-                return;
-            } else {
-                logDebug("[Database] sessions buffer ready at @%p\n", (void*)data);
-            }
-
-            u64 dataRead = 0;
-            if(R_FAILED(fsFileRead(&handle_database_, 0, data, fileSize, FsReadOption_None, &dataRead))) {
-                logError("[Database] Could not read the database file\n");
-                fsFileClose(&handle_database_);
-                return;
-            } else {
-                logDebug("[Database] Sessions database read\n");
-            }
-
-            data[fileSize] = '\0';
-
-            logDebug("[Database] Sessions data: %s\n", data);
-            logDebug("[Database] Parse sessions file\n");
-            json j_data = json::parse(data);
-
-            // Verify database integrity
-            logInfo("[Database] Verifying database integrity\n");
-            if(j_data.contains("hash")) {
-                isTampered_ = !crypto::verifyHash(j_data);
-                logInfo("[Database] Database file integrity is %s. %s\n", (!isTampered_ ? "verified" : "compromized"), isTampered_ ? "The hash is corrupted." : "");
-            } else {
-                isTampered_ = true;
-                logInfo("[Database] Database file integrity is compromized. The hash is missing\n");
-            }
-
-            std::vector<json> j_entries = j_data["history"].get<std::vector<json>>();
-
-            for(const auto& j_entry: j_entries) {
-                auto uidAsString = j_entry["uid"].get<std::string>();
-                auto date = j_entry["date"].get<std::string>();
-                auto titleId = j_entry["title_id"].get<u64>();
-                auto durationInMinutes = j_entry["duration_in_min"].get<u16>();
-                auto uid = accountUidFromString(uidAsString);
-
-                HistoryEntry entry(uid, date, titleId, durationInMinutes);
-                history_.addEntry(entry);
-            }
-
-            fsFileClose(&handle_database_);
-            delete[] data;
 
             data_synchronized_ = true;
+            return;
         }
+
+        s64 fileSize = 0;
+        if(R_FAILED(fsFileGetSize(&handle_database_, &fileSize))) {
+            logError("[Database] Could not get database file size\n");
+            fsFileClose(&handle_database_);
+            return;
+        } else {
+            logDebug("[Database] Database file size is %i\n", fileSize);
+        }
+
+        if(fileSize == 0) {
+            logDebug("[Database] Database file is empty, initializing new database\n");
+            fsFileClose(&handle_database_);
+            data_synchronized_ = true;
+            return;
+        }
+
+        std::vector<u8> buffer(fileSize);
+        u64 dataRead = 0;
+        if(R_FAILED(fsFileRead(&handle_database_, 0, buffer.data(), fileSize, FsReadOption_None, &dataRead))) {
+            logError("[Database] Could not read the database file\n");
+            fsFileClose(&handle_database_);
+            return;
+        }
+
+        fsFileClose(&handle_database_);
+
+        logDebug("[Database] Successfully read %llu bytes from database\n", dataRead);
+
+        if(!loadEntriesFromBinary(buffer.data(), fileSize)) {
+            logError("[Database] Failed to parse database entries\n");
+            isTampered_ = true;
+            return;
+        }
+
+        logInfo("[Database] Loaded %llu entries from database\n", history_.entries().size());
+
+        data_synchronized_ = true;
     }
 
     void saveDatabase() {
@@ -302,27 +220,46 @@ namespace alefbet::pctrl::database {
 
         if(!prepare()) return;
 
-        json j_entries;
-        for(const auto& entry: history_.entries()) {
-            json j_entry = json::object( {
-                { "uid", entry.uidAsString() },
-                { "date", entry.date() },
-                { "title_id", entry.titleId() },
-                { "duration_in_min", entry.durationInMinutes() }
-            });
+        const auto& entries = history_.entries();
+        u64 entryCount = entries.size();
 
-            j_entries.push_back(j_entry);
+        // Calculate required buffer size
+        s64 totalSize = sizeof(BinHeader);
+        for(const auto& entry : entries) {
+            totalSize += sizeof(BinEntry);
+            totalSize += entry.date().length();
         }
 
-        json j_history = json{
-            { "history", j_entries }
-        };
+        std::vector<u8> buffer(totalSize);
+        u8* writePtr = buffer.data();
 
-        // Calculate data hash
-        const auto& hash = crypto::calculateHash(j_history);
+        // Write header
+        BinHeader header;
+        header.magic = DB_MAGIC;
+        header.version = DB_VERSION;
+        header.entryCount = entryCount;
+        std::memcpy(writePtr, &header, sizeof(BinHeader));
+        writePtr += sizeof(BinHeader);
 
-        // Add the hash
-        j_history["hash"] = hash;
+        // Write entries
+        for(const auto& entry : entries) {
+            BinEntry binEntry;
+            binEntry.uidLow = entry.uid().uid[0];
+            binEntry.uidHigh = entry.uid().uid[1];
+            
+            const auto& dateStr = entry.date();
+            binEntry.dateLength = static_cast<u32>(dateStr.length());
+            binEntry.titleId = entry.titleId();
+            binEntry.durationInMinutes = entry.durationInMinutes();
+
+            std::memcpy(writePtr, &binEntry, sizeof(BinEntry));
+            writePtr += sizeof(BinEntry);
+
+            std::memcpy(writePtr, dateStr.data(), dateStr.length());
+            writePtr += dateStr.length();
+        }
+
+        logDebug("[Database] Writing %llu bytes (%llu entries) to database\n", totalSize, entryCount);
 
         if(R_FAILED(fsFsDeleteFile(&sdmc_, DB_FILENAME))) {
             logError("[Database] Could not delete the current database file\n");
@@ -338,34 +275,21 @@ namespace alefbet::pctrl::database {
             return;
         }
 
-        const auto stdstr_data = j_history.dump();
-        u64 lenstr = stdstr_data.length();
-        void* s_data = malloc(lenstr+1);
-        memset(s_data, 0, lenstr);
-        std::snprintf((char*)s_data, lenstr, "%s", stdstr_data.c_str());
-
-        logDebug("[Database] Writing sessions data %s (size=%i)\n", s_data, lenstr);
-
-        if(R_FAILED(fsFileWrite(&handle_database_, 0, s_data, lenstr, FsWriteOption_Flush))) {
+        u64 bytesWritten = 0;
+        if(R_FAILED(fsFileWrite(&handle_database_, 0, buffer.data(), totalSize, FsWriteOption_Flush))) {
             logError("[Database] Could not write into database file\n");
+        } else {
+            logDebug("[Database] Successfully wrote %llu bytes to database\n", totalSize);
         }
 
         fsFileClose(&handle_database_);
-        free(s_data);
     }
 
     std::vector<HistoryEntry> getHistory(AccountUid uid, std::string date) {
-        //Get current history
         loadDatabase();
-
         return history_.entries(uid, date);
     }
 
-    /*! \brief Adds an entry in the history
-     *
-     * An history entry represents the duration of play for a single title for a single player.
-     * An entry is composed of an account ID, a title ID and the duration of play.
-    */
     HistoryEntry addToHistory(AccountUid uid, u64 titleId, u16 duration_in_minutes)
     {
         HistoryEntry result;
@@ -377,15 +301,11 @@ namespace alefbet::pctrl::database {
 
         std::string uidToString = accountUidToString(uid);
 
-        //Get current history
-        //loadDatabase();
-
         const auto& date = today();
         if(date.empty()) {
             return result;
         }
 
-        //Search existing entry
         auto entries = history_.entries(uid, date, titleId);
 
         if(!entries.empty()) {
@@ -395,7 +315,6 @@ namespace alefbet::pctrl::database {
             logDebug("[Database] new duration is %i\n", entry.durationInMinutes());
             result = entry;
         } else {
-            //Or create a new one
             logDebug("[Database] no entry found for user %s with title ID %i\n", uidToString.c_str(), titleId);
             HistoryEntry entry = HistoryEntry(uid, date, titleId, duration_in_minutes);
             history_.addEntry(entry);

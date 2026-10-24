@@ -25,6 +25,15 @@
 
 namespace alefbet::pctrl::database {
 
+    /**
+     * @brief History database module
+     *
+     * Manages persistent storage of session history data for parental control.
+     *
+     * Full binary format specification is documented in
+     * docs/database-binary-format.md
+     */
+
     /* Files management */
     bool createDataDirectory();
 

@@ -332,11 +332,11 @@ namespace alefbet::pctrl::database::history {
         auto entries = history_.entries(uid, date, titleId);
 
         if(!entries.empty()) {
-            auto entry = entries[0];
             logDebug("[Database] entry found for user %s with title ID %i\n", uidToString.c_str(), titleId);
-            entry.setDurationInMinutes(duration_in_minutes + entry.durationInMinutes());
-            logDebug("[Database] new duration is %i\n", entry.durationInMinutes());
-            result = entry;
+            u16 currentDuration = entries[0].durationInMinutes();
+            history_.updateEntry(uid, date, titleId, duration_in_minutes);
+            result = entries[0];
+            result.setDurationInMinutes(currentDuration + duration_in_minutes);
         } else {
             logDebug("[Database] no entry found for user %s with title ID %i\n", uidToString.c_str(), titleId);
             HistoryEntry entry = HistoryEntry(uid, date, titleId, duration_in_minutes);

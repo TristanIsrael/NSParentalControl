@@ -61,6 +61,7 @@ public:
     History& operator=(const History&);
     
     void addEntry(const HistoryEntry& entry);
+    void updateEntry(const AccountUid& uid, const std::string& date, u64 titleId, u16 durationInMinutes);
     std::vector<HistoryEntry> entries() const;
     std::vector<HistoryEntry> entries(const AccountUid& uid, const std::string& date, const u64& titleId = 0) const;
 

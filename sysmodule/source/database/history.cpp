@@ -99,6 +99,23 @@ void History::addEntry(const HistoryEntry& entry) {
     d_->history.push_back(entry);
 }
 
+/*! @brief Updates an existing history entry or creates a new one if not found.
+ * @param uid The account UID to match.
+ * @param date The date string to match.
+ * @param titleId The title ID to match.
+ * @param durationInMinutes The duration to add to the existing entry. */
+void History::updateEntry(const AccountUid& uid, const std::string& date, u64 titleId, u16 durationInMinutes) {
+    for(auto& existingEntry : d_->history) {
+        if(existingEntry.uid().uid[0] == uid.uid[0] &&
+           existingEntry.uid().uid[1] == uid.uid[1] &&
+           existingEntry.date() == date &&
+           existingEntry.titleId() == titleId) {
+            existingEntry.setDurationInMinutes(durationInMinutes + existingEntry.durationInMinutes());
+            return;
+        }
+    }
+}
+
 /*! @brief Returns all history entries.
  * @return Vector of all history entries. */
 std::vector<HistoryEntry> History::entries() const {

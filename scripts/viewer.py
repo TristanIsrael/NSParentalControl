@@ -86,7 +86,7 @@ def read_settings(path):
         print("Error: file too small for header")
         sys.exit(1)
 
-    magic, version, entry_count = struct.unpack("<IIIQ", data[:16])
+    magic, version, entry_count = struct.unpack("<IIQ", data[:16])
     magic_str = struct.pack("<I", magic).decode("ascii", errors="replace")
 
     print(f"Settings Database: {path}")

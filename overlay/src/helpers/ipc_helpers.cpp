@@ -499,7 +499,7 @@ namespace alefbet::pctrl::ipc {
             return false;
         }
 
-        typedef struct {
+        typedef struct __attribute__((packed)) {
             u16 limit_in_minutes;
             char userId[80];
         } Args;

@@ -272,8 +272,8 @@ namespace alefbet::pctrl::srv {
      * @param request IPC request containing the limit in minutes and the user ID.
      * @return Ipc::Result::Ok on success.
      */
-    Ipc::Result Service::setUserDailyLimit(Ipc::Request* request) {        
-        typedef struct {
+    Ipc::Result Service::setUserDailyLimit(Ipc::Request* request) {
+        typedef struct __attribute__((packed)) {
             u16 limit_in_minutes;
             char userId[80];
         } Args;

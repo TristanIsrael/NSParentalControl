@@ -72,14 +72,15 @@ namespace alefbet::pctrl::srv {
 
     namespace actions {        
 
-        void reboot_to_payload(void) {
-            helpers::rebootToPayload();
+        /*! @brief Terminates the currently running application. */
+        void terminate_current_application(void) {
+            helpers::terminateCurrentApplication();
         }
     }
 
     /*! @brief Shows the timeout screen and waits for Vol+ button press.
      *
-     * When Vol+ is pressed, the system reboots to the recovery payload.
+     * When Vol+ is pressed, the current application is terminated.
      */
     void Service::showScreenTimeout() {        
         logDebug("[Service] Requested to show timeout screen\n");                        
@@ -98,7 +99,8 @@ namespace alefbet::pctrl::srv {
 
             if(value == 0) {
                 logDebug("[GUI] Vol+ pressed.\n");
-                actions::reboot_to_payload();
+                gui_.hideScreenTimeout();
+                actions::terminate_current_application();
                 break;
             }  
             
@@ -649,8 +651,8 @@ namespace alefbet::pctrl::srv {
                 threadCreate(&t, delayedTimeout, this, NULL, 0x4000, 0x2c, -2);
                 threadStart(&t);*/                
                 //NotificationsController::notifyRemainingTime(15);
-                helpers::terminateCurrentApplication();
-
+                //helpers::terminateCurrentApplication();
+                gui_
                 break;
             }
             case Ipc::Command::GetCurrentUserUid: {

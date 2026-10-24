@@ -46,6 +46,7 @@ namespace alefbet::pctrl::gui {
         public:            
             //void setTransferMemory(u8*, u64 size);
             ::Result ShowScreenTimeout();
+            void Hide();
 
         private:
             ViDisplay m_display;
@@ -54,6 +55,7 @@ namespace alefbet::pctrl::gui {
             NvMap m_map;
             //u8* g_nv_transfer_memory = nullptr;
             //u64 nv_transfer_memory_size = 0;
+            bool m_display_prepared = false;
     };
     
 }

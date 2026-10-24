@@ -214,7 +214,9 @@ namespace alefbet::pctrl::gui {
                 InitializeNativeWindow(),
                 "[Screen] Could not initialize native window.\n"
             )
-        }        
+        }
+
+        m_display_prepared = true;
 
         return 0;
     }
@@ -255,29 +257,51 @@ namespace alefbet::pctrl::gui {
 
         /* Let the font manager know about our framebuffer. */
         font::ConfigureFontFramebuffer(tiled_buf, GetPixelOffset);
-        font::SetFontColor(0x000F);
+        font::SetFontColor(0x001F);
 
-        /* Draw a background. */
+        /* Draw a semi-transparent dark overlay over the entire screen. */
         for (size_t i = 0; i < FrameBufferRequiredSizeBytes / sizeof(*tiled_buf); i++) {
-            tiled_buf[i] = pctrl_logo[0];
+            tiled_buf[i] = 0x0008;
         }
         
-        u32 logo_x = (PctrlScreenWidth - LogoWidth) / 2;
-        u32 logo_y = (PctrlScreenHeight - LogoHeight) / 2;
+        constexpr u32 BoxWidth = 640;
+        constexpr u32 BoxHeight = 360;
+        u32 box_x = (PctrlScreenWidth - BoxWidth) / 2;
+        u32 box_y = (PctrlScreenHeight - BoxHeight) / 2;
 
-        /* Draw the logo in the center of the screen */
-        for (size_t y = 0; y < LogoHeight; y++) {
-            for (size_t x = 0; x < LogoWidth; x++) {
-                tiled_buf[GetPixelOffset(logo_x + x, logo_y + y)] = pctrl_logo[y * LogoWidth + x];
+        for (u32 y = 0; y < BoxHeight; y++) {
+            for (u32 x = 0; x < BoxWidth; x++) {
+                tiled_buf[GetPixelOffset(box_x + x, box_y + y)] = 0x1084;
             }
         }
 
-        /* Show message */
-        font::SetPosition(336, 318);
-        font::SetFontSize(62.0f);
+        for (u32 x = 0; x < BoxWidth; x++) {
+            tiled_buf[GetPixelOffset(box_x + x, box_y)] = 0xFFFF;
+            tiled_buf[GetPixelOffset(box_x + x, box_y + BoxHeight - 1)] = 0xFFFF;
+        }
+        for (u32 y = 0; y < BoxHeight; y++) {
+            tiled_buf[GetPixelOffset(box_x, box_y + y)] = 0xFFFF;
+            tiled_buf[GetPixelOffset(box_x + BoxWidth - 1, box_y + y)] = 0xFFFF;
+        }
+
+        u32 logo_x = box_x + (BoxWidth - LogoWidth) / 2;
+        u32 logo_y = box_y + 30;
+
+        for (size_t y = 0; y < LogoHeight; y++) {
+            for (size_t x = 0; x < LogoWidth; x++) {
+                u16 pixel = pctrl_logo[y * LogoWidth + x];
+                if (pixel != 0) {
+                    tiled_buf[GetPixelOffset(logo_x + x, logo_y + y)] = pixel;
+                }
+            }
+        }
+
+        font::SetPosition(box_x + 120, box_y + 120);
+        font::SetFontSize(48.0f);
         font::Print("Your time is up!");
-        font::SetPosition(473, 402);
-        font::SetFontSize(25.0f);
+        
+        font::SetPosition(box_x + 150, box_y + 200);
+        font::SetFontSize(20.0f);
         font::Print("Press Vol+ to reboot");
         
         return 0;
@@ -362,6 +386,33 @@ namespace alefbet::pctrl::gui {
         if(R_FAILED(res)) {
             logError("[Screen timeout] Coulr not dequeue window buffer: %i.%i\n", R_MODULE(res), R_DESCRIPTION(res));
         }
+    }
+
+    /*! @brief Hides the screen timeout overlay by setting layer alpha to 0 and cleaning up. */
+    void ScreenTimeout::Hide() {
+        logDebug("[Screen] Hiding timeout overlay\n");
+
+        if(m_display_prepared) {
+            viSetDisplayAlpha(&m_display, 0.0f);
+            
+            viDestroyLayer(&m_layer);
+            viCloseDisplay(&m_display);
+            viExit();
+
+            nwindowFinalize(&m_win);
+        }
+
+        nvFenceFinalize();
+        nvMapClose(&m_map);
+        nvMapFinalize();
+        nvExit();
+
+        if(g_framebuffer_pointer != nullptr) {
+            free(g_framebuffer_pointer);
+            g_framebuffer_pointer = nullptr;
+        }
+
+        logDebug("[Screen] Timeout overlay hidden\n");
     }
 
     /*! @brief Shows the full screen timeout display, orchestrating all rendering steps.

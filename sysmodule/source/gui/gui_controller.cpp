@@ -30,9 +30,8 @@ using namespace alefbet::pctrl::gui;
 void GuiController::showScreenTimeout() {
     logDebug("[Gui] ShowScreenTimeout\n");
 
-    ScreenTimeout *screen = new ScreenTimeout();
-    //screen->setTransferMemory(g_nv_transfer_memory, sizeof(g_nv_transfer_memory));
-    screen->ShowScreenTimeout();
+    m_screen_timeout = new ScreenTimeout();
+    m_screen_timeout->ShowScreenTimeout();
 
     // Instance is not freed because the console will be rebooted
 
@@ -54,7 +53,12 @@ void GuiController::showScreenTimeout() {
 /*! @brief Hides the screen timeout overlay by clearing the screen. */
 void GuiController::hideScreenTimeout() {
     logDebug("[Gui] Hide timeout screen\n");
-    clearScreen();
+
+    if(m_screen_timeout != nullptr) {
+        m_screen_timeout->Hide();
+        delete m_screen_timeout;
+        m_screen_timeout = nullptr;
+    }
 }
 
 /*void GuiController::showRemainingTimePanel() {    

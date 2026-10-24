@@ -1,5 +1,18 @@
 # Changelog
 
+## Release 2.0
+
+### Overlay
+
+- Fixed small bugs
+
+### Sysmodule
+
+- Fixed bugs.
+- Changed the database from JSON to binary.
+- Replaced the limit screen by notifications and the forced shutdown of the the game.
+- Reduced the memory reserver from 2500 MB to 512 MB for the heap.
+
 ## Release 1.1
 
 ### Overlay

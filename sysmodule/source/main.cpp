@@ -36,7 +36,7 @@ using namespace alefbet::pctrl::database::settings;
 extern "C" {
 #endif
 
-    constexpr size_t TotalHeapSize = ams::util::AlignUp(2500_KB, ams::os::MemoryHeapUnitSize);
+    constexpr size_t TotalHeapSize = ams::util::AlignUp(500_KB, ams::os::MemoryHeapUnitSize);
 
     constexpr size_t ThreadServiceStackRequiredSizeBytes = ams::util::AlignUp(256_KB, 128);
     constexpr size_t ThreadServiceStackRequiredSizeAligned = ams::util::AlignUp(ThreadServiceStackRequiredSizeBytes, ams::os::MemoryPageSize);
@@ -51,7 +51,7 @@ extern "C" {
     u32 __nx_fsdev_direntry_cache_size = 1;
     bool __nx_fsdev_support_cwd = false;
 
-    u32 __nx_applet_type = AppletType_None;
+    /*u32 __nx_applet_type = AppletType_None;
     ViLayerFlags __nx_vi_stray_layer_flags = (ViLayerFlags)0;
 
     alignas(ams::os::MemoryPageSize) constinit u8 g_nv_transfer_memory[0x40000];
@@ -66,7 +66,7 @@ extern "C" {
         }
 
         return rc;
-    }
+    }*/
 
     void __libnx_initheap(void)
     {

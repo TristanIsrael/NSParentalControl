@@ -35,7 +35,8 @@
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::structs;
-using namespace alefbet::pctrl::database;
+using namespace alefbet::pctrl::database::history;
+using namespace alefbet::pctrl::database::settings;
 using std::operator""sv;
 
 namespace alefbet::pctrl::helpers {

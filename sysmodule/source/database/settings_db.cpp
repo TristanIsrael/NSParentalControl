@@ -33,7 +33,7 @@ using namespace alefbet::pctrl::helpers;
 static const char* DATA_DIR = "/config/parental_control";
 static const char* SETTINGS_FILENAME = "/config/parental_control/settings.bin";
 
-namespace alefbet::pctrl::database {
+namespace alefbet::pctrl::database::settings {
 
     // Binary format constants (see docs/database-binary-format.md for full spec)
     static constexpr u32 SETTINGS_MAGIC = 0x4E535053; // "NSPS"

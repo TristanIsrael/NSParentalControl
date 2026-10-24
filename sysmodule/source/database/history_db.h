@@ -23,7 +23,7 @@
 #include "settings.h"
 #include "history.h"
 
-namespace alefbet::pctrl::database {
+namespace alefbet::pctrl::database::history {
 
     /**
      * @brief History database module

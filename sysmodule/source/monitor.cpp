@@ -29,7 +29,8 @@
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::helpers;
-using namespace alefbet::pctrl::database;
+using namespace alefbet::pctrl::database::settings;
+using namespace alefbet::pctrl::database::history;
 using namespace std::chrono_literals;
 
 constexpr std::chrono::minutes MainLoopDelayInMinutes = 1min;

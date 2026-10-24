@@ -22,7 +22,7 @@
 #include <switch.h>
 #include "settings.h"
 
-namespace alefbet::pctrl::database {
+namespace alefbet::pctrl::database::settings {
 
     /* Settings management */
     Settings& loadSettings();

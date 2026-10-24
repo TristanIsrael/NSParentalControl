@@ -30,7 +30,7 @@
 #include "monitor.h"
 
 using namespace alefbet::pctrl::logger;
-using namespace alefbet::pctrl::database;
+using namespace alefbet::pctrl::database::settings;
 
 #ifdef __cplusplus
 extern "C" {

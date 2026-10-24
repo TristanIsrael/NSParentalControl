@@ -32,7 +32,7 @@ using namespace alefbet::pctrl::helpers;
 static const char* DATA_DIR = "/config/parental_control";
 static const char* DB_FILENAME = "/config/parental_control/sessions.bin";
 
-namespace alefbet::pctrl::database {
+namespace alefbet::pctrl::database::history {
 
     // Binary format constants and structures (see history_db.h for full spec)
     static constexpr u32 DB_MAGIC = 0x4E535043; // "NSPC"
@@ -289,8 +289,7 @@ namespace alefbet::pctrl::database {
             logError("[Database] The database file could not be opened for writing\n");
             return;
         }
-
-        u64 bytesWritten = 0;
+        
         if(R_FAILED(fsFileWrite(&handle_database_, 0, buffer.data(), totalSize, FsWriteOption_Flush))) {
             logError("[Database] Could not write into database file\n");
         } else {

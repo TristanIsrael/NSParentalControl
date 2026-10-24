@@ -20,7 +20,7 @@
 #include <vector>
 #include <atomic>
 #include "ipc/Server.hpp"
-#include "gui_controller.h"
+//#include "gui_controller.h"
 //#include "pctrl_screen.hpp"
 
 namespace alefbet::pctrl::srv {
@@ -34,9 +34,9 @@ namespace alefbet::pctrl::srv {
             ~Service();
             
             void listen();
-            GuiController&& gui() {
+            /*GuiController&& gui() {
                 return std::move(gui_);
-            }
+            }*/
 
             void setMonitor(Monitor* monitor) {
                 monitor_ = monitor;
@@ -84,7 +84,7 @@ namespace alefbet::pctrl::srv {
             bool is_ready_ = false;
             bool session_opened_ = false;
             Ipc::Server *ipcServer_ = nullptr;
-            GuiController gui_;
+            //GuiController gui_;
             bool enabled_ = true;
             Monitor* monitor_ = nullptr;
             std::atomic<bool> timeout_cancelled_ = false;

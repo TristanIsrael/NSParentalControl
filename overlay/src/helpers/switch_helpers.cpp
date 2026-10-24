@@ -31,6 +31,8 @@ namespace alefbet {
 
             using std::operator""sv;
 
+            /*! @brief Retrieves a list of all user accounts on the Switch.
+             * @return List of UserData for all users. */
             std::list<UserData> getUsersList() {
                 std::list<UserData> users;
 
@@ -86,10 +88,16 @@ namespace alefbet {
                 return users;
             }
 
+            /*! @brief Converts an AccountUid to a colon-separated string representation.
+             * @param uid The AccountUid to convert.
+             * @return String representation of the UID in "low:high" format. */
             UserUid accountUidToString(AccountUid uid) {
                 return std::to_string(uid.uid[0]) + ":" + std::to_string(uid.uid[1]);
             }
 
+            /*! @brief Converts a colon-separated UID string back to an AccountUid.
+             * @param uid_str The UID string in "low:high" format.
+             * @return The parsed AccountUid. */
             AccountUid accountUidFromString(const UserUid& uid_str) {
                 AccountUid uid;
 
@@ -109,6 +117,9 @@ namespace alefbet {
                 return uid;
             }
 
+            /*! @brief Gets the application title name for a given title ID.
+             * @param titleId The title ID to look up.
+             * @return The application name, or an error string on failure. */
             std::string getTitleName(u64 titleId) {
                 bool ok = R_SUCCEEDED(nsInitialize());
                 if(!ok) {

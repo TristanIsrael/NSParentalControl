@@ -88,6 +88,11 @@ namespace alefbet::pctrl::font {
         stbtt_fontinfo g_stb_font;
 
         /* Helpers. */
+        /*! @brief Blends two RGB565 colors with the given alpha value.
+         * @param color The foreground color.
+         * @param bg The background color.
+         * @param alpha The alpha value (0-255).
+         * @return The blended RGB565 color. */
         u16 Blend(u16 color, u16 bg, u8 alpha) {
             const u32 c_r = RGB565_GET_R8(color);
             const u32 c_g = RGB565_GET_G8(color);
@@ -103,6 +108,10 @@ namespace alefbet::pctrl::font {
             return RGB888_TO_RGB565(r, g, b);
         }
 
+        /*! @brief Draws a single codepoint glyph at the given position on the framebuffer.
+         * @param codepoint The Unicode codepoint to draw.
+         * @param x The X coordinate.
+         * @param y The Y coordinate. */
         void DrawCodePoint(u32 codepoint, u32 x, u32 y) {
             int width = 0, height = 0;
             u8* imageptr = stbtt_GetCodepointBitmap(std::addressof(g_stb_font), g_font_size, g_font_size, codepoint, std::addressof(width), std::addressof(height), 0, 0);
@@ -117,6 +126,10 @@ namespace alefbet::pctrl::font {
             }
         }
 
+        /*! @brief Draws a string onto the framebuffer at the current position.
+         * @param str The null-terminated string to draw.
+         * @param add_line Whether to advance to the next line after drawing.
+         * @param mono Whether to use monospace rendering. */
         void DrawString(const char *str, bool add_line, bool mono = false) {
             const size_t len = strlen(str);
 
@@ -166,7 +179,9 @@ namespace alefbet::pctrl::font {
 
     }
 
-    void PrintLine(const char *str) {
+            /*! @brief Prints a string and advances to the next line.
+         * @param str The null-terminated string to print. */
+        void PrintLine(const char *str) {
         return DrawString(str, true);
     }
 
@@ -181,7 +196,9 @@ namespace alefbet::pctrl::font {
         PrintLine(char_buf);
     }*/
 
-    void Print(const char *str) {
+            /*! @brief Prints a string without advancing to the next line.
+         * @param str The null-terminated string to print. */
+        void Print(const char *str) {
         return DrawString(str, false);
     }
 
@@ -217,25 +234,36 @@ namespace alefbet::pctrl::font {
         DrawString(char_buf, false, true);
     }*/
 
-    void SetFontColor(u16 color) {
+            /*! @brief Sets the current font color (RGB565 format).
+         * @param color The RGB565 color value. */
+        void SetFontColor(u16 color) {
         g_font_color = color;
     }
 
-    void SetPosition(u32 x, u32 y) {
+            /*! @brief Sets the current drawing position.
+         * @param x The X coordinate.
+         * @param y The Y coordinate. */
+        void SetPosition(u32 x, u32 y) {
         g_line_x = x;
         g_cur_x = x;
         g_cur_y = y;
     }
 
-    u32 GetX() {
+            /*! @brief Returns the current X coordinate.
+         * @return The current X coordinate. */
+        u32 GetX() {
         return g_cur_x;
     }
 
-    u32 GetY() {
+            /*! @brief Returns the current Y coordinate.
+         * @return The current Y coordinate. */
+        u32 GetY() {
         return g_cur_y;
     }
 
-    void SetFontSize(float fsz) {
+            /*! @brief Sets the font size and recalculates metrics.
+         * @param fsz The font size in pixels. */
+        void SetFontSize(float fsz) {
         g_font_size = stbtt_ScaleForPixelHeight(std::addressof(g_stb_font), fsz * 1.375);
 
         int ascent;
@@ -248,17 +276,24 @@ namespace alefbet::pctrl::font {
         g_mono_adv = adv_width * g_font_size;
     }
 
-    void AddSpacingLines(float num_lines) {
+            /*! @brief Adds spacing lines by advancing the Y coordinate.
+         * @param num_lines Number of lines to add as spacing. */
+        void AddSpacingLines(float num_lines) {
         g_cur_x = g_line_x;
         g_cur_y += static_cast<u32>(g_font_line_pixels * num_lines);
     }
 
-    void ConfigureFontFramebuffer(u16 *fb, u32 (*unswizzle_func)(u32, u32)) {        
+            /*! @brief Configures the framebuffer and unswizzle function for font rendering.
+         * @param fb Pointer to the framebuffer (u16 array).
+         * @param unswizzle_func Function to convert linear coordinates to framebuffer offset. */
+        void ConfigureFontFramebuffer(u16 *fb, u32 (*unswizzle_func)(u32, u32)) {        
         g_frame_buffer = fb;
         g_unswizzle_func = unswizzle_func;
     }
 
-    Result InitializeSharedFont() {
+            /*! @brief Initializes the shared font using the PL (PlayLog) service and stb_truetype.
+         * @return Result code, 0 on success. */
+        Result InitializeSharedFont() {
         ::Result rc = plGetSharedFontByType(std::addressof(g_font), PlSharedFontType_Standard);
         if(rc != 0) {
             logError("[Font] font initialization failed\n");

@@ -26,6 +26,7 @@ using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::gfx;
 using namespace alefbet::pctrl::gui;
 
+/*! @brief Displays the screen timeout overlay. */
 void GuiController::showScreenTimeout() {
     logDebug("[Gui] ShowScreenTimeout\n");
 
@@ -50,6 +51,7 @@ void GuiController::showScreenTimeout() {
     renderer.endFrame();*/
 }
 
+/*! @brief Hides the screen timeout overlay by clearing the screen. */
 void GuiController::hideScreenTimeout() {
     logDebug("[Gui] Hide timeout screen\n");
     clearScreen();
@@ -163,6 +165,7 @@ void GuiController::showOverlay(u16 width, u16 height, u16 posX, u16 posY) {
     //requestForeground(true);
 }*/
 
+/*! @brief Clears the screen by starting a frame, clearing, and ending. */
 void GuiController::clearScreen() {
     auto& renderer = Renderer::get();
     renderer.startFrame();

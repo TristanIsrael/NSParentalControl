@@ -31,10 +31,13 @@ namespace alefbet::pctrl::ipc {
     constexpr u8 PIN_LEN_MAX = 20*4+3;
     constexpr u8 ACC_USER_NICKNAME_MAX = 0x20;
 
+    /*! @brief Checks if the pctrl service is available.
+     * @return true if the service is available, false otherwise. */
     bool isAvailable() {
         return getAppContext().is_available;
     }
 
+    /*! @brief Sends a test request to the sysmodule. */
     void startTest() {
         logInfo("[IPC] starting test\n");
 
@@ -53,6 +56,8 @@ namespace alefbet::pctrl::ipc {
         logDebug("[IPC] service dispatch OK\n");
     }
     
+    /*! @brief Gets the current user's account UID via IPC.
+     * @return The user's UID as a string, or empty on failure. */
     UserUid getCurrentUserUid() {
         logDebug("[IPC] Get current user Uid\n");
 
@@ -77,6 +82,8 @@ namespace alefbet::pctrl::ipc {
         return user_id;
     }
 
+    /*! @brief Gets the current user's nickname via IPC.
+     * @return The user's nickname as a string, or empty on failure. */
     UserNickname getCurrentUserNickname() {
         logDebug("[IPC] Get current user Nickname\n");
 
@@ -100,6 +107,8 @@ namespace alefbet::pctrl::ipc {
         return nickname;
     }
 
+    /*! @brief Gets the name of the currently running application via IPC.
+     * @return The title name as a string, or empty on failure. */
     std::string getCurrentTitle() {
         logDebug("[IPC] Get current title\n");
 
@@ -127,6 +136,9 @@ namespace alefbet::pctrl::ipc {
         return title;
     }
 
+    /*! @brief Gets the total usage time for a user via IPC.
+     * @param accountUid The account UID to query (empty for current user).
+     * @return The usage time as a chrono minutes object. */
     minutes getUserUsageTime(const AccountUid& accountUid) {
         logDebug("[IPC] Get usage time for the user\n");
                 
@@ -158,6 +170,9 @@ namespace alefbet::pctrl::ipc {
         return std::chrono::minutes(usageTime);
     }
 
+    /*! @brief Gets the remaining time for a user via IPC.
+     * @param accountUid The account UID to query (empty for current user).
+     * @return The remaining time as a chrono minutes object. */
     minutes getUserRemainingTime(const AccountUid& accountUid) {
         logDebug("[IPC] Get remaining time for the user\n");
         
@@ -189,6 +204,9 @@ namespace alefbet::pctrl::ipc {
         return std::chrono::minutes(remainingTime);
     }
 
+    /*! @brief Encodes a PIN (array of 4 u64 values) into a comma-separated string.
+     * @param keys Array of 4 u64 values representing the PIN.
+     * @return Comma-separated PIN string, or empty on failure. */
     std::string encodeAdminPin(const std::vector<u64>& keys) {
         std::string pin;
 
@@ -208,6 +226,9 @@ namespace alefbet::pctrl::ipc {
         return pin;
     }
 
+    /*! @brief Verifies the admin PIN via IPC.
+     * @param pin Array of 4 u64 values representing the PIN.
+     * @return true if verified, false otherwise. */
     bool verifyPin(const std::vector<u64>& pin) {
         logDebug("[IPC] Verify Admin PIN\n");
 
@@ -233,6 +254,9 @@ namespace alefbet::pctrl::ipc {
         return verified;
     }
 
+    /*! @brief Sets a new admin PIN via IPC.
+     * @param pin Array of 4 u64 values representing the new PIN.
+     * @return true if successful, false otherwise. */
     bool setupPin(const std::vector<u64>& pin) {
         logDebug("[IPC] Setup new PIN\n");
 
@@ -257,6 +281,9 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Sets the working mode via IPC.
+     * @param mode The working mode to set.
+     * @return true if successful, false otherwise. */
     bool setWorkingMode(const WorkingMode& mode) {
         logDebug("[IPC] Setting working mode\n");
 
@@ -277,6 +304,8 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Gets the current working mode via IPC.
+     * @return The current working mode. */
     WorkingMode getWorkingMode() {
         logDebug("[IPC] Getting working mode\n");
 
@@ -302,6 +331,9 @@ namespace alefbet::pctrl::ipc {
         return WorkingModeBlocking;
     }
     
+    /*! @brief Sets the remaining time visibility setting via IPC.
+     * @param active Whether to show remaining time.
+     * @return true if successful, false otherwise. */
     bool setShowRemainingTime(const bool& active) {
         logDebug("[IPC] Setting remaining time visibility: %s\n", active ? "true" : "false");
 
@@ -321,6 +353,8 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Gets the remaining time visibility setting via IPC.
+     * @return true if remaining time is visible, false otherwise. */
     bool getShowRemainingTime() {
         logDebug("[IPC] Getting remaining time visibility\n");
 
@@ -341,6 +375,9 @@ namespace alefbet::pctrl::ipc {
         return visible == 1 ? true : false;
     }
 
+    /*! @brief Enables or disables the service via IPC.
+     * @param enabled Whether to enable the service.
+     * @return true if successful, false otherwise. */
     bool setEnabled(const bool& enabled) {
         if(enabled)
             logDebug("[IPC] Setting service enabled\n");
@@ -363,6 +400,8 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Gets the current enabled state of the service via IPC.
+     * @return true if the service is enabled, false otherwise. */
     bool isEnabled() {
         logDebug("[IPC] Getting current state of the service\n");
 
@@ -385,6 +424,8 @@ namespace alefbet::pctrl::ipc {
         return enabled == 1 ? true : false;
     }
  
+    /*! @brief Gets the sysmodule version via IPC.
+     * @return The version string, or empty on failure. */
     std::string getVersion() {
         logDebug("[IPC] Getting sysmodule version\n");
 
@@ -407,6 +448,9 @@ namespace alefbet::pctrl::ipc {
         return std::string(version);
     }
 
+    /*! @brief Gets the daily time limit for a user via IPC.
+     * @param user The user data containing the UID.
+     * @return The daily limit in minutes, or 0 on failure. */
     u16 getDailyLimit(const UserData& user) {
         logDebug("[IPC] Getting daily limit\n");
 
@@ -433,6 +477,10 @@ namespace alefbet::pctrl::ipc {
         return limit;
     }
 
+    /*! @brief Sets the daily time limit for a user via IPC.
+     * @param user The user data containing the UID.
+     * @param limit The daily limit in minutes.
+     * @return true if successful, false otherwise. */
     bool setDailyLimit(const UserData& user, u16 limit) {
         logDebug("[IPC] Setting the daily limit to %i\n", limit);
 
@@ -464,6 +512,8 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Checks if debug logging is enabled via IPC.
+     * @return true if debug logging is enabled, false otherwise. */
     bool isDebugLogEnabled() {
         logDebug("[IPC] Getting log level\n");
 
@@ -486,6 +536,9 @@ namespace alefbet::pctrl::ipc {
         return level == DEBUG;
     }
 
+    /*! @brief Enables or disables debug logging via IPC.
+     * @param enable Whether to enable debug logging.
+     * @return true if successful, false otherwise. */
     bool enableDebugLog(bool enable) {
         logDebug("[IPC] Setting log level\n");
 
@@ -506,6 +559,8 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Checks if the database has been tampered with via IPC.
+     * @return true if tampered, false otherwise. */
     bool isDatabaseTampered() {
         logDebug("[IPC] Verifying whether database has been tampered\n");
 
@@ -528,6 +583,8 @@ namespace alefbet::pctrl::ipc {
         return tampered != 0;
     }
 
+    /*! @brief Checks if the database needs an upgrade via IPC.
+     * @return true if upgrade is needed, false otherwise. */
     bool isDatabaseNeedsUpgrade() {
         logDebug("[IPC] Verifying whether database needs upgrade\n");
 

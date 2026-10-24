@@ -31,15 +31,20 @@ static std::mutex updateMutex_;
 constexpr tsl::Color ColorReady = tsl::Color(0xffff);
 constexpr tsl::Color ColorNotReady = tsl::Color(RGBA4(0x7, 0x7, 0x7, 0xf));
 
+/*! @brief Constructs a SetupPinPanel instance. */
 SetupPinPanel::SetupPinPanel() {}
 
+/*! @brief Destructs a SetupPinPanel instance and releases resources. */
 SetupPinPanel::~SetupPinPanel() {  
     closeAndClean();
 }
 
+/*! @brief Closes the panel and cleans up associated resources. */
 void SetupPinPanel::closeAndClean() {
 }
 
+/*! @brief Creates and returns the root UI element for the PIN setup panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* SetupPinPanel::createUI() {
     rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Setup PIN");
     rootList_ = new tsl::elm::List();
@@ -49,6 +54,7 @@ tsl::elm::Element* SetupPinPanel::createUI() {
     return rootFrame_;
 }
 
+/*! @brief Rebuilds the PIN entry UI with circle indicators and error messages. */
 void SetupPinPanel::rebuildUI() {    
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         renderer->drawString("Please enter the new PIN", false, x + 20, y + 20, 20, renderer->a(0xFFFF));  
@@ -100,11 +106,18 @@ void SetupPinPanel::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void SetupPinPanel::update() {    
     
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input not captured by other UI elements for PIN entry.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool SetupPinPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
     if (keysDown == 0) return false;    
 

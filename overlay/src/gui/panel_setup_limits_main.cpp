@@ -29,12 +29,16 @@
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::helpers;
 
+/*! @brief Constructs a SetupLimitsPanel instance. */
 SetupLimitsPanel::SetupLimitsPanel() {    
 }
 
+/*! @brief Destructs a SetupLimitsPanel instance and releases resources. */
 SetupLimitsPanel::~SetupLimitsPanel() {      
 }
 
+/*! @brief Creates and returns the root UI element for the setup limits main panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* SetupLimitsPanel::createUI() {
     rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Set limits");
     rootList_ = new tsl::elm::List();
@@ -45,6 +49,7 @@ tsl::elm::Element* SetupLimitsPanel::createUI() {
 }
 
 
+/*! @brief Rebuilds the user selection list for setting limits. */
 void SetupLimitsPanel::rebuildUI() {
     rootList_->addItem(new tsl::elm::CategoryHeader("Choose a user"));
 
@@ -66,10 +71,17 @@ void SetupLimitsPanel::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void SetupLimitsPanel::update() {    
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input not captured by other UI elements.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool SetupLimitsPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
     if (keysDown & HidNpadButton_B) {
         tsl::goBack();

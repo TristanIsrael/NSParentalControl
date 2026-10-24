@@ -38,6 +38,8 @@ using namespace alefbet::pctrl::logger;
 const bool CIPHER_DATABASE = false;
 constexpr SmServiceName service_name = smEncodeName("pctrl");
 
+/*! @brief Connects to the pctrl service and initializes the service session.
+ * @return true if connected successfully, false otherwise. */
 bool connectToService() {
     u8 exists(0);
     Result res = tipcDispatchInOut(smGetServiceSessionTipc(), 65100, service_name, exists);
@@ -63,6 +65,10 @@ bool connectToService() {
     return true;
 }
 
+/*! @brief Entry point for the overlay application, initializing services and running the UI loop.
+ * @param argc Argument count.
+ * @param argv Argument values.
+ * @return Exit code. */
 int main(int argc, char** argv) {
     smInitialize();
     fsInitialize();

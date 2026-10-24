@@ -25,16 +25,21 @@
 
 using namespace alefbet::pctrl;
 
+/*! @brief Constructs a DebugMenu instance. */
 DebugMenu::DebugMenu() {}
 
+/*! @brief Destructs a DebugMenu instance and releases resources. */
 DebugMenu::~DebugMenu() {  
     closeAndClean();
 }
 
+/*! @brief Closes the panel and cleans up associated resources. */
 void DebugMenu::closeAndClean() {
 }
 
 
+/*! @brief Creates and returns the root UI element for the debug menu panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* DebugMenu::createUI() {
     std::string subTitle = "Debug options";
 
@@ -47,6 +52,7 @@ tsl::elm::Element* DebugMenu::createUI() {
 }
 
 
+/*! @brief Rebuilds the debug menu list items and their click handlers. */
 void DebugMenu::rebuildUI() {
    
     // Run Test
@@ -74,11 +80,18 @@ void DebugMenu::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void DebugMenu::update() {
     
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input not captured by other UI elements.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool DebugMenu::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
     if (keysDown & HidNpadButton_B) {
         tsl::goBack();

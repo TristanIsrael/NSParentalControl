@@ -37,11 +37,13 @@ constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_
 
 namespace alefbet::pctrl::srv {   
 
+    /*! @brief Starts the monitoring loop if not already running. */
     void Monitor::start() {
         if(running_) return;
         running_ = true;
     }
 
+    /*! @brief Main monitoring loop that tracks application usage and enforces limits. */
     void Monitor::loop() {        
         logDebug("[Monitor] Starting monitoring loop\n");        
         structs::UserData user;
@@ -134,12 +136,20 @@ namespace alefbet::pctrl::srv {
         logInfo("[Monitor] Stopped monitoring.\n");
     }
 
+    /*! @brief Stops the monitoring loop and resets notification state. */
     void Monitor::stop() {
         logInfo("[Monitor] Stopping monitor\n");
         running_ = false;
         notified_ = false;
     }
 
+    /*! @brief Determines whether a remaining-time notification should be sent.
+     *
+     * Notifications are sent every 15 minutes and every minute during the last 5 minutes.
+     *
+     * @param remainingTimeInMinutes The number of minutes remaining until the daily limit.
+     * @return true if a notification should be sent, false otherwise.
+     */
     bool Monitor::shouldSendNotification(int remainingTimeInMinutes) {
         // Remaining time notitications are sent every 15 minutes and every minute during the last 5 minutes
         return remainingTimeInMinutes % 15 == 0 || remainingTimeInMinutes <= 5;

@@ -57,6 +57,8 @@ namespace alefbet::pctrl::database {
     static bool settings_synchronized_ = false;
     static Settings settings_;
 
+    /*! @brief Initializes the SD card filesystem access.
+     * @return true if successful, false otherwise. */
     bool prepare() {
         if(ready_) return true;
 
@@ -68,12 +70,15 @@ namespace alefbet::pctrl::database {
         return ready_;
     }
 
+    /*! @brief Closes the SD card filesystem handle. */
     void freeFs() {
         if(!ready_) return;
 
         fsFsClose(&sdmc_);
     }
 
+    /*! @brief Creates the data directory on the SD card if it doesn't exist.
+     * @return true if successful, false otherwise. */
     bool createDataDirectory()
     {
         if(!prepare()) return false;
@@ -83,6 +88,10 @@ namespace alefbet::pctrl::database {
         return result;
     }
 
+    /*! @brief Loads settings entries from a binary buffer in memory.
+     * @param data Pointer to the binary data.
+     * @param fileSize Size of the binary data in bytes.
+     * @return true if parsing succeeded, false otherwise. */
     static bool loadEntriesFromBinary(const u8* data, s64 fileSize) {
         if(fileSize < static_cast<s64>(sizeof(BinHeader))) {
             logError("[Database] Settings file too small for header\n");
@@ -179,6 +188,8 @@ namespace alefbet::pctrl::database {
         return true;
     }
 
+    /*! @brief Loads the settings from the SD card file and returns the settings map.
+     * @return Reference to the loaded settings map. */
     Settings& loadSettings() {
         if(settings_synchronized_) return settings_;
 
@@ -247,11 +258,14 @@ namespace alefbet::pctrl::database {
         return settings_;
     }
 
+    /*! @brief Saves a single setting to the settings map and persists to disk.
+     * @param setting The setting to save. */
     void saveSetting(Setting setting) {
         settings_[setting.key] = setting;
         saveSettings();
     }
 
+    /*! @brief Persists all settings from the map to the SD card file. */
     void saveSettings() {
         logDebug("[Database] Saving settings\n");
         std::lock_guard<std::mutex> lock(mutex_settings_);

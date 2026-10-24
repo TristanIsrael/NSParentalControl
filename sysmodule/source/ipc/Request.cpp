@@ -32,6 +32,7 @@ namespace Ipc {
     // Max bytes that fit in 'header'
     constexpr size_t maxReplyBytes = 0x90 - sizeof(Header);
 
+    /*! @brief Default constructor for Request, initializing all internal state. */
     Request::Request() {
         // For my sanity
         this->inArgs.clear();
@@ -50,6 +51,8 @@ namespace Ipc {
         this->type_ = Type::Other;
     }
 
+    /*! @brief Creates a Request object from thread-local storage IPC data.
+     * @return Pointer to the newly created Request, or nullptr on failure. */
     Request * Request::fromTLS() {                
         // Read structure from thread-local storage
         uint8_t * base = static_cast<uint8_t *>(armGetTls());
@@ -99,6 +102,7 @@ namespace Ipc {
         return req;
     }
 
+    /*! @brief Writes the response data back to thread-local storage for IPC reply. */
     void Request::toResponseTLS() {
         // First copy any reply data if it is present
         if (!this->outData.empty() && !this->outMeta.empty()) {
@@ -128,26 +132,37 @@ namespace Ipc {
         }
     }
 
+    /*! @brief Returns the command ID of this request.
+     * @return The command ID. */
     uint64_t Request::cmd() {
         return this->cmd_;
     }
 
+    /*! @brief Sets the result code for the response.
+     * @param r The result code to set. */
     void Request::setResult(const uint32_t r) {
         this->result = r;
     }
 
+    /*! @brief Returns the type of this request.
+     * @return The request type. */
     Request::Type Request::type() {
         return this->type_;
     }
 
+    /*! @brief Returns the input data buffer received with this request.
+     * @return Const reference to the input data vector. */
     const std::vector<uint8_t> & Request::getRequestBuffer() {
         return this->inData;
     }
 
+    /*! @brief Returns the output data buffer for the response.
+     * @return Const reference to the output data vector. */
     const std::vector<uint8_t> & Request::getReplyBuffer() {
         return this->outData;
     }
 
+    /*! @brief Destructor for Request. */
     Request::~Request() {
 
     }

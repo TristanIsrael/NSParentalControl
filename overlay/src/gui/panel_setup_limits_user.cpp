@@ -33,17 +33,23 @@ using namespace std::chrono;
 constexpr tsl::Color ColorSelected = tsl::style::color::ColorHighlight;
 constexpr tsl::Color ColorWhite = tsl::Color(0xffff);
 
+/*! @brief Constructs a SetupLimitsUserPanel for the given user.
+ * @param user The user data for whom limits are being set. */
 SetupLimitsUserPanel::SetupLimitsUserPanel(const UserData& user) {
     user_ = user;
 }
 
+/*! @brief Destructs a SetupLimitsUserPanel instance and releases resources. */
 SetupLimitsUserPanel::~SetupLimitsUserPanel() {  
     closeAndClean();
 }
 
+/*! @brief Closes the panel and cleans up associated resources. */
 void SetupLimitsUserPanel::closeAndClean() {
 }
 
+/*! @brief Creates and returns the root UI element for the user limits panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* SetupLimitsUserPanel::createUI() {
     rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Set limits for " +user_.nickname);
     rootList_ = new tsl::elm::List();
@@ -61,6 +67,7 @@ tsl::elm::Element* SetupLimitsUserPanel::createUI() {
     return rootFrame_;
 }
 
+/*! @brief Rebuilds the UI displaying play limit controls for the user. */
 void SetupLimitsUserPanel::rebuildUI() {    
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         renderer->drawString("Please use \u2190 and \u2192 to move.", false, x + 50, y + 30, 16, renderer->a(ColorWhite));
@@ -92,11 +99,18 @@ void SetupLimitsUserPanel::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void SetupLimitsUserPanel::update() {    
     
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input for navigating and adjusting play limits.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
     if (keysDown == 0) return false;    
 
@@ -123,6 +137,7 @@ bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouc
     return false; 
 }
 
+/*! @brief Selects the next item in the limit fields (hours <-> minutes). */
 void SetupLimitsUserPanel::selectNextItem() {
     switch(selectedItem_) {
         case DailyLimitHours: selectedItem_ = DailyLimitMinutes; break;
@@ -131,6 +146,7 @@ void SetupLimitsUserPanel::selectNextItem() {
     }
 }
 
+/*! @brief Selects the previous item in the limit fields (minutes <-> hours). */
 void SetupLimitsUserPanel::selectBeforeItem() {
     switch(selectedItem_) {
         case DailyLimitHours: selectedItem_ = DailyLimitMinutes; break;
@@ -139,6 +155,7 @@ void SetupLimitsUserPanel::selectBeforeItem() {
     }
 }
 
+/*! @brief Decreases the currently selected limit value by one unit. */
 void SetupLimitsUserPanel::decreaseValue() {
     switch(selectedItem_) {
         case DailyLimitHours: dailyLimitHours_ = valueRanged(dailyLimitHours_, -1, 0, 12); break;
@@ -147,6 +164,7 @@ void SetupLimitsUserPanel::decreaseValue() {
     }
 }
 
+/*! @brief Increases the currently selected limit value by one unit. */
 void SetupLimitsUserPanel::increaseValue() {
     switch(selectedItem_) {
         case DailyLimitHours: dailyLimitHours_ = valueRanged(dailyLimitHours_, +1, 0, 12); break;
@@ -155,6 +173,13 @@ void SetupLimitsUserPanel::increaseValue() {
     }
 }
 
+/*! @brief Clamps a value within a specified range, optionally wrapping around.
+ * @param value The current value.
+ * @param diff The difference to add to the value.
+ * @param min The minimum allowed value.
+ * @param max The maximum allowed value.
+ * @param cycle Whether to wrap around at boundaries (default false).
+ * @return The clamped (or wrapped) value as an unsigned 16-bit integer. */
 u16 SetupLimitsUserPanel::valueRanged(int value, int diff, int min, int max, bool cycle) {
     if(value + diff < min) {
         return (u16)(cycle ? max : min);

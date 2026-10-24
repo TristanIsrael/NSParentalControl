@@ -34,30 +34,41 @@ using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
 using namespace std::chrono;
 
+/*! @brief Constructs a MainMenuPanel instance. */
 MainMenuPanel::MainMenuPanel() {    
 }
 
+/*! @brief Destructs a MainMenuPanel instance and releases resources. */
 MainMenuPanel::~MainMenuPanel() {      
 }
 
+/*! @brief Closes the panel and cleans up associated resources. */
 void MainMenuPanel::closeAndClean() {
 }
 
+/*! @brief Checks whether parental control is currently enabled.
+ * @return true if parental control is enabled, false otherwise. */
 bool MainMenuPanel::isParentalControlEnabled() {
     getAppContext().is_enabled = ipc::isEnabled();
     return getAppContext().is_enabled;
 }
 
+/*! @brief Checks whether parental control is installed on the system.
+ * @return true if parental control is installed, false otherwise. */
 bool MainMenuPanel::isParentalControlInstalled() {
     return getAppContext().is_available;
 }
 
+/*! @brief Retrieves the list of user accounts.
+ * @return A list of user account names. */
 std::list<std::string> MainMenuPanel::getUsersList() {
     std::list<std::string> users;
 
     return users;
 }
 
+/*! @brief Creates and returns the root UI element for the main menu panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* MainMenuPanel::createUI() {
     std::string subTitle = isParentalControlInstalled() ? isParentalControlEnabled() ? "Parental Control is Enabled" : "Parental Control is Disabled" : "Parental Control is not installed";
 
@@ -70,6 +81,7 @@ tsl::elm::Element* MainMenuPanel::createUI() {
 }
 
 
+/*! @brief Rebuilds the main menu list items and their click handlers. */
 void MainMenuPanel::rebuildUI() {
     // Special place for special messages (database tampered / needs upgrade)
     bool specialMessages = false;
@@ -182,10 +194,17 @@ void MainMenuPanel::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void MainMenuPanel::update() {    
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input not captured by other UI elements.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool MainMenuPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
     if (keysDown & HidNpadButton_B) {
         tsl::Overlay::get()->close();

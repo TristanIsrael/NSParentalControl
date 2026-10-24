@@ -20,6 +20,11 @@
 #include "../helpers.h"
 #include <string>
 
+/*! @brief Constructs a HistoryEntry with the given parameters.
+ * @param uid The account UID.
+ * @param date The date string.
+ * @param titleId The title ID of the application.
+ * @param durationInMinutes The play duration in minutes. */
 HistoryEntry::HistoryEntry(AccountUid uid, std::string date, u64 titleId, u16 durationInMinutes) 
 : d_(std::make_shared<HistoryEntryData>()) { 
     d_->uid = uid;
@@ -28,53 +33,83 @@ HistoryEntry::HistoryEntry(AccountUid uid, std::string date, u64 titleId, u16 du
     d_->durationInMinutes = durationInMinutes;
 }
 
+/*! @brief Copy constructor for HistoryEntry.
+ * @param orig The HistoryEntry to copy. */
 HistoryEntry::HistoryEntry(const HistoryEntry& orig)
 : d_(orig.d_) {}
 
+/*! @brief Copy assignment operator for HistoryEntry.
+ * @param orig The HistoryEntry to assign from.
+ * @return Reference to this HistoryEntry. */
 HistoryEntry& HistoryEntry::operator=(const HistoryEntry& orig) {    
     d_ = orig.d_;
     return *this;
 }
 
+/*! @brief Returns the account UID of this entry.
+ * @return The account UID. */
 AccountUid HistoryEntry::uid() const {
     return d_->uid;
 }
 
+/*! @brief Returns the account UID as a string representation.
+ * @return String representation of the UID. */
 std::string HistoryEntry::uidAsString() const {
     return alefbet::pctrl::helpers::accountUidToString(d_->uid);
 }
 
+/*! @brief Returns the date of this entry.
+ * @return The date string. */
 std::string HistoryEntry::date() const {
     return d_->date;
 }
     
+/*! @brief Returns the title ID of this entry.
+ * @return The title ID. */
 u64 HistoryEntry::titleId() const {
     return d_->titleId;
 }
 
+/*! @brief Returns the play duration in minutes.
+ * @return Duration in minutes. */
 u16 HistoryEntry::durationInMinutes() const {
     return d_->durationInMinutes;
 }
 
+/*! @brief Default constructor for History. */
 History::History()
 : d_(std::make_shared<HistoryData>()) {}
 
+/*! @brief Copy constructor for History.
+ * @param orig The History to copy. */
 History::History(const History& orig)
 : d_(orig.d_) {}
 
+/*! @brief Copy assignment operator for History.
+ * @param orig The History to assign from.
+ * @return Reference to this History. */
 History& History::operator=(const History& orig) {
     d_ = orig.d_;
     return *this;
 }
 
+/*! @brief Adds a history entry to the history list.
+ * @param entry The entry to add. */
 void History::addEntry(const HistoryEntry& entry) {
     d_->history.push_back(entry);
 }
 
+/*! @brief Returns all history entries.
+ * @return Vector of all history entries. */
 std::vector<HistoryEntry> History::entries() const {
     return d_->history;
 }
 
+/*! @brief Returns history entries filtered by UID, date, and optionally title ID.
+ * @param uid The account UID to filter by.
+ * @param date The date string to filter by.
+ * @param titleId The title ID to filter by (0 to skip).
+ * @return Vector of matching history entries. */
 std::vector<HistoryEntry> History::entries(const AccountUid& uid, const std::string& date, const u64& titleId) const {
     std::vector<HistoryEntry> entries;
 
@@ -91,10 +126,14 @@ std::vector<HistoryEntry> History::entries(const AccountUid& uid, const std::str
     return entries;
 }
 
+/*! @brief Checks if this history entry is valid.
+ * @return true if titleId is non-zero and date is not empty. */
 bool HistoryEntry::isValid() const {
     return d_->titleId != 0 && !d_->date.empty();
 }
 
+/*! @brief Sets the play duration in minutes.
+ * @param duration The duration in minutes. */
 void HistoryEntry::setDurationInMinutes(u16 duration) {
     d_->durationInMinutes = duration;
 }

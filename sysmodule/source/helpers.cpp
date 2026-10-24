@@ -41,6 +41,11 @@ using std::operator""sv;
 namespace alefbet::pctrl::helpers {
     static FsFileSystem sdmc;
 
+    /*! @brief Converts a title ID to a hexadecimal string representation.
+     *
+     * @param titleId The title ID to convert.
+     * @return Hexadecimal string (16 chars uppercase), or "None" if titleId is 0.
+     */
     std::string titleIdToString(u64 titleId) {
         if(titleId == 0) {
             return std::string("None");        
@@ -51,10 +56,20 @@ namespace alefbet::pctrl::helpers {
         return ss.str();
     }
 
+    /*! @brief Converts an AccountUid struct to a colon-separated string.
+     *
+     * @param uid The AccountUid to convert.
+     * @return String in format "uid[0]:uid[1]".
+     */
     UserUid accountUidToString(AccountUid uid) {
         return std::to_string(uid.uid[0]) + ":" + std::to_string(uid.uid[1]);
     }
 
+    /*! @brief Parses a colon-separated string into an AccountUid struct.
+     *
+     * @param uid_str String in format "uid[0]:uid[1]".
+     * @return Parsed AccountUid, or zeros on failure.
+     */
     AccountUid accountUidFromString(const UserUid& uid_str) {
         AccountUid uid;
 
@@ -74,6 +89,14 @@ namespace alefbet::pctrl::helpers {
         return uid;
     }
 
+    /*! @brief Retrieves full user data (UID and nickname) from an AccountUid.
+     *
+     * Initializes the account service, fetches the profile, and returns
+     * a UserData struct with the retrieved information.
+     *
+     * @param uid The AccountUid to query.
+     * @return UserData struct with uid and nickname, or error nickname on failure.
+     */
     UserData getUserFromAccountUid(AccountUid uid) {
         UserData user;
 
@@ -119,6 +142,12 @@ namespace alefbet::pctrl::helpers {
         return user;
     }
 
+    /*! @brief Retrieves the currently active user's data.
+     *
+     * Queries the last opened user account and returns their UID and nickname.
+     *
+     * @return UserData struct, or error nickname on failure.
+     */
     UserData getCurrentUser() {
         UserData user;
 
@@ -176,6 +205,10 @@ namespace alefbet::pctrl::helpers {
         return user;
     }
 
+    /*! @brief Retrieves the process ID of the currently running application.
+     *
+     * @return The application process ID, or 0 on failure.
+     */
     u64 getRunningApplicationPid() {
         u64 process_id = 0;                        
 
@@ -190,6 +223,11 @@ namespace alefbet::pctrl::helpers {
         return process_id;
     }
 
+    /*! @brief Retrieves the title ID for a given process ID.
+     *
+     * @param process_id The process ID to query.
+     * @return The title ID, or 0 on failure.
+     */
     u64 getRunningApplicationTitleId(u64 process_id) {
         u64 title_id = 0;
 
@@ -205,6 +243,11 @@ namespace alefbet::pctrl::helpers {
         return title_id;
     }
 
+    /*! @brief Retrieves the application name for a given title ID.
+     *
+     * @param title_id The title ID to query.
+     * @return The application name, or "Unknown" on failure.
+     */
     std::string getApplicationName(u64 title_id) {
         NsApplicationControlData control;
         u64 actual_size = 0;
@@ -224,6 +267,10 @@ namespace alefbet::pctrl::helpers {
         return std::string(langEntry->name);
     }
 
+    /*! @brief Retrieves today's date as a string in YYYYMMDD format.
+     *
+     * @return Date string, or empty string on failure.
+     */
     std::string today() {        
         ::Result rc = timeInitialize();
         if(R_FAILED(rc)) {
@@ -256,6 +303,12 @@ namespace alefbet::pctrl::helpers {
         return std::string(buffer);
     }
 
+    /*! @brief Reads the reboot payload file from the SD card.
+     *
+     * @param buffer Output buffer to receive the payload data.
+     * @param buffer_size Size of the output buffer.
+     * @return true on success, false on failure.
+     */
     bool readPayloadFile(u8* buffer, u64 buffer_size) {
         FsFile handle;
         
@@ -296,6 +349,13 @@ namespace alefbet::pctrl::helpers {
     }
 
     #define IRAM_PAYLOAD_MAX_SIZE 0x24000
+    /*! @brief Configures and reboots the console to the recovery payload.
+     *
+     * Initializes SPSM and AMS:BPC services, loads the payload from SD card,
+     * and triggers a reboot. Shuts down the system if payload is missing.
+     *
+     * @return true on success, false on failure.
+     */
     bool rebootToPayload() {
         logInfo("[Helpers] Try to reboot to payload\n");
       
@@ -339,6 +399,10 @@ namespace alefbet::pctrl::helpers {
         return true;
     }
 
+    /*! @brief Terminates the currently running application title.
+     *
+     * @return true on success, false on failure.
+     */
     bool terminateCurrentApplication() {
         logInfo("[Helpers] Trying to terminate the current title\n");
 
@@ -366,6 +430,10 @@ namespace alefbet::pctrl::helpers {
         return true;
     }
 
+    /*! @brief Checks whether the currently running title is blacklisted for the current user.
+     *
+     * @return true if the title is blacklisted, false otherwise.
+     */
     bool isCurrentTitleBlacklisted() {
         logDebug("[Helpers] Checking whether the current title is blacklisted\n");
 
@@ -466,6 +534,11 @@ namespace alefbet::pctrl::helpers {
         return result;
     }
 
+    /*! @brief Adds a title to the blacklist for a specific user.
+     *
+     * @param userId The user ID string.
+     * @param titleId The title ID to black list.
+     */
     void addToBlacklist(const std::string& userId, u64 titleId) {
         auto blacklistMap = deserializeBlacklist("");
         
@@ -494,6 +567,11 @@ namespace alefbet::pctrl::helpers {
         saveSetting(setting);
     }
         
+    /*! @brief Removes a title from the blacklist for a specific user.
+     *
+     * @param userId The user ID string.
+     * @param titleId The title ID to remove from the blacklist.
+     */
     void removeFromBlacklist(const std::string& userId, u64 titleId) {
         auto blacklistMap = deserializeBlacklist("");
         
@@ -553,6 +631,11 @@ namespace alefbet::pctrl::helpers {
         return result;
     }
 
+    /*! @brief Retrieves the daily usage limit for a specific user.
+     *
+     * @param userId The user ID string.
+     * @return The daily limit in minutes, or 0 if not set.
+     */
     u16 getDailyLimitForUser(const std::string& userId) {
         auto& settings = loadSettings();
 
@@ -576,6 +659,11 @@ namespace alefbet::pctrl::helpers {
         return 0;
     }
 
+    /*! @brief Sets the daily usage limit for a specific user.
+     *
+     * @param userId The user ID string.
+     * @param limit_in_minutes The daily limit in minutes.
+     */
     void setDailyLimitForUser(const std::string& userId, u16 limit_in_minutes) {
         auto limitsMap = deserializeDailyLimits("");
         
@@ -595,6 +683,11 @@ namespace alefbet::pctrl::helpers {
         saveSetting(setting);
     }
 
+    /*! @brief Encodes a 4-digit PIN vector into a comma-separated string.
+     *
+     * @param password Vector of 4 u64 values representing the PIN digits.
+     * @return Comma-separated string (e.g., "1234,5678,9012,3456"), or empty on failure.
+     */
     std::string encodePassword(const std::vector<u64>& password) {
         std::string pin;
 
@@ -608,6 +701,11 @@ namespace alefbet::pctrl::helpers {
         return pin;    
     }
 
+    /*! @brief Decodes a comma-separated PIN string into a vector of 4 u64 values.
+     *
+     * @param str Comma-separated PIN string (e.g., "1234,5678,9012,3456").
+     * @return Vector of 4 u64 values, or empty vector on failure.
+     */
     std::vector<u64> decodePassword(const std::string& str) {
         std::vector<u64> password;
         password.reserve(4);
@@ -628,6 +726,11 @@ namespace alefbet::pctrl::helpers {
         return password;
     }
     
+    /*! @brief Retrieves the total usage time in minutes for a user today.
+     *
+     * @param uid The AccountUid of the user.
+     * @return Total usage time in minutes for today.
+     */
     u16 getUserUsageTimeForToday(const AccountUid& uid) {
         const auto history = getHistory(uid, today());
         auto usage_time_in_minutes = (u16)0;        

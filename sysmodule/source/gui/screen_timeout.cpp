@@ -64,6 +64,7 @@ namespace alefbet::pctrl::gui {
         return tmp_pos / 2;
     }
 
+    /*! @brief Initializes the framebuffer pointer with aligned memory allocation. */
     void ScreenTimeout::InitializeFrameBufferPointer() {
         void* mem = aligned_alloc(0x1000, FrameBufferRequiredSizePageAligned);
         if(mem == nullptr) {
@@ -74,6 +75,8 @@ namespace alefbet::pctrl::gui {
     }
 
     /* Task implementations. */
+    /*! @brief Sets up the internal (TV) display for drawing.
+     * @return Result code, 0 on success. */
     ::Result ScreenTimeout::SetupDisplayInternal() {
         logDebug("[Screen] SetupDisplayInternal\n");
 
@@ -102,6 +105,8 @@ namespace alefbet::pctrl::gui {
         return 0;
     }
 
+    /*! @brief Sets up the external (docked) display for drawing.
+     * @return Result code, 0 on success. */
     ::Result ScreenTimeout::SetupDisplayExternal() {
         logDebug("[Screen] SetupDisplayExternal\n");
 
@@ -126,6 +131,8 @@ namespace alefbet::pctrl::gui {
         return 0;
     }
 
+    /*! @brief Prepares the screen for drawing by initializing VI service, opening display, and creating layers.
+     * @return Result code, 0 on success. */
     ::Result ScreenTimeout::PrepareScreenForDrawing() {    
         logDebug("[Screen] PrepareScreenForDrawing\n");
 
@@ -213,6 +220,7 @@ namespace alefbet::pctrl::gui {
         return 0;
     }
 
+    /*! @brief Pre-renders the framebuffer by initializing resources and drawing contents. */
     void ScreenTimeout::PreRenderFrameBuffer() {   
         logDebug("[Screen] PreRenderFrameBuffer\n");
 
@@ -226,6 +234,8 @@ namespace alefbet::pctrl::gui {
         PreRenderContents();
     }
 
+    /*! @brief Pre-renders the screen contents including font, logo, and messages into the framebuffer.
+     * @return Result code, 0 on success. */
     ::Result ScreenTimeout::PreRenderContents() {
         logDebug("[Screen] PreRenderContents\n");
 
@@ -274,6 +284,8 @@ namespace alefbet::pctrl::gui {
         return 0;
     }
 
+    /*! @brief Initializes the native window with NV driver, NvMap, and buffer configuration.
+     * @return Result code, 0 on success. */
     ::Result ScreenTimeout::InitializeNativeWindow() {
         logDebug("[Screen] InitializeNativeWindow\n");
 
@@ -332,6 +344,7 @@ namespace alefbet::pctrl::gui {
         return 0;        
     }
 
+    /*! @brief Displays the pre-rendered frame by dequeuing and queuing the buffer. */
     void ScreenTimeout::DisplayPreRenderedFrame() {
         logDebug("[Screen] DisplayPreRenderedFrame\n");
 
@@ -352,6 +365,8 @@ namespace alefbet::pctrl::gui {
         }
     }
 
+    /*! @brief Shows the full screen timeout display, orchestrating all rendering steps.
+     * @return Result code, 0 on success. */
     ::Result ScreenTimeout::ShowScreenTimeout() {
         logDebug("[Screen] Show timeout screen\n");       
 

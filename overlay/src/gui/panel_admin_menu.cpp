@@ -30,15 +30,20 @@
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
 
+/*! @brief Constructs an AdminMenuPanel instance. */
 AdminMenuPanel::AdminMenuPanel() {    
 }
 
+/*! @brief Destructs an AdminMenuPanel instance and releases resources. */
 AdminMenuPanel::~AdminMenuPanel() {      
 }
 
+/*! @brief Closes the panel and cleans up associated resources. */
 void AdminMenuPanel::closeAndClean() {
 }
 
+/*! @brief Creates and returns the root UI element for the admin menu panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* AdminMenuPanel::createUI() {        
     rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Administration");
     rootList_ = new tsl::elm::List();
@@ -49,6 +54,7 @@ tsl::elm::Element* AdminMenuPanel::createUI() {
 }
 
 
+/*! @brief Rebuilds the admin menu list items with their configurations and click handlers. */
 void AdminMenuPanel::rebuildUI() {
 
     // Enable parental control
@@ -126,11 +132,18 @@ void AdminMenuPanel::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void AdminMenuPanel::update() {
     
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input not captured by other UI elements.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool AdminMenuPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
     if (keysDown & HidNpadButton_B) {
         tsl::changeTo<MainMenuPanel>();

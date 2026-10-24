@@ -56,10 +56,14 @@ namespace alefbet {
                 static LogLevel loglevel = INFO;
             }
 
+            /*! @brief Returns the current log level.
+             * @return The current LogLevel. */
             LogLevel currentLogLevel() {
                 return loglevel;
             }
             
+            /*! @brief Initializes the SD card filesystem for logging.
+             * @return true if successful, false otherwise. */
             bool prepare() {
                 if(ready) return true;
 
@@ -68,21 +72,20 @@ namespace alefbet {
                 return ready;
             }
 
+            /*! @brief Opens the log file for writing, creating it if it doesn't exist.
+             * @return true if the file is open, false otherwise. */
             bool openFile() {
                 if(opened) return true;
                 if(!prepare()) return false;
 
                 // Try to open the file
                 opened = R_SUCCEEDED(fsFsOpenFile(&sdmc, LogFilename, FsOpenMode_Write | FsOpenMode_Append, &handle));
-                //opened = R_SUCCEEDED(OpenFile(std::addressof(handle), LogFilename, OpenMode_Write | OpenMode_AllowAppend));                
 
                 // If the file could not be opened 
                 if(!opened) {
                     // try to create a new one
-                    //if(R_SUCCEEDED(CreateFile(LogFilename, 0))) {
                     if(R_SUCCEEDED(fsFsCreateFile(&sdmc, LogFilename, 0, 0))) {
                         // Then open it
-                        //opened = R_SUCCEEDED(OpenFile(std::addressof(handle), LogFilename, OpenMode_Write | OpenMode_AllowAppend));
                         opened = R_SUCCEEDED(fsFsOpenFile(&sdmc, LogFilename, FsOpenMode_Write | FsOpenMode_Append, &handle));
                     }
                 }                 
@@ -90,6 +93,7 @@ namespace alefbet {
                 return opened;
             }
             
+            /*! @brief Deletes the log file. */
             void clearLog() {
                 if(opened) return;
 
@@ -99,6 +103,9 @@ namespace alefbet {
                 //DeleteFile(LogFilename);
             }          
 
+            /*! @brief Logs a debug message if the current log level permits.
+             * @param fmt The format string (printf-style).
+             * @param ... Variable arguments for the format string. */
             void logDebug(const char *fmt, ...) {
                 if(loglevel > DEBUG) return;
                                 
@@ -108,6 +115,9 @@ namespace alefbet {
                 va_end(args);
             }
 
+            /*! @brief Logs an info message if the current log level permits.
+             * @param fmt The format string (printf-style).
+             * @param ... Variable arguments for the format string. */
             void logInfo(const char *fmt, ...) {
                 if(loglevel > INFO) return;
 
@@ -117,6 +127,9 @@ namespace alefbet {
                 va_end(args);
             }
 
+            /*! @brief Logs an error message if the current log level permits.
+             * @param fmt The format string (printf-style).
+             * @param ... Variable arguments for the format string. */
             void logError(const char *fmt, ...) {
                 if(loglevel > ERROR) return;
 
@@ -127,17 +140,16 @@ namespace alefbet {
             }
 
             namespace priv {
+                /*! @brief Internal function to write a formatted log message to the log file.
+                 * @param fmt The format string (printf-style).
+                 * @param args The va_list of arguments. */
                 void logToFile(const char* fmt, va_list args) {
                     std::lock_guard<std::mutex> lock(s_mutex);
 
                     if(openFile()) {
-                        //std::va_list vl;
-                        //va_start(vl, fmt);
                         vsnprintf(g_format_buffer, sizeof(g_format_buffer), fmt, args);
-                        //va_end(vl);    
                         
                         size_t size = std::strlen(g_format_buffer);
-                        //if(R_SUCCEEDED(WriteFile(handle, offset, g_format_buffer, size, WriteOption::Flush))) {
                         if(R_SUCCEEDED(fsFileWrite(&handle, offset, g_format_buffer, size, FsWriteOption_Flush))) {
                             offset += size;                        
                         }
@@ -147,6 +159,8 @@ namespace alefbet {
                 }
             }
 
+            /*! @brief Logs the contents of a HIPC metadata header for debugging.
+             * @param hdr Pointer to the HIPC metadata header. */
             void debugHipcMetaHeader(void* hdr) {
                 HipcMetadata* h = (HipcMetadata*)hdr;
 
@@ -163,14 +177,16 @@ namespace alefbet {
                 logDebug("  num_move_handles   : %u\n", h->num_move_handles);
             }
 
+            /*! @brief Closes the log file handle. */
             void closeFile() {
                 if(opened) {
-                    //CloseFile(handle);
                     fsFileClose(&handle);
                     opened = false;
                 }
             }
 
+            /*! @brief Sets the current log level and logs the change.
+             * @param level The new log level to set. */
             void setLogLevel(LogLevel level)
             {
                 loglevel = level;

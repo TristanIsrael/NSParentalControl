@@ -42,6 +42,12 @@ constexpr u64 DefaultPin[] = { HidNpadButton_A, HidNpadButton_A, HidNpadButton_A
 
 namespace alefbet::pctrl::srv {       
 
+    /*! @brief Initializes the service and registers the IPC request handler.
+     *
+     * Checks the enabled state from the settings database on startup.
+     *
+     * @param ipcServer Pointer to the IPC server for request routing.
+     */
     Service::Service(Ipc::Server* ipcServer)
     : ipcServer_(ipcServer) {
         logInfo("[Service] Starting service\n");        
@@ -59,6 +65,7 @@ namespace alefbet::pctrl::srv {
         }
     }    
 
+    /*! @brief Destructor for the service. */
     Service::~Service() {        
     }
 
@@ -69,6 +76,10 @@ namespace alefbet::pctrl::srv {
         }
     }
 
+    /*! @brief Shows the timeout screen and waits for Vol+ button press.
+     *
+     * When Vol+ is pressed, the system reboots to the recovery payload.
+     */
     void Service::showScreenTimeout() {        
         logDebug("[Service] Requested to show timeout screen\n");                        
 
@@ -97,6 +108,7 @@ namespace alefbet::pctrl::srv {
         gpioExit();
     }
 
+    /*! @brief Retrieves the currently running application name. */
     Ipc::Result Service::getRunningApplication(Ipc::Request* request) {
         auto process_id = helpers::getRunningApplicationPid();
         if(process_id > 0) {
@@ -110,6 +122,7 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves the Uid of the current user. */
     Ipc::Result Service::getCurrentUserUid(Ipc::Request* request) {   
         const auto current_title = helpers::getRunningApplicationPid();        
         if(current_title == 0) {
@@ -128,6 +141,7 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves the nickname of the current user. */
     Ipc::Result Service::getCurrentUserNickname(Ipc::Request* request) {    
         const auto current_title = helpers::getRunningApplicationPid();        
         if(current_title == 0) {
@@ -148,6 +162,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Calculates and returns the remaining time for a user based on their daily limit.
+     *
+     * @param request IPC request containing an optional user Uid string.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::getUserRemainingTime(Ipc::Request* request) {
         char user_uid[40] = {0};
         structs::UserData user;
@@ -199,6 +218,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves the total usage time for a user today.
+     *
+     * @param request IPC request containing an optional user Uid string.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::getUserUsageTime(Ipc::Request* request) {
         char user_uid[40] = {0};
         structs::UserData user;
@@ -230,6 +254,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Sets the daily usage limit for a specific user.
+     *
+     * @param request IPC request containing the limit in minutes and the user ID.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::setUserDailyLimit(Ipc::Request* request) {        
         typedef struct {
             u16 limit_in_minutes;
@@ -250,6 +279,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves the daily usage limit for a specific user.
+     *
+     * @param request IPC request containing the user ID.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::getUserDailyLimit(Ipc::Request* request) {                
         char _userId[80] = {0};
 
@@ -267,6 +301,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Sets the admin PIN for unlocking parental control settings.
+     *
+     * @param request IPC request containing 4 u64 values representing the PIN digits.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::setAdminPin(Ipc::Request* request) {
         //std::string pin;
         //Ipc::Result rc = request->readRequestData(pin);
@@ -305,6 +344,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;        
     }
 
+    /*! @brief Verifies the provided admin PIN against the stored PIN.
+     *
+     * @param request IPC request containing 4 u64 values representing the PIN digits.
+     * @return Ipc::Result::Ok on success, BadInput if data could not be read.
+     */
     Ipc::Result Service::verifyAdminPin(Ipc::Request* request) {
         //std::string pin;
         u64 pin[4] = {0};
@@ -341,6 +385,11 @@ namespace alefbet::pctrl::srv {
     }
 
 
+    /*! @brief Sets the working mode (Info or Blocking) for parental control.
+     *
+     * @param request IPC request containing the working mode value.
+     * @return Ipc::Result::Ok on success, BadInput if data could not be read.
+     */
     Ipc::Result Service::setWorkingMode(Ipc::Request* request) {
         WorkingMode workingMode = WorkingModeInfo;
         Ipc::Result rc = request->readRequestValue(workingMode);
@@ -361,6 +410,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves the current working mode (Info or Blocking).
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::getWorkingMode(Ipc::Request* request) {
         auto settings = loadSettings();
 
@@ -374,6 +428,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Enables or disables the display of remaining time in the UI.
+     *
+     * @param request IPC request containing a boolean flag.
+     * @return Ipc::Result::Ok on success, BadInput if data could not be read.
+     */
     Ipc::Result Service::setShowRemainingTime(Ipc::Request* request) {        
         bool showRemainingTime = false;
         Ipc::Result rc = request->readRequestValue(showRemainingTime);
@@ -403,6 +462,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves whether the remaining time display is enabled.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::getShowRemainingTime(Ipc::Request* request) {
         auto settings = loadSettings();
 
@@ -416,6 +480,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves the current enabled state of the service.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::isEnabled(Ipc::Request* request) {
         logDebug("[Service] getting current service state: %i\n", enabled_);
 
@@ -423,6 +492,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Enables or disables the parental control service.
+     *
+     * @param request IPC request containing a boolean flag.
+     * @return Ipc::Result::Ok on success, BadInput if data could not be read.
+     */
     Ipc::Result Service::setEnabled(Ipc::Request* request) {        
         bool isEnabled = false;        
         Ipc::Result rc = request->readRequestValue(isEnabled);
@@ -452,6 +526,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }    
 
+    /*! @brief Retrieves the current application version string.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::getCurrentVersion(Ipc::Request* request) {
         logDebug("[Service] Getting current version: %s\n", VERSION);
 
@@ -460,6 +539,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }    
 
+    /*! @brief Sets the log level for both sysmodule and overlay logging.
+     *
+     * @param request IPC request containing the log level value.
+     * @return Ipc::Result::Ok on success, BadInput if data could not be read.
+     */
     Ipc::Result Service::setLogLevel(Ipc::Request* request) {
         logDebug("[Service] Setting log level\n");
 
@@ -485,6 +569,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Retrieves the current log level.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::getLogLevel(Ipc::Request* request) {
         logDebug("[Service] Getting current log level\n");
 
@@ -494,6 +583,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     } 
 
+    /*! @brief Checks whether the history database has been tampered with.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::isDatabaseTampered(Ipc::Request* request) {
         logDebug("[Service] Verify whether database has been tampered\n");
 
@@ -502,6 +596,11 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Checks whether the history database needs to be upgraded.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
     Ipc::Result Service::isMustUpgradeDatabase(Ipc::Request* request) {
         logDebug("[Service] Verify whether database needs to be upgraded\n");
 
@@ -510,6 +609,12 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Delayed background task that triggers the timeout screen after 1 second.
+     *
+     * Used as a thread argument to defer the timeout screen display.
+     *
+     * @param arg Pointer to the Service instance.
+     */
     void delayedTimeout(void* arg) {
         logDebug("[Service] Delayed task\n");
         Service* svc = static_cast<Service*>(arg);
@@ -517,6 +622,11 @@ namespace alefbet::pctrl::srv {
         svc->showScreenTimeout();
     }
 
+    /*! @brief Main IPC request dispatcher that routes commands to handler methods.
+     *
+     * @param request Pointer to the IPC request object.
+     * @return Ipc::Result indicating success or failure.
+     */
     Ipc::Result Service::commandThread(Ipc::Request* request) {
         const auto cmd = static_cast<Ipc::Command>(request->cmd());
         logDebug("[Service] request received: %s\n", Ipc::commandToString(cmd).c_str());
@@ -601,6 +711,7 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
     
+    /*! @brief Starts the IPC server listener thread. */
     void Service::listen() {                
         logInfo("[Service] Starting listening\n");
 

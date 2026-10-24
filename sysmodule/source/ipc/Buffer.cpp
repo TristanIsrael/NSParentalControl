@@ -20,6 +20,10 @@
 #include "Buffer.hpp"
 
 namespace Utils::Buffer {
+    /*! @brief Appends a null-terminated string to a byte buffer.
+     * @param buf The buffer to append to.
+     * @param str The string to append.
+     * @return true always. */
     bool appendString(std::vector<uint8_t> & buf, const std::string & str) {
         // Iterate over string
         for (size_t i = 0; i < str.size(); i++) {
@@ -29,6 +33,11 @@ namespace Utils::Buffer {
         return true;
     }
 
+    /*! @brief Reads a null-terminated string from a byte buffer at the given position.
+     * @param buf The buffer to read from.
+     * @param pos The current position in the buffer (updated on success).
+     * @param str The string output parameter.
+     * @return true if a string was read successfully, false if position is out of bounds. */
     bool readString(const std::vector<uint8_t> & buf, size_t & pos, std::string & str) {
         if (pos >= buf.size()) {
             return false;

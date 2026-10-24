@@ -62,14 +62,20 @@ namespace alefbet::pctrl::database {
     static bool mustUpgrade_ = false;
     static bool isTampered_ = false;
 
+    /*! @brief Returns whether a database upgrade is needed.
+     * @return true if upgrade is needed, false otherwise. */
     bool upgradeNeeded() {
         return mustUpgrade_;
     }
 
+    /*! @brief Returns whether the database has been tampered with.
+     * @return true if tampered, false otherwise. */
     bool isTampered() {
         return isTampered_;
     }
 
+    /*! @brief Initializes the SD card filesystem access.
+     * @return true if successful, false otherwise. */
     bool prepare() {
         if(ready_) return true;
 
@@ -81,12 +87,15 @@ namespace alefbet::pctrl::database {
         return ready_;
     }
 
+    /*! @brief Closes the SD card filesystem handle. */
     void freeFs() {
         if(!ready_) return;
 
         fsFsClose(&sdmc_);
     }
 
+    /*! @brief Creates the data directory on the SD card if it doesn't exist.
+     * @return true if successful, false otherwise. */
     bool createDataDirectory()
     {
         if(!prepare()) return false;
@@ -96,6 +105,10 @@ namespace alefbet::pctrl::database {
         return result;
     }
 
+    /*! @brief Loads history entries from a binary buffer in memory.
+     * @param data Pointer to the binary data.
+     * @param fileSize Size of the binary data in bytes.
+     * @return true if parsing succeeded, false otherwise. */
     static bool loadEntriesFromBinary(const u8* data, s64 fileSize) {
         if(fileSize < static_cast<s64>(sizeof(BinHeader))) {
             logError("[Database] Database file too small for header\n");
@@ -144,6 +157,7 @@ namespace alefbet::pctrl::database {
         return true;
     }
 
+    /*! @brief Loads the history database from the SD card file. */
     void loadDatabase()
     {
         if(data_synchronized_) return;
@@ -215,6 +229,7 @@ namespace alefbet::pctrl::database {
         data_synchronized_ = true;
     }
 
+    /*! @brief Saves the history database to the SD card file. */
     void saveDatabase() {
         std::lock_guard<std::mutex> lock(mutex_database_);
 
@@ -285,11 +300,20 @@ namespace alefbet::pctrl::database {
         fsFileClose(&handle_database_);
     }
 
+    /*! @brief Retrieves history entries for a specific user and date.
+     * @param uid The account UID to query.
+     * @param date The date string to filter by.
+     * @return Vector of history entries matching the criteria. */
     std::vector<HistoryEntry> getHistory(AccountUid uid, std::string date) {
         loadDatabase();
         return history_.entries(uid, date);
     }
 
+    /*! @brief Adds a new or updates an existing history entry for a user.
+     * @param uid The account UID.
+     * @param titleId The title ID of the application.
+     * @param duration_in_minutes The duration to add in minutes.
+     * @return The updated or newly created history entry. */
     HistoryEntry addToHistory(AccountUid uid, u64 titleId, u16 duration_in_minutes)
     {
         HistoryEntry result;

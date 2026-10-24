@@ -33,6 +33,9 @@ namespace Ipc {
 
     constexpr uint64_t waitTimeout = UINT64_MAX;                // Wait timeout when processing
 
+    /*! @brief Constructs a new IPC Server with the given name and max clients.
+     * @param name The service name to register.
+     * @param maxClients The maximum number of concurrent client sessions. */
     Server::Server(const std::string & name, const size_t maxClients) {
         // Set status variables
         this->error_ = false;
@@ -61,6 +64,9 @@ namespace Ipc {
         this->handles.push_back(serverHandle);
     }
 
+    /*! @brief Processes a session request from a specific client index.
+     * @param index The index of the client handle to process.
+     * @return true if the session was handled successfully (or closed), false on error. */
     bool Server::processSession(const int32_t index) {
         int tmp;
 
@@ -123,6 +129,8 @@ namespace Ipc {
         return (R_SUCCEEDED(rc));
     }
 
+    /*! @brief Accepts a new client session and adds it to the handles list.
+     * @return true if a new session was accepted, false otherwise. */
     bool Server::processNewSession() {
         Handle session;
         ::Result rc = svcAcceptSession(&session, this->handles[0]);
@@ -143,10 +151,14 @@ namespace Ipc {
         return false;
     }
 
+    /*! @brief Sets the request handler function for this server.
+     * @param f The handler function to use. */
     void Server::setRequestHandler(Handler f) {
         this->handler = f;
     }
 
+    /*! @brief Processes one iteration of the event loop, waiting for and handling requests.
+     * @return true if the server is still running normally, false on error. */
     bool Server::process() {
         if (this->error_) {
             return false;
@@ -187,6 +199,7 @@ namespace Ipc {
         return !this->error_;
     }
 
+    /*! @brief Destructor for Server, closing all handles and unregistering the service. */
     Server::~Server() {
         // Close all client handles
         for (size_t i = 1; i < this->handles.size(); i++) {

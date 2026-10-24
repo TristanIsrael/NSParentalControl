@@ -29,6 +29,10 @@ using namespace alefbet::pctrl::logger;
 const char* FLAGPATH = "/config/ultrahand/flags/NOTIFICATIONS.flag";
 static FsFileSystem sdmc;
 
+/*! @brief Writes a notification JSON file for Ultrahand to display.
+ * @param message The notification text message.
+ * @param fontSize The font size for the notification.
+ * @param priority The priority level of the notification. */
 void UltraHandInterface::writeNotification(const std::string& message, int fontSize, int priority) 
 {    
     if(!R_SUCCEEDED(fsOpenSdCardFileSystem(&sdmc))) {

@@ -23,11 +23,14 @@
 
 using namespace alefbet::pctrl::logger;
 
+/*! @brief Constructs a MainOverlay instance. */
 MainOverlay::MainOverlay() {    
 }
 
 extern "C" u64 __nx_vi_layer_id;
 
+/*! @brief Loads the initial GUI when the overlay starts.
+ * @return A unique pointer to the Gui to display initially. */
 std::unique_ptr<tsl::Gui> MainOverlay::loadInitialGui() {
     logDebug("loadInitialGui. __nx_vi_layer_id=%i\n", __nx_vi_layer_id);
     logDebug("aruid=%i\n", appletGetAppletResourceUserId());

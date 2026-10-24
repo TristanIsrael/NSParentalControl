@@ -29,17 +29,23 @@
 
 using namespace alefbet::pctrl;
 
+/*! @brief Constructs a VerifyPinPanel targeting the specified next panel.
+ * @param nextPanel The panel to navigate to upon successful PIN verification. */
 VerifyPinPanel::VerifyPinPanel(const NextPanel& nextPanel) 
 : nextPanel_(nextPanel) {    
 }
 
+/*! @brief Destructs a VerifyPinPanel instance and releases resources. */
 VerifyPinPanel::~VerifyPinPanel() {  
     closeAndClean();
 }
 
+/*! @brief Closes the panel and cleans up associated resources. */
 void VerifyPinPanel::closeAndClean() {
 }
 
+/*! @brief Creates and returns the root UI element for the PIN verification panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* VerifyPinPanel::createUI() {
     rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Verify PIN");
     rootList_ = new tsl::elm::List();
@@ -49,6 +55,7 @@ tsl::elm::Element* VerifyPinPanel::createUI() {
     return rootFrame_;
 }
 
+/*! @brief Rebuilds the PIN verification UI with circle indicators and error messages. */
 void VerifyPinPanel::rebuildUI() {     
     rootList_->addItem(new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
         renderer->drawString("Please enter Admin PIN", false, x + 20, y + 20, 20, renderer->a(0xFFFF));            
@@ -76,10 +83,17 @@ void VerifyPinPanel::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void VerifyPinPanel::update() {    
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input not captured by other UI elements for PIN verification.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool VerifyPinPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {    
     if (keysDown == 0) return false;    
 
@@ -119,6 +133,7 @@ bool VerifyPinPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState
     return true; // We capture all input
 }
 
+/*! @brief Navigates to the next panel after successful PIN verification. */
 void VerifyPinPanel::goToNextPanel() const {
     switch(nextPanel_) {
         case PanelSetPin: tsl::changeTo<SetupPinPanel>(); break;

@@ -20,6 +20,8 @@
 
 static AppContext g_ctx;
 
+/*! @brief Returns the global AppContext singleton.
+ * @return Reference to the AppContext instance. */
 AppContext& getAppContext() {
     return g_ctx;
 }

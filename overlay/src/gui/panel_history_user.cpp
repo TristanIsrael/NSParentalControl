@@ -29,13 +29,18 @@ using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
 using namespace std::chrono;
 
+/*! @brief Constructs a HistoryUserPanel for the given user.
+ * @param user The user data for whom history is being displayed. */
 HistoryUserPanel::HistoryUserPanel(const UserData& user) {    
     user_ = user;
 }
 
+/*! @brief Destructs a HistoryUserPanel instance and releases resources. */
 HistoryUserPanel::~HistoryUserPanel() {      
 }
 
+/*! @brief Creates and returns the root UI element for the user history panel.
+ * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* HistoryUserPanel::createUI() {
     rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Usage history");
     rootList_ = new tsl::elm::List();
@@ -64,10 +69,17 @@ void HistoryUserPanel::rebuildUI() {
     rootFrame_->setContent(rootList_);
 }
 
+/*! @brief Updates the panel state each frame. */
 void HistoryUserPanel::update() {    
 }
 
-// Called once every frame to handle inputs not handled by other UI elements
+/*! @brief Handles user input not captured by other UI elements.
+ * @param keysDown Keys pressed this frame.
+ * @param keysHeld Keys held this frame.
+ * @param touchPos Current touch screen position.
+ * @param joyStickPosLeft Left analog stick position.
+ * @param joyStickPosRight Right analog stick position.
+ * @return true if the input was handled, false otherwise. */
 bool HistoryUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
     if (keysDown & HidNpadButton_B) {
         tsl::goBack();

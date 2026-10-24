@@ -23,11 +23,14 @@
 
 using namespace std::chrono;
 
+/*! @brief Sends a notification that parental control monitoring has started. */
 void NotificationsController::notifyMonitoringStarted() 
 {
     UltraHandInterface::writeNotification("Parental control enabled");
 }
 
+/*! @brief Sends an attention notification with the remaining time.
+ * @param remainingTimeInMinutes The remaining time in minutes. */
 void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
 {
     //std::string message = std::to_string(remainingTimeInMinutes) + " minute" +(remainingTimeInMinutes > 1 ? "s" : "") +" left";
@@ -37,6 +40,9 @@ void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
     UltraHandInterface::writeNotification(message);
 }
 
+/*! @brief Formats a duration in minutes to a human-readable string (e.g., "2h 30mn").
+ * @param duration_in_minutes The duration in minutes.
+ * @return Formatted time string. */
 std::string NotificationsController::formatTime(int duration_in_minutes) {
     const auto& duration = minutes{duration_in_minutes};
     auto hoursPart = duration_cast<hours>(duration);

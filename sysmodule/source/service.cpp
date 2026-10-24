@@ -30,7 +30,6 @@
 #include "database/history_db.h"
 #include "database/settings_db.h"
 #include "monitor.h"
-#include "gui/gui_controller.h"
 #include "notifications_controller.h"
 
 using namespace alefbet::pctrl::logger;
@@ -68,6 +67,7 @@ namespace alefbet::pctrl::srv {
 
     /*! @brief Destructor for the service. */
     Service::~Service() {        
+        timeout_cancelled_ = true;
     }
 
     namespace actions {        
@@ -78,38 +78,33 @@ namespace alefbet::pctrl::srv {
         }
     }
 
-    /*! @brief Shows the timeout screen and waits for Vol+ button press.
+    /*! @brief Sends countdown notifications every 10 seconds and terminates the app after 60 seconds.
      *
-     * When Vol+ is pressed, the current application is terminated.
-     */
+     * The countdown can be cancelled if the parent application closes.
+     * In that case the sysmodule returns to normal monitoring state. */
     void Service::showScreenTimeout() {        
-        logDebug("[Service] Requested to show timeout screen\n");                        
+        logDebug("[Service] Starting 60s countdown with notifications\n");
 
-        gui_.showScreenTimeout();
+        constexpr int totalSeconds = 60;
+        constexpr int intervalSeconds = 10;
 
-        // Wait for Vol+
-        // Block unless a button has been pressed
-        GpioPadSession g_volup;
-        gpioInitialize();
-        gpioOpenSession(&g_volup, GpioPadName_ButtonVolUp);
-        GpioValue value;
+        for(int seconds = totalSeconds; seconds >= 0; seconds -= intervalSeconds) {
+            if(timeout_cancelled_.load()) {
+                logInfo("[Service] Screen timeout cancelled, returning to normal state\n");
+                return;
+            }
 
-        while(true) {            
-            gpioPadGetValue(&g_volup, &value);
+            NotificationsController::notifyRemainingSeconds(seconds);
 
-            if(value == 0) {
-                logDebug("[GUI] Vol+ pressed.\n");
-                gui_.hideScreenTimeout();
-                actions::terminate_current_application();
-                break;
-            }  
-            
-            // Wait a little
-            svcSleepThread(50e6); // 50 ms
+            if(seconds > 0) {
+                svcSleepThread(10e9);
+            }
         }
 
-        gpioExit();
+        logInfo("[Service] Time's up, terminating application\n");
+        actions::terminate_current_application();
     }
+
 
     /*! @brief Retrieves the currently running application name. */
     Ipc::Result Service::getRunningApplication(Ipc::Request* request) {
@@ -712,6 +707,9 @@ namespace alefbet::pctrl::srv {
             case Ipc::Command::MustUpgradeDatabase: {
                 return isMustUpgradeDatabase(request);
             }
+            case Ipc::Command::CancelScreenTimeout: {
+                return cancelScreenTimeout(request);
+            }
             default: {
                 logError("[Service] command %i not supported.\n", request->cmd());                
                 return Ipc::Result::BadInput;
@@ -720,7 +718,14 @@ namespace alefbet::pctrl::srv {
 
         return Ipc::Result::Ok;
     }
-    
+
+    /*! @brief Cancels the active screen timeout countdown. */
+    Ipc::Result Service::cancelScreenTimeout(Ipc::Request* request) {
+        logInfo("[Service] Screen timeout cancelled by user\n");
+        timeout_cancelled_ = true;
+        return Ipc::Result::Ok;
+    }
+
     /*! @brief Starts the IPC server listener thread. */
     void Service::listen() {                
         logInfo("[Service] Starting listening\n");

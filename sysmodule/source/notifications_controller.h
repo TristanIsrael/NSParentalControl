@@ -24,6 +24,7 @@ public:
 
     static void notifyMonitoringStarted();
     static void notifyRemainingTime(int remainingTimeInMinutes);
+    static void notifyRemainingSeconds(int remainingSeconds);
 
 private:
     static std::string formatTime(int duration_in_minutes);

@@ -40,6 +40,16 @@ void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
     UltraHandInterface::writeNotification(message);
 }
 
+/*! @brief Sends an attention notification with the remaining seconds.
+ * @param remainingSeconds The remaining time in seconds. */
+void NotificationsController::notifyRemainingSeconds(int remainingSeconds)
+{
+    std::string message = std::to_string(remainingSeconds) + "s left";
+
+    UltraHandInterface::drawAttention();
+    UltraHandInterface::writeNotification(message);
+}
+
 /*! @brief Formats a duration in minutes to a human-readable string (e.g., "2h 30mn").
  * @param duration_in_minutes The duration in minutes.
  * @return Formatted time string. */

@@ -18,6 +18,7 @@
 #pragma once
 #include <switch.h>
 #include <vector>
+#include <atomic>
 #include "ipc/Server.hpp"
 #include "gui_controller.h"
 //#include "pctrl_screen.hpp"
@@ -75,6 +76,9 @@ namespace alefbet::pctrl::srv {
             
             Ipc::Result isDatabaseTampered(Ipc::Request*);
             Ipc::Result isMustUpgradeDatabase(Ipc::Request*);
+            Ipc::Result cancelScreenTimeout(Ipc::Request*);
+            
+            Ipc::Result cancelScreenTimeout(Ipc::Request*);
 
         private:
             bool is_ready_ = false;
@@ -83,6 +87,7 @@ namespace alefbet::pctrl::srv {
             GuiController gui_;
             bool enabled_ = true;
             Monitor* monitor_ = nullptr;
+            std::atomic<bool> timeout_cancelled_ = false;
     };
 
 }

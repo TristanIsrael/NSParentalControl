@@ -20,6 +20,7 @@
 #include <switch.h>
 #include <mutex>
 #include <chrono>
+#include <algorithm>
 #include "logger.h"
 #include "Command.hpp"
 #include "AppContext.h"

@@ -31,7 +31,8 @@ namespace Ipc {
         RemoveTitleFromBlacklist,   /*! Removes a title from a users's blacklist */
         GetUserDailyLimit,          /*! Gets a users limits. */
         SetAuthenticationActive,    /*! Sets the authentication active or not */
-        IsAuthenticationActive      /*! Returns true if authentication is enabled */
+        IsAuthenticationActive,     /*! Returns true if authentication is enabled */
+        CancelScreenTimeout         /*! Cancels the active screen timeout countdown */
     };
 
 };

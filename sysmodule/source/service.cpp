@@ -200,7 +200,7 @@ namespace alefbet::pctrl::srv {
             }
         }
 
-        logDebug("[Service] Get usage time for user %s\n", user.nickname.c_str());
+        logDebug("[Service] Get remaining time for user %s\n", user.nickname.c_str());
 
         const auto& date = today();
         if(date.empty()) {

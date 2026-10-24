@@ -32,12 +32,10 @@
 #include "database/history_db.h"
 #include "database/settings_db.h"
 #include "ams_bpc.h"
-#include "database/json.hpp"
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::structs;
 using namespace alefbet::pctrl::database;
-using namespace nlohmann;
 using std::operator""sv;
 
 namespace alefbet::pctrl::helpers {
@@ -399,159 +397,202 @@ namespace alefbet::pctrl::helpers {
         std::vector<u64> titles;
 
         auto& settings = loadSettings();
-        if(settings.contains(SETTING_BLACKLIST)) {
-            const auto& blacklist = settings[SETTING_BLACKLIST].string_value;
+        if(!settings.contains(SETTING_BLACKLIST)) {
+            return titles;
+        }
 
-            if(blacklist.empty()) {
-                logDebug("[Helpers] No title blacklisted for user %s\n", userId.c_str());
-                return titles;
-            }
+        const auto& blacklistStr = settings[SETTING_BLACKLIST].string_value;
+        if(blacklistStr.empty()) {
+            logDebug("[Helpers] No title blacklisted for user %s\n", userId.c_str());
+            return titles;
+        }
 
-            json j_blacklist = json::parse(blacklist);
-
-            if(j_blacklist.contains(userId)) {
-                std::vector<u64> j_titlesList = j_blacklist[userId];                
-                return j_titlesList;
-            } else {
-                logDebug("[Helpers] No blacklist for user %s\n", userId.c_str());
+        std::istringstream stream(blacklistStr);
+        std::string line;
+        while(std::getline(stream, line, ';')) {
+            if(line.empty()) continue;
+            auto eqPos = line.find('=');
+            if(eqPos == std::string::npos) continue;
+            std::string lineUser = line.substr(0, eqPos);
+            std::string lineTitles = line.substr(eqPos + 1);
+            if(lineUser != userId) continue;
+            std::istringstream titleStream(lineTitles);
+            std::string titlePart;
+            while(std::getline(titleStream, titlePart, ',')) {
+                if(!titlePart.empty()) {
+                    titles.push_back(std::stoull(titlePart));
+                }
             }
         }
 
         return titles;
     }
 
+    static std::string serializeBlacklist(const std::map<std::string, std::vector<u64>>& blacklistMap) {
+        std::ostringstream oss;
+        bool firstUser = true;
+        for(const auto& [userId, titleIds] : blacklistMap) {
+            if(!firstUser) oss << ';';
+            firstUser = false;
+            oss << userId << '=';
+            bool firstTitle = true;
+            for(u64 titleId : titleIds) {
+                if(!firstTitle) oss << ',';
+                firstTitle = false;
+                oss << titleId;
+            }
+        }
+        return oss.str();
+    }
+
+    static std::map<std::string, std::vector<u64>> deserializeBlacklist(const std::string& data) {
+        std::map<std::string, std::vector<u64>> result;
+        std::istringstream stream(data);
+        std::string line;
+        while(std::getline(stream, line, ';')) {
+            if(line.empty()) continue;
+            auto eqPos = line.find('=');
+            if(eqPos == std::string::npos) continue;
+            std::string userId = line.substr(0, eqPos);
+            std::string titlesStr = line.substr(eqPos + 1);
+            std::istringstream titleStream(titlesStr);
+            std::string titlePart;
+            while(std::getline(titleStream, titlePart, ',')) {
+                if(!titlePart.empty()) {
+                    result[userId].push_back(std::stoull(titlePart));
+                }
+            }
+        }
+        return result;
+    }
+
     void addToBlacklist(const std::string& userId, u64 titleId) {
-        auto userBlacklist = getBlacklistedTitlesForUser(userId);
+        auto blacklistMap = deserializeBlacklist("");
         
-        const auto& title = std::find_if(userBlacklist.begin(), userBlacklist.end(), [titleId](u64 title) {
+        auto& settings = loadSettings();
+        if(settings.contains(SETTING_BLACKLIST)) {
+            blacklistMap = deserializeBlacklist(settings[SETTING_BLACKLIST].string_value);
+        }
+
+        auto& userTitles = blacklistMap[userId];
+        
+        const auto& title = std::find_if(userTitles.begin(), userTitles.end(), [titleId](u64 title) {
             return title == titleId;
         });
 
-        if(title == userBlacklist.end()) {
+        if(title == userTitles.end()) {
             logDebug("[Database] add title\n");
-            userBlacklist.push_back(titleId);
+            userTitles.push_back(titleId);
         }
 
-        auto& settings = loadSettings();
+        Setting setting {
+            .key = SETTING_BLACKLIST,
+            .type = STRING,
+            .string_value = serializeBlacklist(blacklistMap)
+        };
 
-        if(settings.contains(SETTING_BLACKLIST)) { // The setting exists
-            auto& setting = settings[SETTING_BLACKLIST];
-
-            // We replace the values for the user
-            auto j_setting = json::parse(setting.string_value);
-            j_setting[userId] = userBlacklist;            
-            
-            setting.string_value = j_setting.dump();
-
-            saveSetting(setting);
-        } else { // The setting does not exist 
-            json j_setting;
-            j_setting[userId] = userBlacklist; 
-
-            Setting setting {
-                .key = SETTING_BLACKLIST,
-                .type = STRING,
-                .string_value = j_setting.dump()
-            };
-
-            saveSetting(setting);
-        }
+        saveSetting(setting);
     }
         
     void removeFromBlacklist(const std::string& userId, u64 titleId) {
-        auto userBlacklist = getBlacklistedTitlesForUser(userId);
+        auto blacklistMap = deserializeBlacklist("");
+        
+        auto& settings = loadSettings();
+        if(settings.contains(SETTING_BLACKLIST)) {
+            blacklistMap = deserializeBlacklist(settings[SETTING_BLACKLIST].string_value);
+        }
 
-        const auto& title = std::find_if(userBlacklist.begin(), userBlacklist.end(), [titleId](u64 title) {
+        auto& userTitles = blacklistMap[userId];
+
+        const auto& title = std::find_if(userTitles.begin(), userTitles.end(), [titleId](u64 title) {
             return title == titleId;
         });
 
-        if(title == userBlacklist.end()) {
+        if(title == userTitles.end()) {
             logDebug("[Helpers] Title %llu not found in blacklist\n", titleId);
-            return; // Title is not in the blacklist
-        } else {           
-            userBlacklist.erase(std::remove_if(userBlacklist.begin(), userBlacklist.end(), [titleId](u64 title) {
-                if(title == titleId) {
-                    logDebug("[Helpers]  Remove title\n");
-                }
-                return titleId == title;
-            }), userBlacklist.end());
+            return;
         }
 
-        auto& settings = loadSettings();
-        
-        if(settings.contains(SETTING_BLACKLIST)) { // The setting exists
-            auto& setting = settings[SETTING_BLACKLIST];
+        logDebug("[Helpers]  Remove title\n");
+        userTitles.erase(std::remove_if(userTitles.begin(), userTitles.end(), [titleId](u64 title) {
+            return titleId == title;
+        }), userTitles.end());
 
-            // We replace the values for the user
-            auto j_setting = json::parse(setting.string_value);
-            j_setting[userId] = userBlacklist;            
-            
-            setting.string_value = j_setting.dump();
+        Setting setting {
+            .key = SETTING_BLACKLIST,
+            .type = STRING,
+            .string_value = serializeBlacklist(blacklistMap)
+        };
 
-            saveSetting(setting);
-        } else { // The setting does not exist 
-            json j_setting;
-            j_setting[userId] = userBlacklist; 
+        saveSetting(setting);
+    }
 
-            Setting setting {
-                .key = SETTING_BLACKLIST,
-                .type = STRING,
-                .string_value = j_setting.dump()
-            };
+    static std::string serializeDailyLimits(const std::map<std::string, u16>& limitsMap) {
+        std::ostringstream oss;
+        bool first = true;
+        for(const auto& [userId, limit] : limitsMap) {
+            if(!first) oss << ';';
+            first = false;
+            oss << userId << '=' << limit;
+        }
+        return oss.str();
+    }
 
-            saveSetting(setting);
-        }        
+    static std::map<std::string, u16> deserializeDailyLimits(const std::string& data) {
+        std::map<std::string, u16> result;
+        std::istringstream stream(data);
+        std::string line;
+        while(std::getline(stream, line, ';')) {
+            if(line.empty()) continue;
+            auto eqPos = line.find('=');
+            if(eqPos == std::string::npos) continue;
+            std::string userId = line.substr(0, eqPos);
+            u16 limit = static_cast<u16>(std::stoul(line.substr(eqPos + 1)));
+            result[userId] = limit;
+        }
+        return result;
     }
 
     u16 getDailyLimitForUser(const std::string& userId) {
         auto& settings = loadSettings();
 
-        if(settings.contains(SETTING_DAILY_LIMIT_USERS)) {
-            const auto& limits = settings[SETTING_DAILY_LIMIT_USERS].string_value;
-
-            if(limits.empty()) {
-                logDebug("[Helpers] No daily limit for user %s\n", userId.c_str());
-                return 0;
-            }
-
-            json j_limits = json::parse(limits);
-
-            if(j_limits.contains(userId)) {
-                u16 limit = j_limits[userId].get<u16>();
-                return limit;
-            } else {
-                logDebug("[Helpers] No daily limit for user %s\n", userId.c_str());
-            }
+        if(!settings.contains(SETTING_DAILY_LIMIT_USERS)) {
+            return 0;
         }
 
+        const auto& limitsStr = settings[SETTING_DAILY_LIMIT_USERS].string_value;
+        if(limitsStr.empty()) {
+            logDebug("[Helpers] No daily limit for user %s\n", userId.c_str());
+            return 0;
+        }
+
+        auto limitsMap = deserializeDailyLimits(limitsStr);
+        auto it = limitsMap.find(userId);
+        if(it != limitsMap.end()) {
+            return it->second;
+        }
+
+        logDebug("[Helpers] No daily limit for user %s\n", userId.c_str());
         return 0;
     }
 
     void setDailyLimitForUser(const std::string& userId, u16 limit_in_minutes) {
+        auto limitsMap = deserializeDailyLimits("");
+        
         auto& settings = loadSettings();
-
-        if(settings.contains(SETTING_DAILY_LIMIT_USERS)) { // The setting exists
-            auto& setting = settings[SETTING_DAILY_LIMIT_USERS];
-
-            // We replace the value for the user
-            auto j_setting = json::parse(setting.string_value);
-            j_setting[userId] = limit_in_minutes;            
-            
-            setting.string_value = j_setting.dump();
-
-            saveSetting(setting);
-        } else { // The setting does not exist 
-            json j_setting;
-            j_setting[userId] = limit_in_minutes; 
-
-            Setting setting {
-                .key = SETTING_DAILY_LIMIT_USERS,
-                .type = STRING,
-                .string_value = j_setting.dump()
-            };
-
-            saveSetting(setting);
+        if(settings.contains(SETTING_DAILY_LIMIT_USERS)) {
+            limitsMap = deserializeDailyLimits(settings[SETTING_DAILY_LIMIT_USERS].string_value);
         }
+
+        limitsMap[userId] = limit_in_minutes;
+
+        Setting setting {
+            .key = SETTING_DAILY_LIMIT_USERS,
+            .type = STRING,
+            .string_value = serializeDailyLimits(limitsMap)
+        };
+
+        saveSetting(setting);
     }
 
     std::string encodePassword(const std::vector<u64>& password) {

@@ -20,8 +20,8 @@
 #include <ctime>
 #include <cstring>
 #include <format>
+#include <sstream>
 #include <switch.h>
-#include <json.hpp>
 #include "logger.h"
 
 using namespace alefbet::pctrl::logger;
@@ -36,17 +36,14 @@ void UltraHandInterface::writeNotification(const std::string& message, int fontS
         return;
     }
 
-    // Check if flag file exists
     FsFile handle;
     FsDirEntryType fileType;    
 
     if (R_FAILED(fsFsGetEntryType(&sdmc, FLAGPATH, &fileType))) {
-        // Flag file does not exist, do nothing
         logInfo("[Ultrahand] Notifications are not enabled in Ultrahand\n");
         return;
     }
 
-    // Generate filename with timestamp
     u64 tick = armGetSystemTick();
     std::string filename = "NSParentalControl-" + std::to_string(tick) + ".notify";
     std::string fullPath = "/config/ultrahand/notifications/" + filename;
@@ -56,16 +53,17 @@ void UltraHandInterface::writeNotification(const std::string& message, int fontS
         return;
     }
 
-    if(R_SUCCEEDED(fsFsOpenFile(&sdmc, fullPath.c_str(), FsOpenMode_Write | FsOpenMode_Append, &handle))) {        
-        nlohmann::json j;
-        j["text"] = message;
-        j["font_size"] = fontSize;
-        j["priority"] = priority;
-        
-        const auto notif = j.dump(2);
-        const auto s_data = notif.c_str();
+    if(R_SUCCEEDED(fsFsOpenFile(&sdmc, fullPath.c_str(), FsOpenMode_Write | FsOpenMode_Append, &handle))) {
+        std::ostringstream notif;
+        notif << "{\n";
+        notif << "  \"text\": \"" << message << "\",\n";
+        notif << "  \"font_size\": " << fontSize << ",\n";
+        notif << "  \"priority\": " << priority << "\n";
+        notif << "}\n";
 
-        if(R_SUCCEEDED(fsFileWrite(&handle, 0, s_data, std::strlen(s_data), FsWriteOption_Flush))) {
+        const auto s_data = notif.str();
+
+        if(R_SUCCEEDED(fsFileWrite(&handle, 0, s_data.data(), s_data.length(), FsWriteOption_Flush))) {
             logDebug("[Ultrahand] Notification file has been written\n");
         } else {
             logError("[Ultrahand] Notification file has not been written\n");

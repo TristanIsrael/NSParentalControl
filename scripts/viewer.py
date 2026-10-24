@@ -58,7 +58,7 @@ def read_history(path):
         uid_low, uid_high, date_length, title_id, duration = struct.unpack(
             "<QQIQH", data[offset:offset + 30]
         )
-        offset += 28
+        offset += 30
 
         if offset + date_length > len(data):
             print(f"  Warning: truncated date string at entry {i}")

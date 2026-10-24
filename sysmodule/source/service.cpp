@@ -656,7 +656,11 @@ namespace alefbet::pctrl::srv {
                 threadStart(&t);*/                
                 //NotificationsController::notifyRemainingTime(15);
                 //helpers::terminateCurrentApplication();
-                showScreenTimeout();
+                const auto& pid = helpers::getRunningApplicationPid();
+                if(pid == 0) {
+                    return Ipc::Result::Ok;
+                }
+                showScreenTimeout(pid);
                 break;
             }
             case Ipc::Command::GetCurrentUserUid: {

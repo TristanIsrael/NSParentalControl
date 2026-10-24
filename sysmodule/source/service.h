@@ -76,9 +76,7 @@ namespace alefbet::pctrl::srv {
             
             Ipc::Result isDatabaseTampered(Ipc::Request*);
             Ipc::Result isMustUpgradeDatabase(Ipc::Request*);
-            Ipc::Result cancelScreenTimeout(Ipc::Request*);
-            
-            Ipc::Result cancelScreenTimeout(Ipc::Request*);
+            Ipc::Result cancelScreenTimeout(Ipc::Request*);            
 
         private:
             bool is_ready_ = false;

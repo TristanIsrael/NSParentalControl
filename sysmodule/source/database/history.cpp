@@ -132,11 +132,9 @@ std::vector<HistoryEntry> History::entries(const AccountUid& uid, const std::str
 
     for(const auto& _entry: d_->history) {
         if(_entry.uid().uid[0] == uid.uid[0] && _entry.uid().uid[1] == uid.uid[1] && _entry.date() == date) {
-            if(titleId > 0 && titleId == _entry.titleId()) {
+            if(titleId == 0 || titleId == _entry.titleId()) {
                 entries.push_back(_entry);
-            } else {
-                entries.push_back(_entry);
-            }            
+            }
         }
     }
 

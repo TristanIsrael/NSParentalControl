@@ -280,13 +280,14 @@ namespace alefbet::pctrl::srv {
 
         Args args{0};
 
-        Ipc::Result rc = request->readRequestValue(args);
+        Ipc::Result rc = request->readRequestData(args);
         if(rc != Ipc::Result::Ok) {
             logError("[Service] Could not read request data (limit)\n");
             return rc;
         }
 
         std::string userId = std::string(args.userId);
+        logDebug("[Service] SetUserDailyLimit: userId=%s, limit=%u\n", userId.c_str(), args.limit_in_minutes);
         helpers::setDailyLimitForUser(userId, args.limit_in_minutes);
         
         return Ipc::Result::Ok;

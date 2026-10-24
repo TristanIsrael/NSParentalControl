@@ -104,16 +104,16 @@ namespace alefbet::pctrl::srv {
                     u16 remainingTimeInMinutes = daily_limit > totalDuration ? daily_limit - totalDuration : 0;
                     logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), remainingTimeInMinutes, daily_limit);
 
-                    if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
-                        const auto& showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;                                                
-                        if(showRemainingTime) {                            
-                            if(shouldSendNotification(remainingTimeInMinutes)) {
-                                NotificationsController::notifyRemainingTime(remainingTimeInMinutes);
+                    if(remainingTimeInMinutes > 0) {
+                        if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
+                            const auto& showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;                                                
+                            if(showRemainingTime) {                            
+                                if(shouldSendNotification(remainingTimeInMinutes)) {
+                                    NotificationsController::notifyRemainingTime(remainingTimeInMinutes);
+                                }
                             }
                         }
-                    }
-
-                    if(remainingTimeInMinutes <= 0) {
+                    } else {            
                         logInfo("[Monitor] Timeout for the user %s\n", user.nickname.c_str());
                         service_->showScreenTimeout(pid);
                     }

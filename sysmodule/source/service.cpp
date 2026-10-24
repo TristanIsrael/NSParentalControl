@@ -273,22 +273,23 @@ namespace alefbet::pctrl::srv {
      * @return Ipc::Result::Ok on success.
      */
     Ipc::Result Service::setUserDailyLimit(Ipc::Request* request) {
-        typedef struct __attribute__((packed)) {
-            u16 limit_in_minutes;
-            char userId[80];
-        } Args;
+        u16 limit_in_minutes = 0;
+        std::string userId;
 
-        Args args{0};
-
-        Ipc::Result rc = request->readRequestData(args);
+        Ipc::Result rc = request->readRequestValue(limit_in_minutes);
         if(rc != Ipc::Result::Ok) {
-            logError("[Service] Could not read request data (limit)\n");
+            logError("[Service] Could not read limit value\n");
             return rc;
         }
 
-        std::string userId = std::string(args.userId);
-        logDebug("[Service] SetUserDailyLimit: userId=%s, limit=%u\n", userId.c_str(), args.limit_in_minutes);
-        helpers::setDailyLimitForUser(userId, args.limit_in_minutes);
+        rc = request->readRequestValue(userId);
+        if(rc != Ipc::Result::Ok) {
+            logError("[Service] Could not read userId\n");
+            return rc;
+        }
+
+        logDebug("[Service] SetUserDailyLimit: userId=%s, limit=%u\n", userId.c_str(), limit_in_minutes);
+        helpers::setDailyLimitForUser(userId, limit_in_minutes);
         
         return Ipc::Result::Ok;
     }

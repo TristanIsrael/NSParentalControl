@@ -21,6 +21,7 @@
 #include "AppContext.h"
 #include "Command.hpp"
 #include <string>
+#include <algorithm>
 #include <cstring>
 
 namespace alefbet::pctrl::ipc {

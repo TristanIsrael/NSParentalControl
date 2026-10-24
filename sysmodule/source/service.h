@@ -42,7 +42,7 @@ namespace alefbet::pctrl::srv {
                 monitor_ = monitor;
             }
 
-            void showScreenTimeout();
+            void showScreenTimeout(u64 targetPid);
 
         private:
             Ipc::Result commandThread(Ipc::Request*);
@@ -88,6 +88,7 @@ namespace alefbet::pctrl::srv {
             bool enabled_ = true;
             Monitor* monitor_ = nullptr;
             std::atomic<bool> timeout_cancelled_ = false;
+            u64 timeout_target_pid_ = 0;
     };
 
 }

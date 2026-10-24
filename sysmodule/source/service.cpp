@@ -80,17 +80,25 @@ namespace alefbet::pctrl::srv {
 
     /*! @brief Sends countdown notifications every 10 seconds and terminates the app after 60 seconds.
      *
-     * The countdown can be cancelled if the parent application closes.
-     * In that case the sysmodule returns to normal monitoring state. */
-    void Service::showScreenTimeout() {        
-        logDebug("[Service] Starting 60s countdown with notifications\n");
+     * The countdown can be cancelled if the parent application closes or if the game is no longer running.
+     * In that case the sysmodule returns to normal monitoring state.
+     *
+     * @param targetPid The PID of the game that triggered the timeout. */
+    void Service::showScreenTimeout(u64 targetPid) {        
+        logDebug("[Service] Starting 60s countdown with notifications for PID %llu\n", targetPid);
 
+        timeout_target_pid_ = targetPid;
         constexpr int totalSeconds = 60;
         constexpr int intervalSeconds = 10;
 
         for(int seconds = totalSeconds; seconds >= 0; seconds -= intervalSeconds) {
             if(timeout_cancelled_.load()) {
                 logInfo("[Service] Screen timeout cancelled, returning to normal state\n");
+                return;
+            }
+
+            if(getRunningApplicationPid() != targetPid) {
+                logInfo("[Service] Game PID %llu is no longer running, abandoning timeout\n", targetPid);
                 return;
             }
 
@@ -624,7 +632,8 @@ namespace alefbet::pctrl::srv {
         logDebug("[Service] Delayed task\n");
         Service* svc = static_cast<Service*>(arg);
         svcSleepThread(1'000'000'000LL);
-        svc->showScreenTimeout();
+        u64 currentPid = getRunningApplicationPid();
+        svc->showScreenTimeout(currentPid);
     }
 
     /*! @brief Main IPC request dispatcher that routes commands to handler methods.

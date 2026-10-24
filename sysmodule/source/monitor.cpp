@@ -115,7 +115,7 @@ namespace alefbet::pctrl::srv {
 
                     if(remainingTimeInMinutes <= 0) {
                         logInfo("[Monitor] Timeout for the user %s\n", user.nickname.c_str());
-                        service_->showScreenTimeout();
+                        service_->showScreenTimeout(pid);
                     }
                 } else {
                     logDebug("[Monitor] No user found\n");

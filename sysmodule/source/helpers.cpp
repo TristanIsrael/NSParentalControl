@@ -342,7 +342,7 @@ namespace alefbet::pctrl::helpers {
         u16 hours = minutesSinceMidnight / 60;
         u16 minutes = minutesSinceMidnight % 60;
         
-        char buffer[6] = {0};
+        char buffer[12] = {0};
         std::snprintf(buffer, sizeof(buffer), "%02d:%02d", hours, minutes);
         
         return std::string(buffer);

@@ -175,9 +175,11 @@ void MainMenuPanel::rebuildUI() {
         }
 
         if(bedtime > 0) {
-            u16 minutesUntilBedtime = bedtime - currentMinutesSinceMidnight;
-            if(minutesUntilBedtime > 0) {
-                minutesUntilDeadline = std::min(minutesUntilDeadline, minutesUntilBedtime);
+            s16 minutesUntilBedtime = static_cast<s16>(bedtime) - static_cast<s16>(currentMinutesSinceMidnight);
+            if(minutesUntilBedtime <= 0) {
+                minutesUntilDeadline = 0;
+            } else {
+                minutesUntilDeadline = std::min(minutesUntilDeadline, static_cast<u16>(minutesUntilBedtime));
             }
         }
 

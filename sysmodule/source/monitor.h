@@ -48,7 +48,7 @@ namespace alefbet::pctrl::srv {
             bool notified_ = false;
             u64 currentTitle_ = 0;
             u16 lastTime_ = 0;
-            i32 timeJumpOffset_ = 0;
+            s32 timeJumpOffset_ = 0;
     };    
 
 };

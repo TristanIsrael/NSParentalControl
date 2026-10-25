@@ -348,11 +348,11 @@ namespace alefbet::pctrl::helpers {
             return std::string(buffer);
         }
 
-        static constexpr i32 BEDTIME_TIME_JUMP_THRESHOLD = 5;
+        static constexpr s32 BEDTIME_TIME_JUMP_THRESHOLD = 5;
 
-        u16 getAdjustedTime(u16 currTime, u16& lastTime, i32& offset) {
+        u16 getAdjustedTime(u16 currTime, u16& lastTime, s32& offset) {
             if(lastTime != 0) {
-                const i32 apparentDiff = static_cast<i32>(currTime) - static_cast<i32>(lastTime);
+                const s32 apparentDiff = static_cast<s32>(currTime) - static_cast<s32>(lastTime);
                 
                 if(apparentDiff > BEDTIME_TIME_JUMP_THRESHOLD) {
                     logInfo("[Helpers] System time jump detected: +%d minutes, adjusting offset to %d\n", apparentDiff, offset - apparentDiff);
@@ -360,7 +360,7 @@ namespace alefbet::pctrl::helpers {
                 }
             }
 
-            const i32 adjusted = static_cast<i32>(currTime) + offset;
+            const s32 adjusted = static_cast<s32>(currTime) + offset;
             
             if(adjusted < 0) {
                 return static_cast<u16>(1440 + adjusted);

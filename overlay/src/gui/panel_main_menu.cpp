@@ -20,6 +20,7 @@
 //#include <tesla.hpp>
 #include <switch.h>
 #include <chrono>
+#include <limits>
 #include "logger.h"
 #include "Command.hpp"
 #include "panel_debug_menu.h"
@@ -163,7 +164,35 @@ void MainMenuPanel::rebuildUI() {
             std::snprintf(bedtimeStr, sizeof(bedtimeStr), "%02d:%02d", bedtimeHours, bedtimeMinutes);
             auto entryBedtime = new tsl::elm::ListItem("Bedtime: " + std::string(bedtimeStr));
             rootList_->addItem(entryBedtime);
-        }        
+        }
+
+        // Time until next deadline
+        auto now = std::chrono::system_clock::now();
+        auto now_t = std::chrono::system_clock::to_time_t(now);
+        struct tm timeInfo;
+        localtime_r(&now_t, &timeInfo);
+        u16 currentMinutesSinceMidnight = timeInfo.tm_hour * 60 + timeInfo.tm_min;
+
+        u16 minutesUntilDeadline = std::numeric_limits<u16>::max();
+
+        if(remainingTime.count() > 0) {
+            minutesUntilDeadline = std::min(minutesUntilDeadline, remainingTime.count());
+        }
+
+        if(bedtime > 0) {
+            u16 minutesUntilBedtime = bedtime - currentMinutesSinceMidnight;
+            if(minutesUntilBedtime > 0) {
+                minutesUntilDeadline = std::min(minutesUntilDeadline, minutesUntilBedtime);
+            }
+        }
+
+        if(minutesUntilDeadline != std::numeric_limits<u16>::max() && minutesUntilDeadline > 0) {
+            auto durationInMinutes = minutes{minutesUntilDeadline};
+            auto hoursPart = duration_cast<hours>(durationInMinutes);
+            auto minutesPart = duration_cast<minutes>(durationInMinutes - hoursPart);
+            auto entryNextDeadline = new tsl::elm::ListItem("Play time ends at " +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + "h " : "") +std::to_string(minutesPart.count()) +" mn");
+            rootList_->addItem(entryNextDeadline);
+        }
     } else {
         rootList_->addItem(new tsl::elm::ListItem("No user / app started"));
     }            

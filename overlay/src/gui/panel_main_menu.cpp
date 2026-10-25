@@ -183,7 +183,7 @@ void MainMenuPanel::rebuildUI() {
             }
         }
 
-        if(minutesUntilDeadline != std::numeric_limits<u16>::max() && minutesUntilDeadline > 0) {
+        if(minutesUntilDeadline != std::numeric_limits<u16>::max()) {
             auto durationInMinutes = minutes{minutesUntilDeadline};
             auto hoursPart = duration_cast<hours>(durationInMinutes);
             auto minutesPart = duration_cast<minutes>(durationInMinutes - hoursPart);

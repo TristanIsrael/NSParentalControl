@@ -458,6 +458,30 @@ namespace alefbet::pctrl::ipc {
         return std::string(version);
     }
 
+    /*! @brief Gets the current time adjusted for system time jumps via IPC.
+     * @return The adjusted current time in minutes since midnight, or 0 on failure. */
+    u16 getAdjustedCurrentTime() {
+        logDebug("[IPC] Getting adjusted current time\n");
+
+        if(!isAvailable()) {
+            logError("[IPC] service not available\n");
+            return 0;
+        }
+
+        u16 adjustedTime = 0;
+
+        auto& service = getAppContext().pctrl_service;
+        Result res = serviceDispatchOut(&service, (u32)Ipc::Command::GetAdjustedCurrentTime, adjustedTime);
+
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured while getting the adjusted current time.\n");
+        }
+
+        logDebug("[IPC] Adjusted current time is %i minutes since midnight\n", adjustedTime);
+
+        return adjustedTime;
+    }
+
     /*! @brief Gets the daily time limit for a user via IPC.
      * @param user The user data containing the UID.
      * @return The daily limit in minutes, or 0 on failure. */

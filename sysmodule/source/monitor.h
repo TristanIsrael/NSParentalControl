@@ -20,6 +20,7 @@
 #include <switch.h>
 #include "database/history.h"
 #include "service.h"
+#include "helpers.h"
 
 namespace alefbet::pctrl::srv {
 
@@ -37,6 +38,18 @@ namespace alefbet::pctrl::srv {
             void setService(alefbet::pctrl::srv::Service* service) {
                 service_ = service;
                 service->setMonitor(this);
+            }
+
+            u16 getAdjustedCurrentTime() {
+                const auto currentTime = getCurrentTimeInMinutesSinceMidnight();
+                u16 result = getAdjustedTime(currentTime, lastTime_, timeJumpOffset_);
+                lastTime_ = currentTime;
+                return result;
+            }
+
+            void resetTimeJumpState() {
+                lastTime_ = 0;
+                timeJumpOffset_ = 0;
             }
 
         private:

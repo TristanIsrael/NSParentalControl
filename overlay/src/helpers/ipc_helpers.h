@@ -71,6 +71,8 @@ namespace alefbet::pctrl::ipc {
 
     std::string getVersion();    
 
+    u16 getAdjustedCurrentTime();
+
     bool isDatabaseTampered();
     bool isDatabaseNeedsUpgrade();    
 }

@@ -778,6 +778,9 @@ namespace alefbet::pctrl::srv {
             case Ipc::Command::GetBedtime: {
                 return getBedtime(request);
             }
+            case Ipc::Command::GetAdjustedCurrentTime: {
+                return getAdjustedCurrentTime(request);
+            }
             default: {
                 logError("[Service] command %i not supported.\n", request->cmd());                
                 return Ipc::Result::BadInput;
@@ -791,6 +794,23 @@ namespace alefbet::pctrl::srv {
     Ipc::Result Service::cancelScreenTimeout(Ipc::Request* request) {
         logInfo("[Service] Screen timeout cancelled by user\n");
         timeout_cancelled_ = true;
+        return Ipc::Result::Ok;
+    }
+
+    /*! @brief Returns the current time adjusted for system time jumps.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
+    Ipc::Result Service::getAdjustedCurrentTime(Ipc::Request* request) {
+        if(monitor_ == nullptr) {
+            logError("[Service] Monitor not initialized\n");
+            return Ipc::Result::Error;
+        }
+
+        const auto adjustedTime = monitor_->getAdjustedCurrentTime();
+        request->appendReplyValue(adjustedTime);
+        
         return Ipc::Result::Ok;
     }
 

@@ -167,11 +167,7 @@ void MainMenuPanel::rebuildUI() {
         }        
 
         // Time until next deadline
-        auto now = std::chrono::system_clock::now();
-        auto now_t = std::chrono::system_clock::to_time_t(now);
-        struct tm timeInfo;
-        localtime_r(&now_t, &timeInfo);
-        u16 currentMinutesSinceMidnight = timeInfo.tm_hour * 60 + timeInfo.tm_min;
+        u16 currentMinutesSinceMidnight = ipc::getAdjustedCurrentTime();
 
         u16 minutesUntilDeadline = std::numeric_limits<u16>::max();
 

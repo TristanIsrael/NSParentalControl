@@ -354,8 +354,8 @@ namespace alefbet::pctrl::helpers {
             if(lastTime != 0) {
                 const s32 apparentDiff = static_cast<s32>(currTime) - static_cast<s32>(lastTime);
                 
-                if(apparentDiff > BEDTIME_TIME_JUMP_THRESHOLD) {
-                    logInfo("[Helpers] System time jump detected: +%d minutes, adjusting offset to %d\n", apparentDiff, offset - apparentDiff);
+                if(std::abs(apparentDiff) > BEDTIME_TIME_JUMP_THRESHOLD) {
+                    logInfo("[Helpers] System time jump detected: %+d minutes, adjusting offset to %d\n", apparentDiff, offset - apparentDiff);
                     offset -= apparentDiff;
                 }
             }
@@ -369,6 +369,11 @@ namespace alefbet::pctrl::helpers {
             }
             
             return static_cast<u16>(adjusted);
+        }
+
+        void resetAdjustedTimeState(u16& lastTime, s32& offset) {
+            lastTime = 0;
+            offset = 0;
         }
 
     /*! @brief Reads the reboot payload file from the SD card.

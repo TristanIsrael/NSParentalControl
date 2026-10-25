@@ -55,3 +55,4 @@ constexpr const char* SETTING_ENABLED = "enabled";
 constexpr const char* SETTING_LOGLEVEL = "log_level";
 constexpr const char* SETTING_BLACKLIST = "blacklist";
 constexpr const char* SETTING_AUTHENTICATION = "authentication";
+constexpr const char* SETTING_BEDTIME_USERS = "bedtime_users";

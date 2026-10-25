@@ -63,6 +63,9 @@ namespace alefbet::pctrl::ipc {
     u16 getDailyLimit(const UserData& user);
     bool setDailyLimit(const UserData& user, u16 limit);
 
+    u16 getBedtime(const UserData& user);
+    bool setBedtime(const UserData& user, u16 bedtime);
+
     bool isDebugLogEnabled();
     bool enableDebugLog(bool enable);
 

@@ -75,9 +75,8 @@ void SetupLimitsUserPanel::rebuildUI() {
         renderer->drawString("Modify the limits with \u2191 and \u2193.", false, x + 45, y + 55, 16, renderer->a(ColorWhite));
     }), 60);
 
-    rootList_->addItem(new tsl::elm::CategoryHeader("Play limits"));
-    
     // Daily Limit
+    rootList_->addItem(new tsl::elm::CategoryHeader("Play limits"));    
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         s32 yPos = y;
 
@@ -96,6 +95,25 @@ void SetupLimitsUserPanel::rebuildUI() {
 
     }), 60);
 
+    // Bed time
+    rootList_->addItem(new tsl::elm::CategoryHeader("Bed time"));
+    rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
+        s32 yPos = y;
+
+        yPos += 35;
+        renderer->drawString("Stop games after", false, x, yPos, 20, renderer->a(ColorWhite));
+        
+        // Minutes
+        renderer->drawString("mn", false, w-40, yPos, 20, renderer->a(selectedItem_ == DailyLimitMinutes ? ColorSelected : ColorWhite));
+        std::string str = std::to_string(dailyLimitMinutes_);
+        renderer->drawString(str.c_str(), false, w-60 -(dailyLimitMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == DailyLimitMinutes ? ColorSelected : ColorWhite));
+                
+        // Hours
+        renderer->drawString("h", false, w-90, yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));
+        str = std::to_string(dailyLimitHours_);
+        renderer->drawString(str.c_str(), false, w-110 -(dailyLimitHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));            
+
+    }), 60);
     
     rootFrame_->setContent(rootList_);
 }
@@ -122,6 +140,10 @@ bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouc
         ipc::setDailyLimit(user_, limitInMinutes);
         logDebug("limitInMinutes=%i, hours=%i, minutes=%i\n", limitInMinutes, dailyLimitHours_, dailyLimitMinutes_);
 
+        u32 bedtime = bedtimeHours_*60 + bedtimeMinutes_;
+        ipc::setBedtime(user_, bedtime);
+        logDebug("bedTime=%i, hours=%i, minutes=%i\n", bedtime, bedtimeHours_, bedtimeMinutes_);
+
         tsl::goBack();
         return true;
     } else if(keysDown & HidNpadButton_AnyDown) {
@@ -141,7 +163,9 @@ bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouc
 void SetupLimitsUserPanel::selectNextItem() {
     switch(selectedItem_) {
         case DailyLimitHours: selectedItem_ = DailyLimitMinutes; break;
-        case DailyLimitMinutes: selectedItem_ = DailyLimitHours; break;
+        case DailyLimitMinutes: selectedItem_ = BedtimeHours; break;
+        case BedtimeHours: selectedItem_ = BedtimeMinutes; break;
+        case BedtimeMinutes: selectedItem_ = DailyLimitMinutes; break;
         default: break;
     }
 }
@@ -149,8 +173,10 @@ void SetupLimitsUserPanel::selectNextItem() {
 /*! @brief Selects the previous item in the limit fields (minutes <-> hours). */
 void SetupLimitsUserPanel::selectBeforeItem() {
     switch(selectedItem_) {
-        case DailyLimitHours: selectedItem_ = DailyLimitMinutes; break;
+        case BedtimeMinutes: selectedItem_ = BedtimeHours; break;
+        case BedtimeHours: selectedItem_ = DailyLimitMinutes; break;
         case DailyLimitMinutes: selectedItem_ = DailyLimitHours; break;
+        case DailyLimitHours: selectedItem_ = BedtimeMinutes; break;        
         default: break;
     }
 }
@@ -169,6 +195,8 @@ void SetupLimitsUserPanel::increaseValue() {
     switch(selectedItem_) {
         case DailyLimitHours: dailyLimitHours_ = valueRanged(dailyLimitHours_, +1, 0, 12); break;
         case DailyLimitMinutes: dailyLimitMinutes_ = valueRanged(dailyLimitMinutes_, +1, 0, 59); break;
+        case BedtimeHours: bedtimeHours_ = valueRanged(bedtimeHours_, +1, 0, 23); break;
+        case BedtimeMinutes: bedtimeMinutes_ = valueRanged(bedtimeMinutes_, +1, 0, 59); break;
         default: break;
     }
 }

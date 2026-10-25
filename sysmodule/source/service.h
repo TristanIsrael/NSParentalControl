@@ -66,6 +66,9 @@ namespace alefbet::pctrl::srv {
             
             Ipc::Result setShowRemainingTime(Ipc::Request*);
             Ipc::Result getShowRemainingTime(Ipc::Request*);
+
+            Ipc::Result setBedtime(Ipc::Request*);
+            Ipc::Result getBedtime(Ipc::Request*);
             
             Ipc::Result isEnabled(Ipc::Request*);
             Ipc::Result setEnabled(Ipc::Request*);

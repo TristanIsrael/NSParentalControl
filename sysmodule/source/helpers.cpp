@@ -632,6 +632,32 @@ namespace alefbet::pctrl::helpers {
         return result;
     }
 
+    static std::string serializeBedtimes(const std::map<std::string, u16>& bedtimesMap) {
+        std::ostringstream oss;
+        bool first = true;
+        for(const auto& [userId, limit] : bedtimesMap) {
+            if(!first) oss << ';';
+            first = false;
+            oss << userId << '=' << limit;
+        }
+        return oss.str();
+    }
+
+    static std::map<std::string, u16> deserializeBedtimes(const std::string& data) {
+        std::map<std::string, u16> result;
+        std::istringstream stream(data);
+        std::string line;
+        while(std::getline(stream, line, ';')) {
+            if(line.empty()) continue;
+            auto eqPos = line.find('=');
+            if(eqPos == std::string::npos) continue;
+            std::string userId = line.substr(0, eqPos);
+            u16 limit = static_cast<u16>(std::stoul(line.substr(eqPos + 1)));
+            result[userId] = limit;
+        }
+        return result;
+    }
+
     /*! @brief Retrieves the daily usage limit for a specific user.
      *
      * @param userId The user ID string.
@@ -679,6 +705,57 @@ namespace alefbet::pctrl::helpers {
             .key = SETTING_DAILY_LIMIT_USERS,
             .type = STRING,
             .string_value = serializeDailyLimits(limitsMap)
+        };
+
+        saveSetting(setting);
+    }
+
+    /*! @brief Gets the bed time for a user
+     *
+     * @param userId The user ID string.
+     */
+    u16 getBedtime(const std::string& userId) {
+        auto& settings = loadSettings();
+
+        if(!settings.contains(SETTING_BEDTIME_USERS)) {
+            return 0;
+        }
+
+        const auto& bedtimesStr = settings[SETTING_BEDTIME_USERS].string_value;
+        if(bedtimesStr.empty()) {
+            logDebug("[Helpers] No bedtime for user %s\n", userId.c_str());
+            return 0;
+        }
+
+        auto limitsMap = deserializeBedtimes(bedtimesStr);
+        auto it = limitsMap.find(userId);
+        if(it != limitsMap.end()) {
+            return it->second;
+        }
+
+        logDebug("[Helpers] No bedtime for user %s\n", userId.c_str());
+        return 0;
+    }
+        
+    /*! @brief Sets the bed time for a specific user.
+     *
+     * @param userId The user ID string.
+     * @param bedtime_in_minutes The bed time in minutes from midnight.
+     */
+    void setBedtime(const std::string& userId, u16 bedtime_in_minutes) {
+        auto limitsMap = deserializeBedtimes("");
+        
+        auto& settings = loadSettings();
+        if(settings.contains(SETTING_BEDTIME_USERS)) {
+            limitsMap = deserializeBedtimes(settings[SETTING_BEDTIME_USERS].string_value);
+        }
+
+        limitsMap[userId] = bedtime_in_minutes;
+
+        Setting setting {
+            .key = SETTING_BEDTIME_USERS,
+            .type = STRING,
+            .string_value = serializeBedtimes(limitsMap)
         };
 
         saveSetting(setting);

@@ -522,6 +522,70 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Gets the bed time for a user via IPC.
+     * @param user The user data containing the UID.
+     * @return The bed time in minutes from midnight, or 0 on failure. */
+    u16 getBedtime(const UserData& user) {
+        logDebug("[IPC] Getting bed time\n");
+
+        if(!isAvailable()) {
+            logError("[IPC] service not available\n");
+            return 0;
+        }
+
+        u16 bedtime = 0;        
+        char chUserId[80] = {0};
+
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(chUserId, sizeof(chUserId), "%s", userId.c_str());
+
+        auto& service = getAppContext().pctrl_service;
+        Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetUserDailyLimit, chUserId, bedtime);
+
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured while getting the bed time.\n");
+        } 
+
+        logDebug("[IPC] Bed time is %i\n", bedtime);
+
+        return bedtime;
+    }
+
+    /*! @brief Sets the bed time for a user via IPC.
+     * @param user The user data containing the UID.
+     * @param limit The bed time in minutes from midnight.
+     * @return true if successful, false otherwise. */
+    bool setBedtime(const UserData& user, u16 bedtime) {
+        logDebug("[IPC] Setting the bed time to %i\n", bedtime);
+
+        if(!isAvailable()) {
+            logError("[IPC] service not available\n");
+            return false;
+        }
+
+        typedef struct __attribute__((packed)) {
+            u16 bedtime_in_minutes;
+            char userId[80];
+        } Args;
+
+        Args args {
+            .bedtime_in_minutes = bedtime,            
+        };
+
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(args.userId, sizeof(args.userId), "%s", userId.c_str());
+
+        auto& service = getAppContext().pctrl_service;
+        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetBedtime, args);
+
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured while setting the daily limit.\n");
+            return false;
+        }
+
+        return true;
+    }
+
     /*! @brief Checks if debug logging is enabled via IPC.
      * @return true if debug logging is enabled, false otherwise. */
     bool isDebugLogEnabled() {

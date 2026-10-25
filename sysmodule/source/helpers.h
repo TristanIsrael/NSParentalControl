@@ -100,6 +100,10 @@ namespace alefbet::pctrl {
         u16 getDailyLimitForUser(const std::string& userId);
         void setDailyLimitForUser(const std::string& userId, u16 limit_in_minutes);
 
+        // Bed time management
+        u16 getBedtime(const std::string& userId);
+        void setBedtime(const std::string& userId, u16 bedtime_in_minutes);
+
         // Authentication management
         std::string encodePassword(const std::vector<u64>&);
         std::vector<u64> decodePassword(const std::string&);

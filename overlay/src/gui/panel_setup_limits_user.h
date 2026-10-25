@@ -25,7 +25,9 @@
 typedef enum {
     NoItem = 0,
     DailyLimitHours = 1,
-    DailyLimitMinutes = 2
+    DailyLimitMinutes = 2,
+    BedtimeHours = 3,
+    BedtimeMinutes = 4
 } SelectedItem;
 
 using namespace alefbet::pctrl::helpers;
@@ -58,4 +60,6 @@ private:
     SelectedItem selectedItem_ = DailyLimitHours;
     u16 dailyLimitHours_ = 0;
     u16 dailyLimitMinutes_ = 0;
+    u16 bedtimeHours_ = 0;
+    u16 bedtimeMinutes_ = 0;
 };

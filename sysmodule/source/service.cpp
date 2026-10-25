@@ -623,6 +623,54 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Sets the bed time for a user.
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
+    Ipc::Result Service::setBedtime(Ipc::Request* request) {
+        typedef struct __attribute__((packed)) {
+            u16 bedtime_in_minutes;
+            char userId[80];
+        } Args;
+
+        Args args{0};
+
+        Ipc::Result rc = request->readRequestValue(args);
+        if(rc != Ipc::Result::Ok) {
+            logError("[Service] Could not read request value (bedtime)\n");
+            return rc;
+        }
+
+        std::string userId = std::string(args.userId);
+        logDebug("[Service] setBedtime: userId=%s, bedtime=%u\n", userId.c_str(), args.bedtime_in_minutes);
+        helpers::setBedtime(userId, args.bedtime_in_minutes);
+        
+        return Ipc::Result::Ok;
+    }
+
+    /*! @brief Gets the bed time for a user
+     *
+     * @param request IPC request.
+     * @return Ipc::Result::Ok on success.
+     */
+    Ipc::Result Service::getBedtime(Ipc::Request* request) {
+        char _userId[80] = {0};
+
+        Ipc::Result rc = request->readRequestValue(_userId);
+        if(rc != Ipc::Result::Ok) {
+            logError("[Service] Could not read request data\n");
+            return rc;
+        }
+
+        std::string userId = std::string(_userId);
+        const auto& bedtime = helpers::getBedtime(userId);
+
+        request->appendReplyValue(bedtime);
+        
+        return Ipc::Result::Ok;
+    }
+
     /*! @brief Delayed background task that triggers the timeout screen after 1 second.
      *
      * Used as a thread argument to defer the timeout screen display.
@@ -723,6 +771,12 @@ namespace alefbet::pctrl::srv {
             }
             case Ipc::Command::CancelScreenTimeout: {
                 return cancelScreenTimeout(request);
+            }
+            case Ipc::Command::SetBedtime: {
+                return setBedtime(request);
+            }
+            case Ipc::Command::GetBedtime: {
+                return getBedtime(request);
             }
             default: {
                 logError("[Service] command %i not supported.\n", request->cmd());                

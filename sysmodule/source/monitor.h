@@ -22,7 +22,7 @@
 #include "service.h"
 #include "helpers.h"
 
-using alefbet::pctrl::helpers;
+using namespace alefbet::pctrl::helpers;
 
 namespace alefbet::pctrl::srv {
 

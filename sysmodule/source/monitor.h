@@ -39,8 +39,7 @@ namespace alefbet::pctrl::srv {
                 service->setMonitor(this);
             }
 
-        private:            
-            //s16 remainingTimeInMinutes(const HistoryEntry& entry);
+        private:
             bool shouldSendNotification(int remainingTimeInMinutes);
 
         private:
@@ -48,6 +47,8 @@ namespace alefbet::pctrl::srv {
             bool running_ = false;
             bool notified_ = false;
             u64 currentTitle_ = 0;
+            u16 lastTime_ = 0;
+            i32 timeJumpOffset_ = 0;
     };    
 
 };

@@ -338,15 +338,38 @@ namespace alefbet::pctrl::helpers {
      * @param minutesSinceMidnight Minutes since midnight (0-1439).
      * @return Formatted time string (e.g. "21:30").
      */
-    std::string formatTimeInMinutes(u16 minutesSinceMidnight) {
-        u16 hours = minutesSinceMidnight / 60;
-        u16 minutes = minutesSinceMidnight % 60;
-        
-        char buffer[12] = {0};
-        std::snprintf(buffer, sizeof(buffer), "%02d:%02d", hours, minutes);
-        
-        return std::string(buffer);
-    }
+        std::string formatTimeInMinutes(u16 minutesSinceMidnight) {
+            u16 hours = minutesSinceMidnight / 60;
+            u16 minutes = minutesSinceMidnight % 60;
+            
+            char buffer[12] = {0};
+            std::snprintf(buffer, sizeof(buffer), "%02d:%02d", hours, minutes);
+            
+            return std::string(buffer);
+        }
+
+        static constexpr i32 BEDTIME_TIME_JUMP_THRESHOLD = 5;
+
+        u16 getAdjustedTime(u16 currTime, u16& lastTime, i32& offset) {
+            if(lastTime != 0) {
+                const i32 apparentDiff = static_cast<i32>(currTime) - static_cast<i32>(lastTime);
+                
+                if(apparentDiff > BEDTIME_TIME_JUMP_THRESHOLD) {
+                    logInfo("[Helpers] System time jump detected: +%d minutes, adjusting offset to %d\n", apparentDiff, offset - apparentDiff);
+                    offset -= apparentDiff;
+                }
+            }
+
+            const i32 adjusted = static_cast<i32>(currTime) + offset;
+            
+            if(adjusted < 0) {
+                return static_cast<u16>(1440 + adjusted);
+            } else if(adjusted >= 1440) {
+                return static_cast<u16>(adjusted - 1440);
+            }
+            
+            return static_cast<u16>(adjusted);
+        }
 
     /*! @brief Reads the reboot payload file from the SD card.
      *

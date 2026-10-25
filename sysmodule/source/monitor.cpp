@@ -108,9 +108,11 @@ namespace alefbet::pctrl::srv {
                     const auto bedtime = getBedtime(userId);
                     if(bedtime > 0) {
                         const auto currentTimeMinutes = getCurrentTimeInMinutesSinceMidnight();
-                        if(currentTimeMinutes >= bedtime) {
+                        const auto adjustedTimeMinutes = getAdjustedTime(currentTimeMinutes, lastTime_, timeJumpOffset_);
+                        lastTime_ = currentTimeMinutes;
+                        if(adjustedTimeMinutes >= bedtime) {
                             bedtimeReached = true;
-                            logInfo("[Monitor] Bedtime reached for user %s at %s (bedtime: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(bedtime).c_str());
+                            logInfo("[Monitor] Bedtime reached for user %s at %s (adjusted: %s, bedtime: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(bedtime).c_str());
                         }
                     }
 

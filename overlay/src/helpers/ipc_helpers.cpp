@@ -540,7 +540,7 @@ namespace alefbet::pctrl::ipc {
         std::snprintf(chUserId, sizeof(chUserId), "%s", userId.c_str());
 
         auto& service = getAppContext().pctrl_service;
-        Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetUserDailyLimit, chUserId, bedtime);
+        Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetBedtime, chUserId, bedtime);
 
         if(R_FAILED(res)) {
             logError("[IPC] An error occured while getting the bed time.\n");

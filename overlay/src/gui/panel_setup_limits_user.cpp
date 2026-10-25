@@ -57,11 +57,18 @@ tsl::elm::Element* SetupLimitsUserPanel::createUI() {
     
     // Load settings
     const u16 dailyLimitInMinutes = ipc::getDailyLimit(user_); 
-    const auto duration = minutes{dailyLimitInMinutes};
+    auto duration = minutes{dailyLimitInMinutes};
     auto hoursPart = duration_cast<hours>(duration);
     auto minutesPart = duration_cast<minutes>(duration - hoursPart);
     dailyLimitHours_ = std::min(hoursPart.count(), 12L);
     dailyLimitMinutes_ = std::min(minutesPart.count(), 59L);
+
+    const u16 bedTimeInMinutes = ipc::getBedtime(user_);
+    duration = minutes{bedTimeInMinutes};
+    hoursPart = duration_cast<hours>(duration);
+    minutesPart = duration_cast<minutes>(duration - hoursPart);
+    bedtimeHours_ = std::min(hoursPart.count(), 24L);
+    bedtimeMinutes_ = std::min(minutesPart.count(), 59L);
 
     rebuildUI();
 
@@ -186,6 +193,8 @@ void SetupLimitsUserPanel::decreaseValue() {
     switch(selectedItem_) {
         case DailyLimitHours: dailyLimitHours_ = valueRanged(dailyLimitHours_, -1, 0, 12); break;
         case DailyLimitMinutes: dailyLimitMinutes_ = valueRanged(dailyLimitMinutes_, -1, 0, 59); break;
+        case BedtimeHours: bedtimeHours_ = valueRanged(bedtimeHours_, -1, 0, 23); break;
+        case BedtimeMinutes: bedtimeMinutes_ = valueRanged(bedtimeMinutes_, -1, 0, 59); break;
         default: break;
     }
 }

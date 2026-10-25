@@ -29,6 +29,7 @@
 #include "panel_history_main.h"
 #include "AppContext.h"
 #include "helpers/ipc_helpers.h"
+#include "helpers/switch_helpers.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
@@ -147,7 +148,22 @@ void MainMenuPanel::rebuildUI() {
         hoursPart = duration_cast<hours>(durationInMinutes);
         minutesPart = duration_cast<minutes>(durationInMinutes - hoursPart);
         auto entryRemainingTime = new tsl::elm::ListItem("Remaining: " +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + "h " : "") +std::to_string(minutesPart.count()) +" mn");
-        rootList_->addItem(entryRemainingTime);        
+        rootList_->addItem(entryRemainingTime);
+
+        // Bedtime
+        AccountUid currentAccountUid = helpers::accountUidFromString(currentUserUid);
+        UserData currentUserData;
+        currentUserData.uid = currentAccountUid;
+        currentUserData.nickname = currentUserNickname;
+        auto bedtime = ipc::getBedtime(currentUserData);
+        if(bedtime > 0) {
+            u16 bedtimeHours = bedtime / 60;
+            u16 bedtimeMinutes = bedtime % 60;
+            char bedtimeStr[6] = {0};
+            std::snprintf(bedtimeStr, sizeof(bedtimeStr), "%02d:%02d", bedtimeHours, bedtimeMinutes);
+            auto entryBedtime = new tsl::elm::ListItem("Bedtime: " + std::string(bedtimeStr));
+            rootList_->addItem(entryBedtime);
+        }        
     } else {
         rootList_->addItem(new tsl::elm::ListItem("No user / app started"));
     }            

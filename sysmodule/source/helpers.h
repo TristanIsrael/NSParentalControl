@@ -84,6 +84,8 @@ namespace alefbet::pctrl {
         u16 getUserUsageTimeForToday(const AccountUid& uid);
 
         std::string today();
+        u16 getCurrentTimeInMinutesSinceMidnight();
+        std::string formatTimeInMinutes(u16 minutesSinceMidnight);
 
         //bool shutdown();
         bool rebootToPayload();

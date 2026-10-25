@@ -304,6 +304,50 @@ namespace alefbet::pctrl::helpers {
         return std::string(buffer);
     }
 
+    /*! @brief Retrieves the current time in minutes since midnight.
+     *
+     * @return Current time in minutes since midnight (0-1439).
+     */
+    u16 getCurrentTimeInMinutesSinceMidnight() {
+        ::Result rc = timeInitialize();
+        if(R_FAILED(rc)) {
+            logError("[Helpers] Could not connect to time service\n");
+            return 0;
+        }
+
+        u64 ts;
+        TimeCalendarTime time;
+        TimeCalendarAdditionalInfo info;
+        rc = timeGetCurrentTime(TimeType_LocalSystemClock, &ts);
+        if(R_FAILED(rc)) {
+            logError("[Helpers] Could not get current time (err %i:%i)\n", R_MODULE(rc), R_DESCRIPTION(rc));
+            return 0;
+        }
+
+        rc = timeToCalendarTimeWithMyRule(ts, &time, &info);
+        if(R_FAILED(rc)) {
+            logError("[Helpers] Could not convert timestamp\n");
+            return 0;
+        }
+
+        return static_cast<u16>(time.hour * 60 + time.minute);
+    }
+
+    /*! @brief Formats minutes since midnight as HH:mm string.
+     *
+     * @param minutesSinceMidnight Minutes since midnight (0-1439).
+     * @return Formatted time string (e.g. "21:30").
+     */
+    std::string formatTimeInMinutes(u16 minutesSinceMidnight) {
+        u16 hours = minutesSinceMidnight / 60;
+        u16 minutes = minutesSinceMidnight % 60;
+        
+        char buffer[6] = {0};
+        std::snprintf(buffer, sizeof(buffer), "%02d:%02d", hours, minutes);
+        
+        return std::string(buffer);
+    }
+
     /*! @brief Reads the reboot payload file from the SD card.
      *
      * @param buffer Output buffer to receive the payload data.

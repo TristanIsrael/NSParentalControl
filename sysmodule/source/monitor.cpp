@@ -104,7 +104,17 @@ namespace alefbet::pctrl::srv {
                     u16 remainingTimeInMinutes = daily_limit > totalDuration ? daily_limit - totalDuration : 0;
                     logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), remainingTimeInMinutes, daily_limit);
 
-                    if(remainingTimeInMinutes > 0) {
+                    bool bedtimeReached = false;
+                    const auto bedtime = getBedtime(userId);
+                    if(bedtime > 0) {
+                        const auto currentTimeMinutes = getCurrentTimeInMinutesSinceMidnight();
+                        if(currentTimeMinutes >= bedtime) {
+                            bedtimeReached = true;
+                            logInfo("[Monitor] Bedtime reached for user %s at %s (bedtime: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(bedtime).c_str());
+                        }
+                    }
+
+                    if(remainingTimeInMinutes > 0 && !bedtimeReached) {
                         if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
                             const auto& showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;                                                
                             if(showRemainingTime) {                            

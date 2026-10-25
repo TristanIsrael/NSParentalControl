@@ -105,6 +105,9 @@ void SetupLimitsUserPanel::rebuildUI() {
     // Bed time
     rootList_->addItem(new tsl::elm::CategoryHeader("Bed time"));
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
+        renderer->drawString("Set time to 0h 0mn to disable.", false, x, y + 30, 16, renderer->a(ColorWhite));
+    }), 30);
+    rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         s32 yPos = y;
 
         yPos += 35;

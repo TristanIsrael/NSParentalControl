@@ -145,11 +145,11 @@ void MainMenuPanel::rebuildUI() {
 
         // Remaining time
         auto remainingTime = ipc::getUserRemainingTime();
-        durationInMinutes = minutes{remainingTime};
+        /*durationInMinutes = minutes{remainingTime};
         hoursPart = duration_cast<hours>(durationInMinutes);
         minutesPart = duration_cast<minutes>(durationInMinutes - hoursPart);
         auto entryRemainingTime = new tsl::elm::ListItem("Remaining: " +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + "h " : "") +std::to_string(minutesPart.count()) +" mn");
-        rootList_->addItem(entryRemainingTime);
+        rootList_->addItem(entryRemainingTime);*/
 
         // Bedtime
         AccountUid currentAccountUid = helpers::accountUidFromString(currentUserUid);
@@ -164,7 +164,7 @@ void MainMenuPanel::rebuildUI() {
             std::snprintf(bedtimeStr, sizeof(bedtimeStr), "%02d:%02d", bedtimeHours, bedtimeMinutes);
             auto entryBedtime = new tsl::elm::ListItem("Bedtime: " + std::string(bedtimeStr));
             rootList_->addItem(entryBedtime);
-        }
+        }        
 
         // Time until next deadline
         auto now = std::chrono::system_clock::now();
@@ -190,7 +190,7 @@ void MainMenuPanel::rebuildUI() {
             auto durationInMinutes = minutes{minutesUntilDeadline};
             auto hoursPart = duration_cast<hours>(durationInMinutes);
             auto minutesPart = duration_cast<minutes>(durationInMinutes - hoursPart);
-            auto entryNextDeadline = new tsl::elm::ListItem("Play time ends at " +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + "h " : "") +std::to_string(minutesPart.count()) +" mn");
+            auto entryNextDeadline = new tsl::elm::ListItem("Remaining: " +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + "h " : "") +std::to_string(minutesPart.count()) +" mn");
             rootList_->addItem(entryNextDeadline);
         }
     } else {

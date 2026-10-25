@@ -18,7 +18,13 @@ The user manual can be found [here](docs/manual.md).
 
 **Needs a CFW (Atmosphère).**
 
-**Tested with AMS 1.9.4 with FW 20.3.0**
+**Tested with**
+
+| Firmware | Atmosphere | State |
+|--|--|--|
+| 20.3.0 | 1.9.4 | Great |
+| 21.2.0 | 1.10.2 | Untested |
+| 21.2.0 | 1.12.1 | Games randomly stop (Atmosphere?) |
 
 Linked with:
 - libnx 4.10.0 

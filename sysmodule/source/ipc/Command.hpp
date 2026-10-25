@@ -71,7 +71,7 @@ namespace Ipc {
             case Command::IsAuthenticationActive: return "IsAuthenticationActive";
             case Command::CancelScreenTimeout: return "CancelScreenTimeout";
             case Command::SetBedtime: return "SetBedtime";
-            case Command::GetBedtime: return "GetBetime";
+            case Command::GetBedtime: return "GetBedtime";
             case Command::GetAdjustedCurrentTime: return "GetAdjustedCurrentTime";
             default: return "Unknown";
         }

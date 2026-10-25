@@ -34,7 +34,8 @@ namespace Ipc {
         IsAuthenticationActive,     /*! Returns true if authentication is enabled */
         CancelScreenTimeout,        /*! Cancels the active screen timeout countdown */
         SetBedtime,                 /*! Sets the bed time for a user */
-        GetBedtime                  /*! Gets the bed time for a user */
+        GetBedtime,                 /*! Gets the bed time for a user */
+        GetAdjustedCurrentTime      /*! Gets the current time adjusted for time jumps */
     };
 
 };

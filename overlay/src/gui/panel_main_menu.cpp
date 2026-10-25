@@ -168,7 +168,6 @@ void MainMenuPanel::rebuildUI() {
 
         // Time until next deadline
         u16 currentMinutesSinceMidnight = ipc::getAdjustedCurrentTime();
-
         u16 minutesUntilDeadline = std::numeric_limits<u16>::max();
 
         if(remainingTime.count() > 0) {

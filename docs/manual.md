@@ -2,6 +2,10 @@
 
 This document describes how to use Parental Control for the Switch.
 
+## What happens when the limit has been reached?
+
+The last version (> 2.0.0) has a different behaviour from the versions before, it shows a notification every 10 seconds during the last minute and finally it closes the running game. The versions before showed a bug "Time's up" screen and forced the user to reboot the console.
+
 ## Overlay
 
 Interactions with the Parental Control are made thru the overlay.

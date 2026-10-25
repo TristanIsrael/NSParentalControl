@@ -80,9 +80,6 @@ Coming features are in the [GitHub project](https://github.com/users/TristanIsra
 ![Parental control limits setting](docs/2025102321565700.jpg)
 **Parental control limits settings**
 
-![Time out](docs/timeout.png)
-**Timeout screen**
-
 ## Licence
 
 The source code and the binaries are under [GPL v3 licence](LICENSE). 
@@ -93,12 +90,12 @@ You can:
 
 You must:
 - share your changes by committing on this repository or your own fork.
+- credit the original project in your forks.
 
 You are not allowed to:
 - close the sources,
 - sell the product,
-- reuse the source code in a commercial product,
-- use your own modified version.
+- reuse the source code in a commercial product.
 
 ### Dependencies
 

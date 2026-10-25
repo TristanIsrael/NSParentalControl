@@ -77,12 +77,17 @@ namespace alefbet::pctrl::srv {
             }            
 
             logDebug("[Monitor] Update usages\n");
+            // Update time jump offset even when no game is running
+            const auto currentTimeMinutes = getCurrentTimeInMinutesSinceMidnight();
+            const auto adjustedTimeMinutes = getAdjustedTime(currentTimeMinutes, lastTime_, timeJumpOffset_);
+            lastTime_ = currentTimeMinutes;
+            
             // Query the active application and user
             // and update the database
             pid = getRunningApplicationPid();
             u16 daily_limit = 0;            
             
-            if(pid != 0) { 
+            if(pid != 0) {
                 const auto title_id = getRunningApplicationTitleId(pid);
                 user = getCurrentUser();
 
@@ -107,9 +112,6 @@ namespace alefbet::pctrl::srv {
                     bool bedtimeReached = false;
                     const auto bedtime = getBedtime(userId);
                     if(bedtime > 0) {
-                        const auto currentTimeMinutes = getCurrentTimeInMinutesSinceMidnight();
-                        const auto adjustedTimeMinutes = getAdjustedTime(currentTimeMinutes, lastTime_, timeJumpOffset_);
-                        lastTime_ = currentTimeMinutes;
                         if(adjustedTimeMinutes >= bedtime) {
                             bedtimeReached = true;
                             logInfo("[Monitor] Bedtime reached for user %s at %s (adjusted: %s, bedtime: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(bedtime).c_str());

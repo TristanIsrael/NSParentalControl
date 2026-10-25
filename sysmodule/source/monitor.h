@@ -22,6 +22,8 @@
 #include "service.h"
 #include "helpers.h"
 
+using alefbet::pctrl::helpers;
+
 namespace alefbet::pctrl::srv {
 
     /*! \brief The monitor class is used to monitor applications usage and update the database records.

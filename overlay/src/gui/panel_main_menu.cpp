@@ -176,7 +176,7 @@ void MainMenuPanel::rebuildUI() {
         u16 minutesUntilDeadline = std::numeric_limits<u16>::max();
 
         if(remainingTime.count() > 0) {
-            minutesUntilDeadline = std::min(minutesUntilDeadline, remainingTime.count());
+            minutesUntilDeadline = std::min(minutesUntilDeadline, static_cast<u16>(remainingTime.count()));
         }
 
         if(bedtime > 0) {

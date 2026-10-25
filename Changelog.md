@@ -8,7 +8,8 @@
 
 ### Sysmodule
 
-- Fixed bugs.
+- Fix the bug that prevented from setting the users limits ("176h").
+- Fix crashes.
 - Changed the database from JSON to binary.
 - Replaced the limit screen by notifications and the forced shutdown of the the game.
 - Reduced the memory reserver from 2500 MB to 512 MB for the heap.

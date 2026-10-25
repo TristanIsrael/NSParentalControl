@@ -23,7 +23,7 @@ The user manual can be found [here](docs/manual.md).
 | Firmware | Atmosphere | State |
 |--|--|--|
 | 20.3.0 | 1.9.4 | Working |
-| 21.2.0 | 1.10.2 | Untested |
+| 21.2.0 | 1.10.2 | Test in progress |
 | 21.2.0 | 1.12.1 | Games randomly stop (Atmosphere?) |
 
 Linked with:
@@ -115,7 +115,7 @@ Libraries linked or code reused:
 
 1. Install the required [**Tesla Menu**](https://switch.hacks.guide/homebrew/tesla-menu.html) or [**Ultrahand Overlay**](https://github.com/ppkantorski/Ultrahand-Overlay).
 
-⚠️ If you want notifications you have to install **[Ultrahand Overlay](https://github.com/ppkantorski/Ultrahand-Overlay)**. Please look at its documentation to know how to install it and how to enable the notifications.
+⚠️ Since version 2.0 you have to install **[Ultrahand Overlay](https://github.com/ppkantorski/Ultrahand-Overlay)**. Please look at its documentation to know how to install it and how to enable the notifications.
 
 2. Download the latest release from [GitHub](https://github.com/TristanIsrael/NSParentalControl/releases/latest).
 

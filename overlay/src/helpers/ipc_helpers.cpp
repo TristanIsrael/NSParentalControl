@@ -512,7 +512,7 @@ namespace alefbet::pctrl::ipc {
         std::snprintf(args.userId, sizeof(args.userId), "%s", userId.c_str());
 
         auto& service = getAppContext().pctrl_service;
-        Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::SetUserDailyLimit, args);
+        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetUserDailyLimit, args);
 
         if(R_FAILED(res)) {
             logError("[IPC] An error occured while setting the daily limit.\n");

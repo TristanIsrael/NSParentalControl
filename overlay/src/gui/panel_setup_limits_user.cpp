@@ -56,12 +56,12 @@ tsl::elm::Element* SetupLimitsUserPanel::createUI() {
     rootList_ = new tsl::elm::List();
     
     // Load settings
-    const u16 dailyLimitInMinutes = ipc::getDailyLimit(user_);
+    const u16 dailyLimitInMinutes = ipc::getDailyLimit(user_); 
     const auto duration = minutes{dailyLimitInMinutes};
     auto hoursPart = duration_cast<hours>(duration);
     auto minutesPart = duration_cast<minutes>(duration - hoursPart);
-    dailyLimitHours_ = std::min(hoursPart.count(), 12ULL);
-    dailyLimitMinutes_ = std::min(minutesPart.count(), 59ULL);
+    dailyLimitHours_ = std::min(hoursPart.count(), 12L);
+    dailyLimitMinutes_ = std::min(minutesPart.count(), 59L);
 
     rebuildUI();
 
@@ -92,8 +92,8 @@ void SetupLimitsUserPanel::rebuildUI() {
         // Hours
         renderer->drawString("h", false, w-90, yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));
         str = std::to_string(dailyLimitHours_);
-        renderer->drawString(str.c_str(), false, w-110 -(dailyLimitHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));        
-        
+        renderer->drawString(str.c_str(), false, w-110 -(dailyLimitHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));            
+
     }), 60);
 
     
@@ -116,14 +116,13 @@ bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouc
     if (keysDown == 0) return false;    
 
     // B to cancel
-    if(keysDown & HidNpadButton_B) {
-        tsl::goBack();
-
+    if(keysDown & HidNpadButton_B) {        
         // Update the setting only when exitting
-        u16 limitInMinutes = (u16)dailyLimitHours_*60 + (u16)dailyLimitMinutes_;
-        logDebug("limitInMinutes=%i, hours=%i, minutes=%i\n", limitInMinutes, dailyLimitHours_, dailyLimitMinutes_);
+        u32 limitInMinutes = dailyLimitHours_*60 + dailyLimitMinutes_;        
         ipc::setDailyLimit(user_, limitInMinutes);
+        logDebug("limitInMinutes=%i, hours=%i, minutes=%i\n", limitInMinutes, dailyLimitHours_, dailyLimitMinutes_);
 
+        tsl::goBack();
         return true;
     } else if(keysDown & HidNpadButton_AnyDown) {
         decreaseValue();
@@ -182,11 +181,13 @@ void SetupLimitsUserPanel::increaseValue() {
  * @param cycle Whether to wrap around at boundaries (default false).
  * @return The clamped (or wrapped) value as an unsigned 16-bit integer. */
 u16 SetupLimitsUserPanel::valueRanged(int value, int diff, int min, int max, bool cycle) {
-    if(value + diff < min) {
-        return (u16)(cycle ? max : min);
-    } else if(value + diff > max) {
-        return (u16)(cycle ? min : max);
+    int newVal = value + diff;
+
+    if(newVal < min) {
+        return static_cast<u16>(cycle ? max : min);
+    } else if(newVal > max) {
+        return static_cast<u16>(cycle ? min : max);
     } else {
-        return (u16)(value + diff);
+        return static_cast<u16>(newVal);
     }
 }

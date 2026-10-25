@@ -22,7 +22,7 @@ The user manual can be found [here](docs/manual.md).
 
 | Firmware | Atmosphere | State |
 |--|--|--|
-| 20.3.0 | 1.9.4 | Great |
+| 20.3.0 | 1.9.4 | Working |
 | 21.2.0 | 1.10.2 | Untested |
 | 21.2.0 | 1.12.1 | Games randomly stop (Atmosphere?) |
 
@@ -64,6 +64,7 @@ Parental control has the following features:
 - Enable or disable the notifications (since 1.2)
 - Choose the log level between Debug and Information (since 1.2)
 - Define individual limits (since 1.3)
+- Define bed time (since 2.1)
 
 ## Coming features
 

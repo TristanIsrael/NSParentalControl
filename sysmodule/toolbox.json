@@ -2,5 +2,5 @@
 	"name"  : "NSParentalControl",
 	"tid"   : "4200000000003103",
 	"requires_reboot": false,
-	"version": "2.1.0"
+	"version": "2.3.1"
 }

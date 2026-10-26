@@ -38,43 +38,71 @@ constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_
 
 namespace alefbet::pctrl::srv {   
 
-    /*! @brief Starts the monitoring loop if not already running. */
+    /*! @brief Starts the monitoring loop if not already running.
+     *
+     * This only sets a flag: the monitoring thread (created once at startup)
+     * wakes up on its own. It cannot restart a thread that has exited, which
+     * is why Monitor::loop never returns.
+     */
     void Monitor::start() {
         if(running_) return;
         running_ = true;
     }
 
-    /*! @brief Main monitoring loop that tracks application usage and enforces limits. */
+    /*! @brief Main monitoring loop that tracks application usage and enforces limits.
+     *
+     * The loop never exits: when the service is disabled it goes idle so that
+     * the monitoring thread stays alive and automatically resumes when the
+     * service is enabled again.
+     */
     void Monitor::loop() {        
         logDebug("[Monitor] Starting monitoring loop\n");        
         structs::UserData user;
         u64 pid = 0;
+        bool wasEnabled = false;
 
         while(true) {
             if(!running_) {
-                //Do nothing
+                // Do nothing, but keep the thread alive so that the monitoring
+                // can be resumed with start()
+                if(wasEnabled) {
+                    logInfo("[Monitor] Parental Control is now disabled.\n");
+                    wasEnabled = false;
+                }
+                resetTimeJumpState(); // A long idle period must not be mistaken for a clock manipulation
                 svcSleepThread(500'000'000); // Wait for 500ms
                 continue;
             }
 
-            if(!notified_) {
-                logInfo("[Monitoring] Parental control is now enabled.\n");
-                NotificationsController::notifyMonitoringStarted();
-                notified_ = true;
-            }
-            
             logDebug("[Monitor] Monitoring loop has started\n");
             auto settings = loadSettings();
 
             // Verify whether the service is enabled
-            if(settings.contains(SETTING_ENABLED)) {
-                const auto setting = settings[SETTING_ENABLED];
-                if(setting.int_value == 0) {
+            const bool isEnabled = !settings.contains(SETTING_ENABLED) ||
+                                   settings[SETTING_ENABLED].int_value != 0;
+
+            if(!isEnabled) {
+                if(wasEnabled) {
                     logInfo("[Monitor] Parental Control is now disabled.\n");
-                    running_ = false;
-                    return;
+                    wasEnabled = false;
                 }
-            }            
+
+                // Do not exit the loop: go idle so that the monitoring
+                // automatically resumes when the service is enabled again
+                resetTimeJumpState();
+                svcSleepThread(MainLoopDelayInNanos.count());
+                continue;
+            }
+
+            if(!wasEnabled) {
+                logInfo("[Monitoring] Parental control is now enabled.\n");
+                wasEnabled = true;
+            }
+
+            if(!notified_) {
+                NotificationsController::notifyMonitoringStarted();
+                notified_ = true;
+            }
 
             logDebug("[Monitor] Update usages\n");
             // Update time jump offset even when no game is running
@@ -106,28 +134,26 @@ namespace alefbet::pctrl::srv {
                     const auto& userId = accountUidToString(user.uid);
                     daily_limit = getDailyLimitForUser(userId);
 
-                    u16 remainingTimeInMinutes = daily_limit > totalDuration ? daily_limit - totalDuration : 0;
-                    logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), remainingTimeInMinutes, daily_limit);
-
-                    bool bedtimeReached = false;
+                    const auto gameStartTime = getGameStartTime(userId);
                     const auto bedtime = getBedtime(userId);
-                    if(bedtime > 0) {
-                        if(adjustedTimeMinutes >= bedtime) {
-                            bedtimeReached = true;
-                            logInfo("[Monitor] Bedtime reached for user %s at %s (adjusted: %s, bedtime: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(bedtime).c_str());
-                        }
+
+                    bool showRemainingTime = false;
+                    if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
+                        showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;
                     }
 
-                    if(remainingTimeInMinutes > 0 && !bedtimeReached) {
-                        if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
-                            const auto& showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;                                                
-                            if(showRemainingTime) {                            
-                                if(shouldSendNotification(remainingTimeInMinutes)) {
-                                    NotificationsController::notifyRemainingTime(remainingTimeInMinutes);
-                                }
-                            }
-                        }
-                    } else {            
+                    // Pure enforcement decision (tamper-protected time + play window + daily limit)
+                    const auto eval = core::evaluatePlayRules(daily_limit, totalDuration, adjustedTimeMinutes, gameStartTime, bedtime, showRemainingTime);
+
+                    logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), eval.remainingTimeInMinutes, daily_limit);
+
+                    if(eval.outsidePlayWindow) {
+                        logInfo("[Monitor] Current time %s is outside the play window (%s to %s) for user %s\n", formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(gameStartTime).c_str(), formatTimeInMinutes(bedtime).c_str(), user.nickname.c_str());
+                    }
+
+                    if(eval.shouldNotify) {
+                        NotificationsController::notifyRemainingTime(eval.remainingTimeInMinutes);
+                    } else if(eval.shouldBlock) {
                         logInfo("[Monitor] Timeout for the user %s\n", user.nickname.c_str());
                         service_->showScreenTimeout(pid);
                     }
@@ -147,26 +173,17 @@ namespace alefbet::pctrl::srv {
             logDebug("[Monitoring] loop\n");
             svcSleepThread(MainLoopDelayInNanos.count()); //Wait 1 minute
         }
-
-        logInfo("[Monitor] Stopped monitoring.\n");
     }
 
-    /*! @brief Stops the monitoring loop and resets notification state. */
+    /*! @brief Puts the monitoring loop to sleep and resets notification state.
+     *
+     * The loop does not exit: it goes idle and resumes when start() is called
+     * again or when the enabled setting is set back to 1.
+     */
     void Monitor::stop() {
         logInfo("[Monitor] Stopping monitor\n");
         running_ = false;
         notified_ = false;
     }
 
-    /*! @brief Determines whether a remaining-time notification should be sent.
-     *
-     * Notifications are sent every 15 minutes and every minute during the last 5 minutes.
-     *
-     * @param remainingTimeInMinutes The number of minutes remaining until the daily limit.
-     * @return true if a notification should be sent, false otherwise.
-     */
-    bool Monitor::shouldSendNotification(int remainingTimeInMinutes) {
-        // Remaining time notitications are sent every 15 minutes and every minute during the last 5 minutes
-        return remainingTimeInMinutes % 15 == 0 || remainingTimeInMinutes <= 5;
-    }
 }

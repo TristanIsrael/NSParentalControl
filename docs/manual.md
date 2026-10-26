@@ -6,6 +6,13 @@ This document describes how to use Parental Control for the Switch.
 
 The last version (> 2.0.0) has a different behaviour from the versions before, it shows a notification every 10 seconds during the last minute and finally it closes the running game. The versions before showed a bug "Time's up" screen and forced the user to reboot the console.
 
+## Language
+
+Since version 2.3, the overlay interface and the notifications are shown in the language configured on the console. English, French and Simplified Chinese are supported; any other console language falls back to English.
+
+- The overlay picks up the console language each time it is opened.
+- The notifications use the language detected when the sysmodule started: after changing the console language, restart the sysmodule to apply it to the notifications.
+
 ## Overlay
 
 Interactions with the Parental Control are made thru the overlay.
@@ -83,6 +90,16 @@ This screen lets you define a PIN for the Administrator of the Parental Control.
 
 #### Setup limits
 
-This screen lets you define the unique play time limit for all the players. Each player has its own play time but the limit is the same for every player.
+This screen lets you define the play limits for a player. Limits are defined per user.
 
-In case you want more time to play for a single player you will have to disable the parental control temporarilty.
+The screen is organized in two sections:
+
+- **Play limits**
+  - `Daily`: the maximum amount of time the user can play each day.
+- **Playtime window**
+  - `Allow games from`: the earliest time of day at which the user is allowed to play.
+  - `Stop games after`: the time of day at which the user must stop playing (bed time).
+
+Set a time to `0h 0mn` to disable the bound. When both times are set, the user can only play inside the window (for example 08:00 to 21:00). A window crossing midnight is also possible (for example 20:00 to 08:00).
+
+The game is stopped when the daily limit is used up **or** when the current time is outside the playtime window. The time used for these checks is protected against manipulations of the system clock.

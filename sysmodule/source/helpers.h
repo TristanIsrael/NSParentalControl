@@ -21,6 +21,7 @@
 #include <vector>
 #include <switch.h>
 #include "logger.h"
+#include "playtime_rules.h"
 
 namespace alefbet::pctrl {
 
@@ -107,6 +108,10 @@ namespace alefbet::pctrl {
         // Bed time management
         u16 getBedtime(const std::string& userId);
         void setBedtime(const std::string& userId, u16 bedtime_in_minutes);
+
+        // Game start time management
+        u16 getGameStartTime(const std::string& userId);
+        void setGameStartTime(const std::string& userId, u16 game_start_in_minutes);
 
         // Authentication management
         std::string encodePassword(const std::vector<u64>&);

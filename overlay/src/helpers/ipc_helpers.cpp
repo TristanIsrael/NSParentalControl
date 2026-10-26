@@ -610,6 +610,70 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Gets the earliest allowed play time for a user via IPC.
+      * @param user The user data containing the UID.
+      * @return The earliest allowed play time in minutes from midnight, or 0 on failure. */
+    u16 getGameStartTime(const UserData& user) {
+        logDebug("[IPC] Getting game start time\n");
+
+        if(!isAvailable()) {
+            logError("[IPC] service not available\n");
+            return 0;
+        }
+
+        u16 gameStartTime = 0;        
+        char chUserId[80] = {0};
+
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(chUserId, sizeof(chUserId), "%s", userId.c_str());
+
+        auto& service = getAppContext().pctrl_service;
+        Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetGameStartTime, chUserId, gameStartTime);
+
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured while getting the game start time.\n");
+        } 
+
+        logDebug("[IPC] Game start time is %i\n", gameStartTime);
+
+        return gameStartTime;
+    }
+
+    /*! @brief Sets the earliest allowed play time for a user via IPC.
+      * @param user The user data containing the UID.
+      * @param gameStartTime The earliest allowed play time in minutes from midnight.
+      * @return true if successful, false otherwise. */
+    bool setGameStartTime(const UserData& user, u16 gameStartTime) {
+        logDebug("[IPC] Setting the game start time to %i\n", gameStartTime);
+
+        if(!isAvailable()) {
+            logError("[IPC] service not available\n");
+            return false;
+        }
+
+        typedef struct __attribute__((packed)) {
+            u16 game_start_in_minutes;
+            char userId[80];
+        } Args;
+
+        Args args {
+            .game_start_in_minutes = gameStartTime,            
+        };
+
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(args.userId, sizeof(args.userId), "%s", userId.c_str());
+
+        auto& service = getAppContext().pctrl_service;
+        Result res = serviceDispatchIn(&service, (u32)Ipc::Command::SetGameStartTime, args);
+
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured while setting the game start time.\n");
+            return false;
+        }
+
+        return true;
+    }
+
     /*! @brief Checks if debug logging is enabled via IPC.
      * @return true if debug logging is enabled, false otherwise. */
     bool isDebugLogEnabled() {

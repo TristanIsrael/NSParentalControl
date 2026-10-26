@@ -531,6 +531,12 @@ namespace alefbet::pctrl::srv {
         saveSetting(setting);
         enabled_ = isEnabled;
 
+        if(monitor_ == nullptr) {
+            // The monitor thread has not registered itself yet (startup)
+            logError("[Service] Monitor not initialized\n");
+            return Ipc::Result::Error;
+        }
+
         if(enabled_) {
             monitor_->start();
         } else {
@@ -671,6 +677,54 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Sets the earliest allowed play time for a user.
+      *
+      * @param request IPC request.
+      * @return Ipc::Result::Ok on success.
+      */
+    Ipc::Result Service::setGameStartTime(Ipc::Request* request) {
+        typedef struct __attribute__((packed)) {
+            u16 game_start_in_minutes;
+            char userId[80];
+        } Args;
+
+        Args args{0};
+
+        Ipc::Result rc = request->readRequestValue(args);
+        if(rc != Ipc::Result::Ok) {
+            logError("[Service] Could not read request value (game start time)\n");
+            return rc;
+        }
+
+        std::string userId = std::string(args.userId);
+        logDebug("[Service] setGameStartTime: userId=%s, gameStartTime=%u\n", userId.c_str(), args.game_start_in_minutes);
+        helpers::setGameStartTime(userId, args.game_start_in_minutes);
+        
+        return Ipc::Result::Ok;
+    }
+
+    /*! @brief Gets the earliest allowed play time for a user
+      *
+      * @param request IPC request.
+      * @return Ipc::Result::Ok on success.
+      */
+    Ipc::Result Service::getGameStartTime(Ipc::Request* request) {
+        char _userId[80] = {0};
+
+        Ipc::Result rc = request->readRequestValue(_userId);
+        if(rc != Ipc::Result::Ok) {
+            logError("[Service] Could not read request data\n");
+            return rc;
+        }
+
+        std::string userId = std::string(_userId);
+        const auto& gameStartTime = helpers::getGameStartTime(userId);
+
+        request->appendReplyValue(gameStartTime);
+        
+        return Ipc::Result::Ok;
+    }
+
     /*! @brief Delayed background task that triggers the timeout screen after 1 second.
      *
      * Used as a thread argument to defer the timeout screen display.
@@ -777,6 +831,12 @@ namespace alefbet::pctrl::srv {
             }
             case Ipc::Command::GetBedtime: {
                 return getBedtime(request);
+            }
+            case Ipc::Command::SetGameStartTime: {
+                return setGameStartTime(request);
+            }
+            case Ipc::Command::GetGameStartTime: {
+                return getGameStartTime(request);
             }
             case Ipc::Command::GetAdjustedCurrentTime: {
                 return getAdjustedCurrentTime(request);

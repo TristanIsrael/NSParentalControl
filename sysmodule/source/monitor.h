@@ -55,9 +55,6 @@ namespace alefbet::pctrl::srv {
             }
 
         private:
-            bool shouldSendNotification(int remainingTimeInMinutes);
-
-        private:
             alefbet::pctrl::srv::Service* service_ = nullptr;
             bool running_ = false;
             bool notified_ = false;

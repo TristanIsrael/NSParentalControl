@@ -1,5 +1,48 @@
 # Changelog
 
+## Release 2.3.1
+
+### Sysmodule
+
+- Fixed a bug where, once the service was disabled, the monitoring thread exited and never resumed: after re-enabling the parental control, the playtime was no longer counted and the game was no longer interrupted (a reboot was previously required)
+- Fixed a potential crash when the enable state was changed over IPC before the monitor thread had started
+
+## Release 2.3
+
+### Overlay
+
+- The interface is displayed in the console language: English, French and Simplified Chinese are supported (other console languages fall back to English)
+- The playtime window times (game start and bed time) are always displayed with two digits in hours and minutes (HH:MM, e.g. 01:09)
+
+### Sysmodule
+
+- The notifications are displayed in the console language: English, French and Simplified Chinese are supported (other console languages fall back to English)
+- The language is detected from the console settings at startup; change the console language and restart the sysmodule to apply it
+
+## Release 2.2
+
+### Overlay
+
+- Setup limits panel: new "Playtime window" section grouping the play start time ("Allow games from") and the bed time ("Stop games after")
+- Main menu: shows the play start time ("Play from: HH:MM") when set
+
+### Sysmodule
+
+- New per-user setting: the earliest allowed play time (games are stopped before this time)
+- The game is now stopped when the daily limit is used up, or when the current time is outside the playtime window (before the play start time or after the bed time), including windows crossing midnight
+- The time used for the checks is protected against manipulations of the system clock
+
+## Release 2.1
+
+### Overlay
+
+- Setup limits panel: bed time configuration (hours / minutes)
+- Main menu: shows the bed time
+
+### Sysmodule
+
+- New per-user bed time: the game is stopped after the bed time
+
 ## Release 2.0
 
 ### Overlay

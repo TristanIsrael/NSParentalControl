@@ -141,16 +141,30 @@ Where `payloadSize` is `8` for INTEGER/DOUBLE, or `5 + valueLength` for STRING.
 
 Defined in `settings.h`:
 
-| Key                      | Type     | Description                       |
-|--------------------------|----------|-----------------------------------|
-| `daily_limit_users`      | INTEGER  | Daily time limit in minutes       |
-| `admin_pin`              | STRING   | Admin PIN (may be encrypted)      |
-| `working_mode`           | INTEGER  | 0=Info, 1=Blocking                |
-| `show_remaining_time`    | INTEGER  | Display flag (0 or 1)             |
-| `enabled`                | INTEGER  | Master enable flag (0 or 1)       |
-| `log_level`              | INTEGER  | Logging verbosity level           |
-| `blacklist`              | STRING   | Blacklisted title IDs             |
-| `authentication`         | INTEGER  | Authentication mode               |
+| Key                 | Type   | Description                                                          |
+|---------------------|--------|----------------------------------------------------------------------|
+| `daily_limit_users` | STRING | Per-user daily limit in minutes (serialized per-user value)          |
+| `bedtime_users`     | STRING | Per-user bed time, end of the playtime window (serialized per-user value) |
+| `game_start_users`  | STRING | Per-user earliest allowed play time, start of the playtime window (serialized per-user value) |
+| `admin_pin`         | STRING | Admin PIN (may be encrypted)                                         |
+| `working_mode`      | INTEGER| 0=Info, 1=Blocking                                                   |
+| `show_remaining_time` | INTEGER | Display flag (0 or 1)                                              |
+| `enabled`           | INTEGER| Master enable flag (0 or 1)                                          |
+| `log_level`         | INTEGER| Logging verbosity level                                              |
+| `blacklist`         | STRING | Blacklisted title IDs                                                |
+| `authentication`    | INTEGER| Authentication mode                                                  |
+
+### Per-user values
+
+The keys ending in `_users` share a common serialization format: a single STRING setting holds one entry per user, formatted as `uid=value;uid=value`.
+
+- `uid` is the user UID as a hex string (`accountUidToString`).
+- `value` depends on the key:
+  - `daily_limit_users`: daily limit in minutes per day.
+  - `bedtime_users` / `game_start_users`: time in minutes since midnight (0-1439).
+- A value of `0` means the bound is not set (disabled).
+
+See `docs/playtime-window.md` for the rules applied to the playtime window bounds.
 
 ---
 

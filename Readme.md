@@ -65,6 +65,10 @@ Parental control has the following features:
 - Choose the log level between Debug and Information (since 1.2)
 - Define individual limits (since 1.3)
 - Define bed time (since 2.1)
+- Define the playtime window: earliest allowed play time and bed time (since 2.2)
+
+**All users**
+- Interface and notifications are shown in the console language (English and French, since 2.3)
 
 ## Coming features
 
@@ -151,13 +155,29 @@ The sysmodule and the overlay share a common database file.
 
 ### Pre-requisites for build
 
-- Development computer with `devkitPro` and `devkitA64` (see below)
-- `libnx` (Switch homebrew SDK) installed via devkitPto
-- Atmosphere source code (see below)
+- A development computer (Linux) with the devkitPro **devkitA64** toolchain and **libnx** (the Switch homebrew SDK) installed — see below.
+- The Switch targets cannot be built without the devkitPro toolchain. The host unit tests (`make -C tests`) are the exception: they only need a standard C++20 compiler (e.g. `g++`) and no Switch SDK.
 
-### devkitPro and devkitA64 installation
+### Installing the build environment (devkitPro + libnx)
 
-Installation of devkitPro is described on [this page](https://switchbrew.org/wiki/Setting_up_Development_Environment).
+The toolchain and libnx are provided by devkitPro. The recommended installation method is **devkitPro pacman** (`dkp-pacman`), documented in the [official devkitPro wiki](https://devkitpro.org/wiki/devkitPro_pacman).
+
+On Debian/Ubuntu based systems, the whole setup can be run with the provided script:
+
+    bash scripts/setup-toolchain.sh
+
+The script follows the official *Debian and derivatives* procedure: it installs `dkp-pacman`, refreshes the devkitPro package database, and installs the `switch-dev` group (devkitA64 toolchain + libnx). It first checks that `devkitpro.org` is reachable and aborts with a clear message if not.
+
+> **Network note:** `devkitpro.org` is protected by Cloudflare and **blocks datacenter / cloud egress IPs** (HTTP 403, regardless of User-Agent). Run the script from a normal (residential / office) connection. When it happens, this is a network limitation, not a configuration problem.
+
+Alternatively, follow the manual steps of the [devkitPro pacman wiki](https://devkitpro.org/wiki/devkitPro_pacman).
+
+After installation, export the environment variables (the script prints them):
+
+    export DEVKITPRO=/opt/devkitpro
+    export DEVKITARM=/opt/devkitpro/devkitARM
+    export DEVKITPPC=/opt/devkitpro/devkitPPC
+    export PATH="$PATH:/opt/devkitpro/bin"
 
 ### Build the sysmodule
 
@@ -182,6 +202,14 @@ Copy this file in the directory `/switch/.overlays/` in the SD card of the Switc
 In order for the parental control to load on startup you have to create a new folder named `flags` into `/atmosphere/contents/4200000000003103`. 
 
 In this folder create an empty file named `boot2.flag`.
+
+### Versioning
+
+The version follows the `MAJOR.MINOR.PATCH` scheme (e.g. `2.2.0`):
+
+- A bug fix bumps the last digit (patch) only.
+- A new feature bumps the second digit (minor) and resets the last digit to 0.
+- The first digit (major) is bumped only by the product maintainer.
 
 ## References
 

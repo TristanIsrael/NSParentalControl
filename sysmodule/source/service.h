@@ -69,6 +69,9 @@ namespace alefbet::pctrl::srv {
 
             Ipc::Result setBedtime(Ipc::Request*);
             Ipc::Result getBedtime(Ipc::Request*);
+
+            Ipc::Result setGameStartTime(Ipc::Request*);
+            Ipc::Result getGameStartTime(Ipc::Request*);
             
             Ipc::Result isEnabled(Ipc::Request*);
             Ipc::Result setEnabled(Ipc::Request*);

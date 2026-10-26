@@ -18,23 +18,24 @@
 
 #include "notifications_controller.h"
 #include "ultrahand_interface.h"
+#include "i18n/i18n.h"
 #include <switch.h>
 #include <chrono>
 
 using namespace std::chrono;
+using namespace alefbet::pctrl::i18n;
 
 /*! @brief Sends a notification that parental control monitoring has started. */
 void NotificationsController::notifyMonitoringStarted() 
 {
-    UltraHandInterface::writeNotification("Parental control enabled");
+    UltraHandInterface::writeNotification(tr("Parental control enabled"));
 }
 
 /*! @brief Sends an attention notification with the remaining time.
  * @param remainingTimeInMinutes The remaining time in minutes. */
 void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
 {
-    //std::string message = std::to_string(remainingTimeInMinutes) + " minute" +(remainingTimeInMinutes > 1 ? "s" : "") +" left";
-    std::string message = formatTime(remainingTimeInMinutes) +" left";
+    std::string message = trf("%s left", formatDuration(remainingTimeInMinutes));
 
     UltraHandInterface::drawAttention();
     UltraHandInterface::writeNotification(message);
@@ -44,19 +45,8 @@ void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
  * @param remainingSeconds The remaining time in seconds. */
 void NotificationsController::notifyRemainingSeconds(int remainingSeconds)
 {
-    std::string message = std::to_string(remainingSeconds) + "s left";
+    std::string message = trf("%s left", std::to_string(remainingSeconds) + "s");
 
     UltraHandInterface::drawAttention();
     UltraHandInterface::writeNotification(message);
-}
-
-/*! @brief Formats a duration in minutes to a human-readable string (e.g., "2h 30mn").
- * @param duration_in_minutes The duration in minutes.
- * @return Formatted time string. */
-std::string NotificationsController::formatTime(int duration_in_minutes) {
-    const auto& duration = minutes{duration_in_minutes};
-    auto hoursPart = duration_cast<hours>(duration);
-    auto minutesPart = duration_cast<minutes>(duration - hoursPart);
-    std::string formatted = std::to_string(hoursPart.count()) + "h " +std::to_string(minutesPart.count()) +"mn";
-    return formatted;
 }

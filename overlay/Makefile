@@ -39,11 +39,11 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 
 APP_TITLE			:=		Parental Control
-APP_VERSION 	:= 		2.1
+APP_VERSION 	:= 		2.3
 
 TARGET		:=	parental_control
 BUILD		:=	build
-SOURCES		:=	src src/gui src/helpers
+SOURCES		:=	src src/gui src/helpers src/i18n
 DATA		:=	data
 INCLUDES	:=	src src/gui src/helpers
 

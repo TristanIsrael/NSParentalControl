@@ -27,6 +27,8 @@ The reference for the expected behavior is [`docs/playtime-window.md`](playtime-
 | Game | Any game with a fast load (used for all "game running" preconditions) |
 | Access | SD card readable (USB/MTP) to inspect `settings.bin` and `sysmodule.log` |
 
+**Unit tests (host):** the pure logic (play window rule, tamper-protected time, per-user serialization) is covered by a host unit test suite that does not require the Switch: `make -C tests`.
+
 **Setup steps:**
 1. Install the v2.2.0 sysmodule (`exefs.nsp` → `/atmosphere/contents/4200000000003103`) and the overlay (`parental_control.ovl` → `/switch/.overlays/`).
 2. Reboot. Open the overlay → Admin (default PIN `A A A A`) → `Log level` = `DEBUG`.

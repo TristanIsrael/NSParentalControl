@@ -48,7 +48,8 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 
 ## Build
 
-- Requires `devkitPro` with the Switch SDK (`export DEVKITPRO=<path>`); building on the host is not possible.
+- Requires `devkitPro` with the Switch SDK (`export DEVKITPRO=<path>`); building the Switch targets on the host is not possible.
+- Host unit tests (no Switch SDK required): `make -C tests` builds and runs the tests for the pure playtime logic.
 - Sysmodule: `make` in `sysmodule/` → `out.nosync/exefs.nsp`.
 - Overlay: `make` in `overlay/` → `parental_control.ovl`.
 - Both Makefiles carry an `APP_VERSION`; when a feature spans both components, bump both to the same value and update `sysmodule/toolbox.json` (`version` field).
@@ -59,11 +60,12 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 
 ## Coding standards
 
-- Use C++-21 for all new files
+- Use C++-20 for all new files
 - Follow the existing naming conventions
 - New source files must keep the GPLv3 license header used by the other files
 - Log with `logDebug` / `logInfo` / `logError` using the `[Component] ` prefix convention (e.g. `[Monitor]`, `[Service]`, `[IPC]`)
-- There is no unit test suite; verify changes by building both components
+- The pure playtime logic (no Switch dependency) lives in `sysmodule/source/playtime_rules.{h,cpp}` and is unit-tested on the host: `make -C tests`. Keep it free of any Switch dependency, and add or update the matching tests in `/tests` when changing the play rules
+- Verify remaining changes by building both components
 
 ## Chat rules
 

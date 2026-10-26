@@ -338,43 +338,23 @@ namespace alefbet::pctrl::helpers {
      * @param minutesSinceMidnight Minutes since midnight (0-1439).
      * @return Formatted time string (e.g. "21:30").
      */
-        std::string formatTimeInMinutes(u16 minutesSinceMidnight) {
-            u16 hours = minutesSinceMidnight / 60;
-            u16 minutes = minutesSinceMidnight % 60;
-            
-            char buffer[12] = {0};
-            std::snprintf(buffer, sizeof(buffer), "%02d:%02d", hours, minutes);
-            
-            return std::string(buffer);
-        }
+         std::string formatTimeInMinutes(u16 minutesSinceMidnight) {
+             return core::formatTimeInMinutes(minutesSinceMidnight);
+         }
 
-        static constexpr s32 BEDTIME_TIME_JUMP_THRESHOLD = 5;
+         u16 getAdjustedTime(u16 currTime, u16& lastTime, s32& offset) {
+             const auto result = core::computeAdjustedTime(currTime, lastTime, offset);
 
-        u16 getAdjustedTime(u16 currTime, u16& lastTime, s32& offset) {
-            if(lastTime != 0) {
-                const s32 apparentDiff = static_cast<s32>(currTime) - static_cast<s32>(lastTime);
-                
-                if(std::abs(apparentDiff) > BEDTIME_TIME_JUMP_THRESHOLD) {
-                    logInfo("[Helpers] System time jump detected: %+d minutes, adjusting offset to %d\n", apparentDiff, offset - apparentDiff);
-                    offset -= apparentDiff;
-                }
-            }
+             if(result.jump != 0) {
+                 logInfo("[Helpers] System time jump detected: %+d minutes, adjusting offset to %d\n", result.jump, offset);
+             }
 
-            const s32 adjusted = static_cast<s32>(currTime) + offset;
-            
-            if(adjusted < 0) {
-                return static_cast<u16>(1440 + adjusted);
-            } else if(adjusted >= 1440) {
-                return static_cast<u16>(adjusted - 1440);
-            }
-            
-            return static_cast<u16>(adjusted);
-        }
+             return result.time;
+         }
 
-        void resetAdjustedTimeState(u16& lastTime, s32& offset) {
-            lastTime = 0;
-            offset = 0;
-        }
+         void resetAdjustedTimeState(u16& lastTime, s32& offset) {
+             core::resetAdjustedTimeState(lastTime, offset);
+         }
 
     /*! @brief Reads the reboot payload file from the SD card.
      *
@@ -679,81 +659,27 @@ namespace alefbet::pctrl::helpers {
     }
 
     static std::string serializeDailyLimits(const std::map<std::string, u16>& limitsMap) {
-        std::ostringstream oss;
-        bool first = true;
-        for(const auto& [userId, limit] : limitsMap) {
-            if(!first) oss << ';';
-            first = false;
-            oss << userId << '=' << limit;
-        }
-        return oss.str();
+        return core::serializeUserValues(limitsMap);
     }
 
     static std::map<std::string, u16> deserializeDailyLimits(const std::string& data) {
-        std::map<std::string, u16> result;
-        std::istringstream stream(data);
-        std::string line;
-        while(std::getline(stream, line, ';')) {
-            if(line.empty()) continue;
-            auto eqPos = line.find('=');
-            if(eqPos == std::string::npos) continue;
-            std::string userId = line.substr(0, eqPos);
-            u16 limit = static_cast<u16>(std::stoul(line.substr(eqPos + 1)));
-            result[userId] = limit;
-        }
-        return result;
+        return core::deserializeUserValues(data);
     }
 
     static std::string serializeBedtimes(const std::map<std::string, u16>& bedtimesMap) {
-        std::ostringstream oss;
-        bool first = true;
-        for(const auto& [userId, limit] : bedtimesMap) {
-            if(!first) oss << ';';
-            first = false;
-            oss << userId << '=' << limit;
-        }
-        return oss.str();
+        return core::serializeUserValues(bedtimesMap);
     }
 
     static std::map<std::string, u16> deserializeBedtimes(const std::string& data) {
-        std::map<std::string, u16> result;
-        std::istringstream stream(data);
-        std::string line;
-        while(std::getline(stream, line, ';')) {
-            if(line.empty()) continue;
-            auto eqPos = line.find('=');
-            if(eqPos == std::string::npos) continue;
-            std::string userId = line.substr(0, eqPos);
-            u16 limit = static_cast<u16>(std::stoul(line.substr(eqPos + 1)));
-            result[userId] = limit;
-        }
-        return result;
+        return core::deserializeUserValues(data);
     }
 
     static std::string serializeGameStartTimes(const std::map<std::string, u16>& gameStartsMap) {
-        std::ostringstream oss;
-        bool first = true;
-        for(const auto& [userId, limit] : gameStartsMap) {
-            if(!first) oss << ';';
-            first = false;
-            oss << userId << '=' << limit;
-        }
-        return oss.str();
+        return core::serializeUserValues(gameStartsMap);
     }
 
     static std::map<std::string, u16> deserializeGameStartTimes(const std::string& data) {
-        std::map<std::string, u16> result;
-        std::istringstream stream(data);
-        std::string line;
-        while(std::getline(stream, line, ';')) {
-            if(line.empty()) continue;
-            auto eqPos = line.find('=');
-            if(eqPos == std::string::npos) continue;
-            std::string userId = line.substr(0, eqPos);
-            u16 limit = static_cast<u16>(std::stoul(line.substr(eqPos + 1)));
-            result[userId] = limit;
-        }
-        return result;
+        return core::deserializeUserValues(data);
     }
 
     /*! @brief Retrieves the daily usage limit for a specific user.

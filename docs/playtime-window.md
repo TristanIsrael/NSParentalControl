@@ -16,7 +16,7 @@ The three conditions are independent and combined with a logical OR.
 
 All time-based decisions must use the **adjusted time**, never the raw system time.
 
-- `helpers::getAdjustedTime(currTime, lastTime, offset)` (`sysmodule/source/helpers.cpp`) detects jumps of the system clock larger than `BEDTIME_TIME_JUMP_THRESHOLD` (5 minutes) between two monitor iterations and compensates them with a cumulative offset.
+- `core::computeAdjustedTime(currentTime, lastTime, offset)` (`sysmodule/source/playtime_rules.cpp`), exposed to the monitor through `helpers::getAdjustedTime` (`sysmodule/source/helpers.cpp`), detects jumps of the system clock larger than `core::kTimeJumpThreshold` (5 minutes) between two monitor iterations and compensates them with a cumulative offset.
 - The adjusted time is wrapped in the range `[0, 1440)` minutes.
 - Purpose: a user who changes the system clock to escape the limits cannot, because the offset follows the jump.
 
@@ -56,14 +56,16 @@ The `S > B` case is mandatory: a window like 20:00 to 08:00 must allow play at 2
 ## Enforcement
 
 - The rules are evaluated in `Monitor::loop()` (`sysmodule/source/monitor.cpp`), once per minute while a game is running.
+- The pure decision logic (window membership, tamper-protected time, per-user serialization) lives in `sysmodule/source/playtime_rules.{h,cpp}`, which has **no Switch dependency** so it can be unit-tested on the host (`make -C tests`, see `/tests`).
 - **The rules must only be enforced in the sysmodule.** The overlay is a passive client: it displays state and settings but never decides to block.
 
 ## Code map
 
 | Concern                          | Location                                                        |
 |----------------------------------|-----------------------------------------------------------------|
+| Pure playtime logic (no Switch dep) | `sysmodule/source/playtime_rules.{h,cpp}` (host unit tests: `make -C tests`) |
 | Rule evaluation                  | `sysmodule/source/monitor.cpp` (`Monitor::loop`)                |
-| Tamper-protected time            | `sysmodule/source/helpers.cpp` (`getAdjustedTime`)              |
+| Tamper-protected time            | `sysmodule/source/playtime_rules.cpp` (`computeAdjustedTime`) via `helpers.cpp` (`getAdjustedTime`) |
 | Window settings storage          | `sysmodule/source/helpers.cpp` (`getGameStartTime` / `setGameStartTime`, `getBedtime` / `setBedtime`) |
 | Setting keys                     | `sysmodule/source/database/settings.h`                          |
 | IPC commands                     | `sysmodule/source/ipc/Command.hpp` + `service.cpp` (`commandThread`) |

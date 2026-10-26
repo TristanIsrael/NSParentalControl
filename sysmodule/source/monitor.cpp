@@ -115,14 +115,7 @@ namespace alefbet::pctrl::srv {
 
                     bool outsidePlayWindow = false;
                     if(gameStartTime > 0 || bedtime > 0) {
-                        if(gameStartTime <= bedtime) {
-                            // Window within the same day: [gameStart, bedtime)
-                            outsidePlayWindow = (gameStartTime > 0 && adjustedTimeMinutes < gameStartTime) ||
-                                                (bedtime > 0 && adjustedTimeMinutes >= bedtime);
-                        } else {
-                            // Window crossing midnight: [gameStart, 24:00) ∪ [00:00, bedtime)
-                            outsidePlayWindow = adjustedTimeMinutes >= bedtime && adjustedTimeMinutes < gameStartTime;
-                        }
+                        outsidePlayWindow = !core::isInsidePlayWindow(adjustedTimeMinutes, gameStartTime, bedtime);
 
                         if(outsidePlayWindow) {
                             logInfo("[Monitor] Current time %s is outside the play window (%s to %s) for user %s\n", formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(gameStartTime).c_str(), formatTimeInMinutes(bedtime).c_str(), user.nickname.c_str());

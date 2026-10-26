@@ -21,6 +21,7 @@
 #include <vector>
 #include <switch.h>
 #include "logger.h"
+#include "playtime_rules.h"
 
 namespace alefbet::pctrl {
 

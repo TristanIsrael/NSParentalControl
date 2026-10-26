@@ -122,14 +122,16 @@ void SetupLimitsUserPanel::rebuildUI() {
         yPos += 35;
         renderer->drawString(tr("Allow games from"), false, x, yPos, 20, renderer->a(ColorWhite));
         
-        // Minutes
-        std::string str = std::to_string(gameStartMinutes_);
-        renderer->drawString(str.c_str(), false, w-10 -(gameStartMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartMinutes ? ColorSelected : ColorWhite));
+        // Minutes (always two digits, e.g. 09)
+        char minutesStr[4] = {0};
+        std::snprintf(minutesStr, sizeof(minutesStr), "%02d", gameStartMinutes_);
+        renderer->drawString(minutesStr, false, w-20, yPos, 20, renderer->a(selectedItem_ == GameStartMinutes ? ColorSelected : ColorWhite));
                 
-        // Hours
+        // Hours (always two digits, e.g. 01)
         renderer->drawString(":", false, w-40, yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));
-        str = std::to_string(gameStartHours_);
-        renderer->drawString(str.c_str(), false, w-60 -(gameStartHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));            
+        char hoursStr[4] = {0};
+        std::snprintf(hoursStr, sizeof(hoursStr), "%02d", gameStartHours_);
+        renderer->drawString(hoursStr, false, w-70, yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));            
 
     }), 60);
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
@@ -138,14 +140,16 @@ void SetupLimitsUserPanel::rebuildUI() {
         yPos += 35;
         renderer->drawString(tr("Stop games after"), false, x, yPos, 20, renderer->a(ColorWhite));
         
-        // Minutes
-        std::string str = std::to_string(bedtimeMinutes_);
-        renderer->drawString(str.c_str(), false, w-10 -(bedtimeMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == BedtimeMinutes ? ColorSelected : ColorWhite));
+        // Minutes (always two digits, e.g. 09)
+        char minutesStr[4] = {0};
+        std::snprintf(minutesStr, sizeof(minutesStr), "%02d", bedtimeMinutes_);
+        renderer->drawString(minutesStr, false, w-20, yPos, 20, renderer->a(selectedItem_ == BedtimeMinutes ? ColorSelected : ColorWhite));
                 
-        // Hours
+        // Hours (always two digits, e.g. 01)
         renderer->drawString(":", false, w-40, yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));
-        str = std::to_string(bedtimeHours_);
-        renderer->drawString(str.c_str(), false, w-60 -(bedtimeHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));            
+        char hoursStr[4] = {0};
+        std::snprintf(hoursStr, sizeof(hoursStr), "%02d", bedtimeHours_);
+        renderer->drawString(hoursStr, false, w-70, yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));            
 
     }), 60);
 

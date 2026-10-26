@@ -12,6 +12,7 @@
 ### Overlay
 
 - The interface is displayed in the console language: English, French and Simplified Chinese are supported (other console languages fall back to English)
+- The playtime window times (game start and bed time) are always displayed with two digits in hours and minutes (HH:MM, e.g. 01:09)
 
 ### Sysmodule
 

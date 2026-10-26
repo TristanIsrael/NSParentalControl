@@ -24,7 +24,7 @@
 #include "Command.hpp"
 #include "AppContext.h"
 #include "helpers/ipc_helpers.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
@@ -44,7 +44,7 @@ HistoryUserPanel::~HistoryUserPanel() {
 /*! @brief Creates and returns the root UI element for the user history panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* HistoryUserPanel::createUI() {
-    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), tr(Key::UsageHistory));
+    rootFrame_ = new tsl::elm::OverlayFrame(tr("Parental Control"), tr("Usage history"));
     rootList_ = new tsl::elm::List();
     
     rebuildUI();        
@@ -53,7 +53,7 @@ tsl::elm::Element* HistoryUserPanel::createUI() {
 }
 
 void HistoryUserPanel::rebuildUI() {
-    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::Today)));    
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr("Today")));    
     
     duration today_usage = ipc::getUserUsageTime(user_.uid);
     hours today_usage_h = duration_cast<hours>(today_usage);
@@ -62,11 +62,11 @@ void HistoryUserPanel::rebuildUI() {
 
     logDebug("Usage: %i, remaining:%i\n", today_usage.count(), today_remaining.count());
 
-    std::string strUsage = std::to_string(today_usage_h.count()) + tr(Key::UnitHours) + " " +std::to_string( (today_usage - today_usage_h).count() ) + " " + tr(Key::UnitMinutes);
-    std::string strRemaining = std::to_string(today_remaining_h.count()) + tr(Key::UnitHours) + " " +std::to_string( (today_remaining - today_remaining_h).count() ) + " " + tr(Key::UnitMinutes);
+    std::string strUsage = std::to_string(today_usage_h.count()) + tr("h") + " " +std::to_string( (today_usage - today_usage_h).count() ) + " " + tr("mn");
+    std::string strRemaining = std::to_string(today_remaining_h.count()) + tr("h") + " " +std::to_string( (today_remaining - today_remaining_h).count() ) + " " + tr("mn");
 
-    rootList_->addItem(new tsl::elm::ListItem(tr(Key::Usage), strUsage));
-    rootList_->addItem(new tsl::elm::ListItem(tr(Key::Remaining), strRemaining));
+    rootList_->addItem(new tsl::elm::ListItem(tr("Usage"), strUsage));
+    rootList_->addItem(new tsl::elm::ListItem(tr("Remaining"), strRemaining));
 
     rootFrame_->setContent(rootList_);
 }

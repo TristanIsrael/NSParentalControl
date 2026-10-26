@@ -36,40 +36,48 @@ On the host (unit tests, no `__SWITCH__`), `detectSystemLanguage()` always falls
 
 ## Mechanism
 
-Each component has its own translation module (the two builds do not share sources — same convention as the duplicated IPC command enum):
+Each component has its own translation module in its own `i18n/` directory (the two builds do not share sources — same convention as the duplicated IPC command enum):
 
 | Component | Header | Implementation |
 |-----------|--------|----------------|
-| Sysmodule | `sysmodule/source/i18n.h` | `sysmodule/source/i18n.cpp` |
-| Overlay   | `overlay/src/i18n.h`       | `overlay/src/i18n.cpp`       |
+| Sysmodule | `sysmodule/source/i18n/i18n.h` | `sysmodule/source/i18n/i18n.cpp` |
+| Overlay   | `overlay/src/i18n/i18n.h`      | `overlay/src/i18n/i18n.cpp`      |
 
 Both modules expose the same API in the namespace `alefbet::pctrl::i18n`:
 
 - `enum class Language { English, French }`
-- `enum class Key { ... }` — one enumerator per translatable string (the key list differs per component).
 - `Language current()` — the active language.
 - `void setLanguage(Language)` — override the language (used by the host tests).
 - `void detectSystemLanguage()` — read the console language (SET service, target only).
-- `const char* tr(Key)` — the string in the active language (empty string if the key is unknown).
-- `std::string format(Key, const std::string&)` — like `tr`, but replaces the single `%s` placeholder of the template (e.g. the `TimeLeft` notification: `"%s left"` / `"Il reste %s"`).
+- `const char* tr(const char* sourceText)` — the string in the active language. The argument is the **English source text**; it is returned unchanged when no translation exists.
+- `std::string format(const char* sourceTemplate, const std::string& value)` — like `tr`, but replaces the single `%s` placeholder of the translated template (e.g. the remaining-time notification: `"%s left"` / `"Il reste %s"`).
 
-The implementation is a single `constexpr std::array` table `{key, english, french}` plus a global `Language g_language`. The SET-service call is isolated in `detectSystemLanguage()` behind `#ifdef __SWITCH__`, which keeps the module host-compilable and unit-testable.
+### Translation tables (one file per language)
+
+English is the source language: it has **no table**, the English strings live in the call sites themselves. Every other supported language has its own table file in the same `i18n/` directory, a `std::unordered_map<std::string, const char*>` (English source text -> translated text):
+
+| Component | French table |
+|-----------|--------------|
+| Sysmodule | `sysmodule/source/i18n/i18n_fr.cpp` (`french()`) |
+| Overlay   | `overlay/src/i18n/i18n_fr.cpp` (`french()`)      |
+
+`tr()` looks the source text up in the active language's table and falls back to the source text itself when the language has no table (English) or the entry is missing (a stale or missing translation therefore degrades to English, never to an empty string). The tables are function-local statics, so they are initialized on first use (after the heap is up on the target). The SET-service call is isolated in `detectSystemLanguage()` behind `#ifdef __SWITCH__`, which keeps the module host-compilable and unit-testable.
 
 ### Time units
 
-Durations are formatted from the `UnitHours` / `UnitMinutes` keys:
+Durations are formatted from the `"h"` / `"mn"` source strings:
 
 - **Sysmodule** (`i18n::formatDuration`, used by the notifications): English `"2h 30mn"`, French `"2h 30 min"`. The French minutes unit carries its leading space in the table (`" min"`).
-- **Overlay** (usage values, history, setup-limits): the panels insert their own spacing around the unit keys (`"mn"` / `"min"`).
+- **Overlay** (usage values, history, setup-limits): the panels insert their own spacing around the unit strings (`"mn"` / `"min"`).
 
 ## Rules for contributors
 
-- Every string that is rendered on screen (overlay) or sent in a notification (sysmodule) must go through `tr()` / `format()`; do not hardcode user-facing literals in the panels or in `NotificationsController` / `UltraHandInterface`.
-- To add a translatable string: add a `Key` enumerator and one row to the table of the component that shows it (English and French), then use `tr(Key::...)` at the call site.
-- To add a language: extend the `Language` enum, add a column to the `Entry` struct and the table, extend `tr()` / `format()`, and add the language to the `detectSystemLanguage()` mapping.
+- Every string that is rendered on screen (overlay) or sent in a notification (sysmodule) must go through `tr()` / `format()` with the English source text; do not hardcode user-facing literals in the panels or in `NotificationsController` / `UltraHandInterface`.
+- To add a translatable string: call `tr("English text")` at the call site and add one row for that English text to the table of **every non-source language** of the component (`i18n/i18n_fr.cpp`, ...).
+- To add a language: extend the `Language` enum, create the `i18n/i18n_<lang>.cpp` file with its table function, add its case to `tableFor()` in `i18n/i18n.cpp`, and add the language to the `detectSystemLanguage()` mapping.
 - Keep the Doxygen comments and this document in sync when the mechanism changes.
 
 ## Tests
 
-- Host: `make -C tests` runs `i18n_test.cpp`, which checks the English/French strings, the `%s` substitution, the duration formatting in both languages, and the host fallback of `detectSystemLanguage()`.
-- The overlay table cannot be host-tested (the overlay needs the Tesla framework), so keep the overlay keys consistent by hand: every `Key::` used in `overlay/src` must exist in `overlay/src/i18n.h`, and vice versa.
+- Host: `make -C tests` runs `i18n_test.cpp`, which checks the English/French strings, the fallback to the source text for untranslated strings, the `%s` substitution, the duration formatting in both languages, and the host fallback of `detectSystemLanguage()`.
+- The overlay tables cannot be host-tested (the overlay needs the Tesla framework), so keep them consistent by hand: every `tr("...")` / `format("...")` argument used in `overlay/src` must exist in `i18n/i18n_fr.cpp`, and every table row must be used.

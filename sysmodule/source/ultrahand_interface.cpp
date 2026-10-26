@@ -23,7 +23,7 @@
 #include <sstream>
 #include <switch.h>
 #include "logger.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::i18n;
@@ -84,5 +84,5 @@ void UltraHandInterface::writeNotification(const std::string& message, int fontS
 /*! \brief Shows a short notification to draw users attention */
 void UltraHandInterface::drawAttention() 
 {    
-    writeNotification(tr(Key::NotificationTitle), 32, 2);
+    writeNotification(tr("Parental Control"), 32, 2);
 }

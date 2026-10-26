@@ -17,7 +17,6 @@
  */
 
 #include "i18n.h"
-#include <array>
 
 #ifdef __SWITCH__
 #include <switch.h>
@@ -27,27 +26,12 @@ namespace alefbet::pctrl::i18n {
 
 namespace {
 
-struct Entry {
-    Key key;
-    const char* english;
-    const char* french;
-};
-
-constexpr std::array<Entry, 5> kTable = {{
-    {Key::NotificationTitle, "Parental Control", "Contrôle parental"},
-    {Key::MonitoringStarted, "Parental control enabled", "Contrôle parental activé"},
-    {Key::TimeLeft, "%s left", "Il reste %s"},
-    {Key::UnitHours, "h", "h"},
-    {Key::UnitMinutes, "mn", " min"}
-}};
-
 Language g_language = Language::English;
 
-const Entry* findEntry(Key key) {
-    for(const auto& entry : kTable) {
-        if(entry.key == key) {
-            return &entry;
-        }
+const StringMap* tableFor(Language language) {
+    switch(language) {
+        case Language::French:  return &french();
+        case Language::English: return nullptr;  // source language
     }
 
     return nullptr;
@@ -63,7 +47,7 @@ Language current() {
 /*! @brief Sets the active language.
  *
  * The language is normally set once by detectSystemLanguage at startup; this
- * function exists so the translation table can be exercised without a console.
+ * function exists so the translation tables can be exercised without a console.
  */
 void setLanguage(Language language) {
     g_language = language;
@@ -92,22 +76,27 @@ void detectSystemLanguage() {
 #endif
 }
 
-/*! @brief Returns the translated string for the key in the active language.
+/*! @brief Translates an English source string into the active language.
  *
- * @return The translated string, or an empty string if the key is unknown.
+ * The source string is looked up in the active language's table; when no
+ * translation exists (or for the English source language) the source string
+ * itself is returned.
  */
-const char* tr(Key key) {
-    const Entry* entry = findEntry(key);
-    if(entry == nullptr) {
-        return "";
+const char* tr(const char* sourceText) {
+    const StringMap* table = tableFor(g_language);
+    if(table != nullptr) {
+        const auto it = table->find(sourceText);
+        if(it != table->end()) {
+            return it->second;
+        }
     }
 
-    return g_language == Language::French ? entry->french : entry->english;
+    return sourceText;
 }
 
-/*! @brief Returns the translated string for the key with its "%s" placeholder replaced by the value. */
-std::string format(Key key, const std::string& value) {
-    std::string result = tr(key);
+/*! @brief Translates an English template and replaces its "%s" placeholder with the value. */
+std::string format(const char* sourceTemplate, const std::string& value) {
+    std::string result = tr(sourceTemplate);
     const size_t placeholder = result.find("%s");
     if(placeholder != std::string::npos) {
         result.replace(placeholder, 2, value);
@@ -124,7 +113,7 @@ std::string formatDuration(int durationInMinutes) {
     const int hours = durationInMinutes / 60;
     const int minutes = durationInMinutes % 60;
 
-    return std::to_string(hours) + tr(Key::UnitHours) + " " + std::to_string(minutes) + tr(Key::UnitMinutes);
+    return std::to_string(hours) + tr("h") + " " + std::to_string(minutes) + tr("mn");
 }
 
 }

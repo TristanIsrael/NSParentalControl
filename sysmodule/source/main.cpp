@@ -28,7 +28,7 @@
 #include "ipc/Server.hpp"
 #include "service.h"
 #include "monitor.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::database::settings;

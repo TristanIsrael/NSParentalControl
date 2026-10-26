@@ -30,7 +30,7 @@
 #include "logger.h"
 #include "helpers/ipc_helpers.h"
 #include "AppContext.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 
 //Examples : https://github.com/masagrator/Status-Monitor-Overlay/blob/master/source/main.cpp
 

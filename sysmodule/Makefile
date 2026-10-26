@@ -39,7 +39,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	pctrl
 BUILD		:=	build.nosync
-SOURCES		:=	source source/database source/ipc source/gui
+SOURCES		:=	source source/database source/ipc source/gui source/i18n
 DATA		:=	data
 INCLUDES	:=	source source/database source/ipc source/gui
 APP_VERSION	:=	2.3

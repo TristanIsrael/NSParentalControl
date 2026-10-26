@@ -18,7 +18,7 @@
 
 #include "notifications_controller.h"
 #include "ultrahand_interface.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 #include <switch.h>
 #include <chrono>
 
@@ -28,14 +28,14 @@ using namespace alefbet::pctrl::i18n;
 /*! @brief Sends a notification that parental control monitoring has started. */
 void NotificationsController::notifyMonitoringStarted() 
 {
-    UltraHandInterface::writeNotification(tr(Key::MonitoringStarted));
+    UltraHandInterface::writeNotification(tr("Parental control enabled"));
 }
 
 /*! @brief Sends an attention notification with the remaining time.
  * @param remainingTimeInMinutes The remaining time in minutes. */
 void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
 {
-    std::string message = format(Key::TimeLeft, formatDuration(remainingTimeInMinutes));
+    std::string message = format("%s left", formatDuration(remainingTimeInMinutes));
 
     UltraHandInterface::drawAttention();
     UltraHandInterface::writeNotification(message);
@@ -45,7 +45,7 @@ void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
  * @param remainingSeconds The remaining time in seconds. */
 void NotificationsController::notifyRemainingSeconds(int remainingSeconds)
 {
-    std::string message = format(Key::TimeLeft, std::to_string(remainingSeconds) + "s");
+    std::string message = format("%s left", std::to_string(remainingSeconds) + "s");
 
     UltraHandInterface::drawAttention();
     UltraHandInterface::writeNotification(message);

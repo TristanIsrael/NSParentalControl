@@ -35,7 +35,8 @@ $(BUILDDIR)/switch/switch_only_test.o: switch_only_test.cpp ../sysmodule/source/
 $(BUILDDIR)/switch:
 	mkdir -p $(BUILDDIR)/switch
 
-$(BUILDDIR)/%: %.cpp ../sysmodule/source/playtime_rules.cpp ../sysmodule/source/i18n.cpp | $(BUILDDIR)
+$(BUILDDIR)/%: %.cpp ../sysmodule/source/playtime_rules.cpp ../sysmodule/source/i18n/i18n.cpp \
+	../sysmodule/source/i18n/i18n_fr.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 $(BUILDDIR):

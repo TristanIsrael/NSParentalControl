@@ -25,7 +25,7 @@
 #include "helpers/ipc_helpers.h"
 #include "helpers/switch_helpers.h"
 #include "panel_setup_limits_user.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::helpers;
@@ -42,7 +42,7 @@ SetupLimitsPanel::~SetupLimitsPanel() {
 /*! @brief Creates and returns the root UI element for the setup limits main panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* SetupLimitsPanel::createUI() {
-    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), tr(Key::SetLimits));
+    rootFrame_ = new tsl::elm::OverlayFrame(tr("Parental Control"), tr("Set limits"));
     rootList_ = new tsl::elm::List();
     
     rebuildUI();        
@@ -53,7 +53,7 @@ tsl::elm::Element* SetupLimitsPanel::createUI() {
 
 /*! @brief Rebuilds the user selection list for setting limits. */
 void SetupLimitsPanel::rebuildUI() {
-    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::ChooseUser)));
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr("Choose a user")));
 
     const auto& users = helpers::getUsersList();    
 

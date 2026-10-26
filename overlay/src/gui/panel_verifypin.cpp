@@ -26,7 +26,7 @@
 #include "panel_setuppin.h"
 #include "panel_admin_menu.h"
 #include "panel_main_menu.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::i18n;
@@ -49,7 +49,7 @@ void VerifyPinPanel::closeAndClean() {
 /*! @brief Creates and returns the root UI element for the PIN verification panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* VerifyPinPanel::createUI() {
-    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), tr(Key::VerifyPin));
+    rootFrame_ = new tsl::elm::OverlayFrame(tr("Parental Control"), tr("Verify PIN"));
     rootList_ = new tsl::elm::List();
     
     rebuildUI();
@@ -60,11 +60,11 @@ tsl::elm::Element* VerifyPinPanel::createUI() {
 /*! @brief Rebuilds the PIN verification UI with circle indicators and error messages. */
 void VerifyPinPanel::rebuildUI() {     
     rootList_->addItem(new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-        renderer->drawString(tr(Key::EnterAdminPin), false, x + 20, y + 20, 20, renderer->a(0xFFFF));            
+        renderer->drawString(tr("Please enter Admin PIN"), false, x + 20, y + 20, 20, renderer->a(0xFFFF));            
         //renderer->drawString("Use all pad keys except B", false, x + 20, y + 45, 20, renderer->a(0xFFFF));            
     }), 50);
 
-    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::AdminPin)));
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr("Admin PIN")));
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         u16 spacing = w/5;
         bool active = false;
@@ -77,8 +77,8 @@ void VerifyPinPanel::rebuildUI() {
     
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
         if(error_) {
-            renderer->drawString(tr(Key::PinIncorrect), false, x + 100, y + 30, 20, renderer->a(RGBA4(0xf, 0x0, 0x0, 0xf)));
-            renderer->drawString(tr(Key::PressARetry), false, x + 30, y + 55, 20, renderer->a(RGBA4(0xf, 0xf, 0xf, 0xf)));
+            renderer->drawString(tr("PIN is incorrect"), false, x + 100, y + 30, 20, renderer->a(RGBA4(0xf, 0x0, 0x0, 0xf)));
+            renderer->drawString(tr("Press A to retry, B to cancel"), false, x + 30, y + 55, 20, renderer->a(RGBA4(0xf, 0xf, 0xf, 0xf)));
         }
     }), 60);
 

@@ -43,8 +43,9 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 
 Only the strings that reach the user are translated: the on-screen strings (overlay) and the notification strings (sysmodule). English and French are supported; the language is the console language, read once at startup with the SET service (`setGetSystemLanguage` + `setMakeLanguage`, French including Canadian French, everything else falls back to English).
 
-- Each component has its own module — `sysmodule/source/i18n.{h,cpp}` and `overlay/src/i18n.{h,cpp}` — exposing `alefbet::pctrl::i18n::{Language, Key, tr, format, current, setLanguage, detectSystemLanguage}`. The two tables are independent (same convention as the duplicated IPC enum).
-- Every on-screen string (overlay) and every notification string (sysmodule) must go through `tr(Key::...)` / `format(Key::..., value)`; do not hardcode user-facing literals.
+- Each component has its own module in its own `i18n/` directory — `sysmodule/source/i18n/i18n.{h,cpp}` and `overlay/src/i18n/i18n.{h,cpp}` — exposing `alefbet::pctrl::i18n::{Language, tr, format, current, setLanguage, detectSystemLanguage}`. The two modules are independent (same convention as the duplicated IPC enum).
+- Each non-source language has its own translation table file in the same `i18n/` directory (`i18n_fr.cpp`, ...); English is the source language and has no table — the English strings live in the call sites and `tr()` falls back to them.
+- Every on-screen string (overlay) and every notification string (sysmodule) must go through `tr("English source text")` / `format("English template", value)`; do not hardcode user-facing literals. The lookup is done on the English source string, and a missing translation falls back to the source text.
 - The SET-service call is isolated in `detectSystemLanguage()` behind `#ifdef __SWITCH__`, so the module stays host-compilable and covered by `tests/i18n_test.cpp`.
 - The authoritative description is `docs/translations.md` — keep it in sync when adding strings or languages.
 

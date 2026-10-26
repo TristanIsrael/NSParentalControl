@@ -19,23 +19,21 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 namespace alefbet::pctrl::i18n {
 
-    /*! @brief Languages supported by the sysmodule notifications. */
+    /*! @brief Languages supported by the overlay interface. */
     enum class Language {
         English,
         French
     };
 
-    /*! @brief Identifiers of the translatable notification strings. */
-    enum class Key {
-        NotificationTitle,   ///< Attention notification title shown before the message.
-        MonitoringStarted,   ///< "monitoring started" notification.
-        TimeLeft,            ///< Remaining time template, one "%s" placeholder.
-        UnitHours,           ///< Hours unit of a formatted duration.
-        UnitMinutes          ///< Minutes unit of a formatted duration.
-    };
+    /*! @brief Translation table type: English source text -> translated text. */
+    using StringMap = std::unordered_map<std::string, const char*>;
+
+    /*! @brief French table, defined in i18n_fr.cpp. */
+    const StringMap& french();
 
     /*! @brief Returns the currently active language. */
     Language current();
@@ -46,13 +44,13 @@ namespace alefbet::pctrl::i18n {
     /*! @brief Reads the console language and activates the matching interface language. */
     void detectSystemLanguage();
 
-    /*! @brief Returns the translated string for the key in the active language. */
-    const char* tr(Key key);
+    /*! @brief Translates an English source string into the active language.
+     *
+     * @return The translated string, or the source string when no translation exists.
+     */
+    const char* tr(const char* sourceText);
 
-    /*! @brief Returns the translated string for the key with its "%s" placeholder replaced by the value. */
-    std::string format(Key key, const std::string& value);
-
-    /*! @brief Formats a duration in minutes in the active language (e.g. "2h 30mn" or "2h 30 min"). */
-    std::string formatDuration(int durationInMinutes);
+    /*! @brief Translates an English template and replaces its "%s" placeholder with the value. */
+    std::string format(const char* sourceTemplate, const std::string& value);
 
 }

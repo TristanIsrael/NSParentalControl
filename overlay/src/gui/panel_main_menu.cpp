@@ -31,7 +31,7 @@
 #include "AppContext.h"
 #include "helpers/ipc_helpers.h"
 #include "helpers/switch_helpers.h"
-#include "i18n.h"
+#include "i18n/i18n.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
@@ -74,9 +74,9 @@ std::list<std::string> MainMenuPanel::getUsersList() {
 /*! @brief Creates and returns the root UI element for the main menu panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* MainMenuPanel::createUI() {
-    std::string subTitle = isParentalControlInstalled() ? isParentalControlEnabled() ? tr(Key::PcEnabled) : tr(Key::PcDisabled) : tr(Key::PcNotInstalled);
+    std::string subTitle = isParentalControlInstalled() ? isParentalControlEnabled() ? tr("Parental Control is Enabled") : tr("Parental Control is Disabled") : tr("Parental Control is not installed");
 
-    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), subTitle);
+    rootFrame_ = new tsl::elm::OverlayFrame(tr("Parental Control"), subTitle);
     rootList_ = new tsl::elm::List();
     
     rebuildUI();        
@@ -102,7 +102,7 @@ void MainMenuPanel::rebuildUI() {
             rootList_->addItem(new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *r, s32 x, s32 y, s32 width, s32 height) {
                 std::vector<std::string> symbols;
                 symbols.push_back("\ue150");
-                std::string text = std::string("\ue150 ") + tr(Key::DbTampered);
+                std::string text = std::string("\ue150 ") + tr("Database tampered!");
                 r->drawStringWithColoredSections(text.c_str(), false, symbols, x, y, 22, tsl::Color(0xffff), tsl::Color(0xf00f));                    
             }), 30);
         }
@@ -111,7 +111,7 @@ void MainMenuPanel::rebuildUI() {
             rootList_->addItem(new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *r, s32 x, s32 y, s32 width, s32 height) {
                 std::vector<std::string> symbols;
                 symbols.push_back("\ue150");
-                std::string text = std::string("\ue150 ") + tr(Key::DbUpgrade);
+                std::string text = std::string("\ue150 ") + tr("Database needs upgrade!");
                 r->drawStringWithColoredSections(text.c_str(), false, symbols, x, y, 22, tsl::Color(0xffff), tsl::Color(0xf00f));                    
             }), 30);
         }
@@ -132,11 +132,11 @@ void MainMenuPanel::rebuildUI() {
         auto currentUserNickname = ipc::getCurrentUserNickname();        
         logDebug("user name=%s\n", currentUserNickname.c_str());        
 
-        auto entryUser = new tsl::elm::ListItem(tr(Key::UserPrefix) +currentUserNickname);
+        auto entryUser = new tsl::elm::ListItem(tr("User: ") +currentUserNickname);
         rootList_->addItem(entryUser);        
         
         // Current game        
-        auto entryTitle = new tsl::elm::ListItem(tr(Key::PlayingPrefix) +currentTitle);
+        auto entryTitle = new tsl::elm::ListItem(tr("Playing: ") +currentTitle);
         rootList_->addItem(entryTitle);
 
         // Usage time        
@@ -144,7 +144,7 @@ void MainMenuPanel::rebuildUI() {
         auto durationInMinutes = minutes{usageTimeInMinutes};
         auto hoursPart = duration_cast<hours>(durationInMinutes);
         auto minutesPart = duration_cast<minutes>(durationInMinutes - hoursPart);
-        auto entryUsageTime = new tsl::elm::ListItem(tr(Key::UsagePrefix) +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + tr(Key::UnitHours) + " " : "") +std::to_string(minutesPart.count()) +" " + tr(Key::UnitMinutes));
+        auto entryUsageTime = new tsl::elm::ListItem(tr("Usage: ") +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + tr("h") + " " : "") +std::to_string(minutesPart.count()) +" " + tr("mn"));
         rootList_->addItem(entryUsageTime);
 
         // Remaining time
@@ -166,7 +166,7 @@ void MainMenuPanel::rebuildUI() {
             u16 bedtimeMinutes = bedtime % 60;
             char bedtimeStr[6] = {0};
             std::snprintf(bedtimeStr, sizeof(bedtimeStr), "%02d:%02d", bedtimeHours, bedtimeMinutes);
-            auto entryBedtime = new tsl::elm::ListItem(tr(Key::BedtimePrefix) + std::string(bedtimeStr));
+            auto entryBedtime = new tsl::elm::ListItem(tr("Bedtime: ") + std::string(bedtimeStr));
             rootList_->addItem(entryBedtime);
         }
 
@@ -177,7 +177,7 @@ void MainMenuPanel::rebuildUI() {
             u16 gameStartMinutes = gameStartTime % 60;
             char gameStartStr[6] = {0};
             std::snprintf(gameStartStr, sizeof(gameStartStr), "%02d:%02d", gameStartHours, gameStartMinutes);
-            auto entryGameStart = new tsl::elm::ListItem(tr(Key::PlayFromPrefix) + std::string(gameStartStr));
+            auto entryGameStart = new tsl::elm::ListItem(tr("Play from: ") + std::string(gameStartStr));
             rootList_->addItem(entryGameStart);
         }
 
@@ -202,15 +202,15 @@ void MainMenuPanel::rebuildUI() {
             auto durationInMinutes = minutes{minutesUntilDeadline};
             auto hoursPart = duration_cast<hours>(durationInMinutes);
             auto minutesPart = duration_cast<minutes>(durationInMinutes - hoursPart);
-            auto entryNextDeadline = new tsl::elm::ListItem(tr(Key::RemainingPrefix) +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + tr(Key::UnitHours) + " " : "") +std::to_string(minutesPart.count()) +" " + tr(Key::UnitMinutes));
+            auto entryNextDeadline = new tsl::elm::ListItem(tr("Remaining: ") +(hoursPart.count() > 0 ? std::to_string(hoursPart.count()) + tr("h") + " " : "") +std::to_string(minutesPart.count()) +" " + tr("mn"));
             rootList_->addItem(entryNextDeadline);
         }
     } else {
-        rootList_->addItem(new tsl::elm::ListItem(tr(Key::NoUserApp)));
+        rootList_->addItem(new tsl::elm::ListItem(tr("No user / app started")));
     }            
 
     // History
-    auto entryShowHistory = new tsl::elm::ListItem(tr(Key::UsageHistory));
+    auto entryShowHistory = new tsl::elm::ListItem(tr("Usage history"));
     rootList_->addItem(entryShowHistory);
     entryShowHistory->setClickListener([this, entryShowHistory](u64 keys) -> bool {
         if(keys & HidNpadButton_A) {            
@@ -223,7 +223,7 @@ void MainMenuPanel::rebuildUI() {
     
     // Debug menu
     if(getAppContext().is_debug) {
-        auto entryDebugMenu = new tsl::elm::ListItem(tr(Key::Debug));
+        auto entryDebugMenu = new tsl::elm::ListItem(tr("Debug"));
         rootList_->addItem(entryDebugMenu);        
         entryDebugMenu->setClickListener([this](u64 keys) {
             if(keys & HidNpadButton_A) {
@@ -236,7 +236,7 @@ void MainMenuPanel::rebuildUI() {
     }
 
     // Admin menu
-    auto entrySetupMenu = new tsl::elm::ListItem(tr(Key::Admin));
+    auto entrySetupMenu = new tsl::elm::ListItem(tr("Admin"));
     rootList_->addItem(entrySetupMenu);        
     entrySetupMenu->setClickListener([this](u64 keys) {
         if(keys & HidNpadButton_A) {

@@ -48,7 +48,16 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 
 ## Build
 
-- Requires `devkitPro` with the Switch SDK (`export DEVKITPRO=<path>`); building the Switch targets on the host is not possible.
+### Toolchain / build environment
+
+- The Switch targets require the devkitPro **devkitA64** toolchain and **libnx** (Switch homebrew SDK); they cannot be built without them.
+- Install the environment with `bash scripts/setup-toolchain.sh` (Debian/Ubuntu). It follows the [official devkitPro_pacman procedure](https://devkitpro.org/wiki/devkitPro_pacman): installs `dkp-pacman`, refreshes the package DB, and installs the `switch-dev` group (devkitA64 + libnx).
+- After installation, export the variables the script prints (typically `DEVKITPRO=/opt/devkitpro`, plus `DEVKITARM`, `DEVKITPPC`, and `/opt/devkitpro/bin` in `PATH`).
+- Known network limitation: `devkitpro.org` is behind Cloudflare and blocks datacenter / cloud egress IPs (HTTP 403 regardless of User-Agent). If the script aborts at the reachability check, run it from a normal (residential/office) connection.
+- Full build-environment documentation lives in `Readme.md` → *Build and install*.
+
+### Build commands
+
 - Host unit tests (no Switch SDK required): `make -C tests` builds and runs the tests for the pure playtime logic.
 - Sysmodule: `make` in `sysmodule/` → `out.nosync/exefs.nsp`.
 - Overlay: `make` in `overlay/` → `parental_control.ovl`.

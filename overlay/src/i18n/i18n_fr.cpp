@@ -78,7 +78,7 @@ const StringMap& french() {
         {"mn", "min"},
         {"h", "h"},
         {"Playtime window", "Fenêtre de jeu"},
-        {"Set time to 0h 0mn to disable.", "Mettre 0h 0 min pour désactiver."},
+        {"Set time to 0:00 to disable.", "Définir 0:00 pour désactiver."},
         {"Allow games from", "Jeu autorisé à partir de"},
         {"Stop games after", "Arrêter les jeux après"},
         // PIN

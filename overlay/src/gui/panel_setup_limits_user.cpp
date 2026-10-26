@@ -114,7 +114,7 @@ void SetupLimitsUserPanel::rebuildUI() {
     // Playtime window
     rootList_->addItem(new tsl::elm::CategoryHeader(tr("Playtime window")));
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
-        renderer->drawString(tr("Set time to 0h 0mn to disable."), false, x, y + 30, 16, renderer->a(ColorWhite));
+        renderer->drawString(tr("Set time to 0:00 to disable."), false, x, y + 30, 16, renderer->a(ColorWhite));
     }), 30);
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         s32 yPos = y;
@@ -124,12 +124,12 @@ void SetupLimitsUserPanel::rebuildUI() {
         
         // Minutes
         std::string str = std::to_string(gameStartMinutes_);
-        renderer->drawString(str.c_str(), false, w-60 -(gameStartMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartMinutes ? ColorSelected : ColorWhite));
+        renderer->drawString(str.c_str(), false, w-10 -(gameStartMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartMinutes ? ColorSelected : ColorWhite));
                 
         // Hours
-        renderer->drawString(":", false, w-90, yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));
+        renderer->drawString(":", false, w-40, yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));
         str = std::to_string(gameStartHours_);
-        renderer->drawString(str.c_str(), false, w-110 -(gameStartHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));            
+        renderer->drawString(str.c_str(), false, w-60 -(gameStartHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));            
 
     }), 60);
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
@@ -140,12 +140,12 @@ void SetupLimitsUserPanel::rebuildUI() {
         
         // Minutes
         std::string str = std::to_string(bedtimeMinutes_);
-        renderer->drawString(str.c_str(), false, w-60 -(bedtimeMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == BedtimeMinutes ? ColorSelected : ColorWhite));
+        renderer->drawString(str.c_str(), false, w-10 -(bedtimeMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == BedtimeMinutes ? ColorSelected : ColorWhite));
                 
         // Hours
-        renderer->drawString(":", false, w-90, yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));
+        renderer->drawString(":", false, w-40, yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));
         str = std::to_string(bedtimeHours_);
-        renderer->drawString(str.c_str(), false, w-110 -(bedtimeHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));            
+        renderer->drawString(str.c_str(), false, w-60 -(bedtimeHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));            
 
     }), 60);
 

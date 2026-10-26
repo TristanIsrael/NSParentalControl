@@ -78,7 +78,7 @@ const StringMap& chineseSimplified() {
         {"mn", "分钟"},
         {"h", "小时"},
         {"Playtime window", "游戏时段"},
-        {"Set time to 0h 0mn to disable.", "将时间设为 0小时0分钟以禁用。"},
+        {"Set time to 0:00 to disable.", "将时间设为 0小时0分钟以禁用。"},
         {"Allow games from", "游戏开始"},
         {"Stop games after", "游戏结束"},
         // PIN

@@ -531,6 +531,12 @@ namespace alefbet::pctrl::srv {
         saveSetting(setting);
         enabled_ = isEnabled;
 
+        if(monitor_ == nullptr) {
+            // The monitor thread has not registered itself yet (startup)
+            logError("[Service] Monitor not initialized\n");
+            return Ipc::Result::Error;
+        }
+
         if(enabled_) {
             monitor_->start();
         } else {

@@ -56,6 +56,7 @@ The `S > B` case is mandatory: a window like 20:00 to 08:00 must allow play at 2
 ## Enforcement
 
 - The rules are evaluated in `Monitor::loop()` (`sysmodule/source/monitor.cpp`), once per minute while a game is running.
+- The monitoring loop never exits. When the service is disabled (setting `enabled` = 0, or `Monitor::stop()`), the loop goes idle and automatically resumes when the service is enabled again; a reboot is not required. While idle, the tamper-protection state is reset so that the idle period is not mistaken for a system clock manipulation.
 - The pure decision logic (window membership, tamper-protected time, the block/notify decision, the notification cadence, per-user serialization) lives in `sysmodule/source/playtime_rules.{h,cpp}`, which has **no Switch dependency** so it can be unit-tested on the host (`make -C tests`, see `/tests`).
 - The final block/notify decision is consolidated in `core::evaluatePlayRules(...)` (`playtime_rules.cpp`), which `Monitor::loop` calls once per minute. `core::shouldSendNotification(...)` implements the "every 15 minutes and every minute in the last 5" cadence.
 - **The rules must only be enforced in the sysmodule.** The overlay is a passive client: it displays state and settings but never decides to block.

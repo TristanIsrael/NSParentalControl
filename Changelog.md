@@ -1,5 +1,12 @@
 # Changelog
 
+## Release 2.3.1
+
+### Sysmodule
+
+- Fixed a bug where, once the service was disabled, the monitoring thread exited and never resumed: after re-enabling the parental control, the playtime was no longer counted and the game was no longer interrupted (a reboot was previously required)
+- Fixed a potential crash when the enable state was changed over IPC before the monitor thread had started
+
 ## Release 2.3
 
 ### Overlay

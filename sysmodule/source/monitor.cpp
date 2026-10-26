@@ -38,43 +38,71 @@ constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_
 
 namespace alefbet::pctrl::srv {   
 
-    /*! @brief Starts the monitoring loop if not already running. */
+    /*! @brief Starts the monitoring loop if not already running.
+     *
+     * This only sets a flag: the monitoring thread (created once at startup)
+     * wakes up on its own. It cannot restart a thread that has exited, which
+     * is why Monitor::loop never returns.
+     */
     void Monitor::start() {
         if(running_) return;
         running_ = true;
     }
 
-    /*! @brief Main monitoring loop that tracks application usage and enforces limits. */
+    /*! @brief Main monitoring loop that tracks application usage and enforces limits.
+     *
+     * The loop never exits: when the service is disabled it goes idle so that
+     * the monitoring thread stays alive and automatically resumes when the
+     * service is enabled again.
+     */
     void Monitor::loop() {        
         logDebug("[Monitor] Starting monitoring loop\n");        
         structs::UserData user;
         u64 pid = 0;
+        bool wasEnabled = false;
 
         while(true) {
             if(!running_) {
-                //Do nothing
+                // Do nothing, but keep the thread alive so that the monitoring
+                // can be resumed with start()
+                if(wasEnabled) {
+                    logInfo("[Monitor] Parental Control is now disabled.\n");
+                    wasEnabled = false;
+                }
+                resetTimeJumpState(); // A long idle period must not be mistaken for a clock manipulation
                 svcSleepThread(500'000'000); // Wait for 500ms
                 continue;
             }
 
-            if(!notified_) {
-                logInfo("[Monitoring] Parental control is now enabled.\n");
-                NotificationsController::notifyMonitoringStarted();
-                notified_ = true;
-            }
-            
             logDebug("[Monitor] Monitoring loop has started\n");
             auto settings = loadSettings();
 
             // Verify whether the service is enabled
-            if(settings.contains(SETTING_ENABLED)) {
-                const auto setting = settings[SETTING_ENABLED];
-                if(setting.int_value == 0) {
+            const bool isEnabled = !settings.contains(SETTING_ENABLED) ||
+                                   settings[SETTING_ENABLED].int_value != 0;
+
+            if(!isEnabled) {
+                if(wasEnabled) {
                     logInfo("[Monitor] Parental Control is now disabled.\n");
-                    running_ = false;
-                    return;
+                    wasEnabled = false;
                 }
-            }            
+
+                // Do not exit the loop: go idle so that the monitoring
+                // automatically resumes when the service is enabled again
+                resetTimeJumpState();
+                svcSleepThread(MainLoopDelayInNanos.count());
+                continue;
+            }
+
+            if(!wasEnabled) {
+                logInfo("[Monitoring] Parental control is now enabled.\n");
+                wasEnabled = true;
+            }
+
+            if(!notified_) {
+                NotificationsController::notifyMonitoringStarted();
+                notified_ = true;
+            }
 
             logDebug("[Monitor] Update usages\n");
             // Update time jump offset even when no game is running
@@ -145,11 +173,13 @@ namespace alefbet::pctrl::srv {
             logDebug("[Monitoring] loop\n");
             svcSleepThread(MainLoopDelayInNanos.count()); //Wait 1 minute
         }
-
-        logInfo("[Monitor] Stopped monitoring.\n");
     }
 
-    /*! @brief Stops the monitoring loop and resets notification state. */
+    /*! @brief Puts the monitoring loop to sleep and resets notification state.
+     *
+     * The loop does not exit: it goes idle and resumes when start() is called
+     * again or when the enabled setting is set back to 1.
+     */
     void Monitor::stop() {
         logInfo("[Monitor] Stopping monitor\n");
         running_ = false;

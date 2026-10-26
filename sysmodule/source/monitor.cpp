@@ -109,25 +109,27 @@ namespace alefbet::pctrl::srv {
                     u16 remainingTimeInMinutes = daily_limit > totalDuration ? daily_limit - totalDuration : 0;
                     logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), remainingTimeInMinutes, daily_limit);
 
-                    bool bedtimeReached = false;
-                    const auto bedtime = getBedtime(userId);
-                    if(bedtime > 0) {
-                        if(adjustedTimeMinutes >= bedtime) {
-                            bedtimeReached = true;
-                            logInfo("[Monitor] Bedtime reached for user %s at %s (adjusted: %s, bedtime: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(bedtime).c_str());
-                        }
-                    }
-
-                    bool tooEarlyForPlay = false;
+                    // Check whether the adjusted (tamper-protected) time is inside the play window
                     const auto gameStartTime = getGameStartTime(userId);
-                    if(gameStartTime > 0) {
-                        if(adjustedTimeMinutes < gameStartTime) {
-                            tooEarlyForPlay = true;
-                            logInfo("[Monitor] Too early for user %s at %s (adjusted: %s, game start: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(gameStartTime).c_str());
+                    const auto bedtime = getBedtime(userId);
+
+                    bool outsidePlayWindow = false;
+                    if(gameStartTime > 0 || bedtime > 0) {
+                        if(gameStartTime <= bedtime) {
+                            // Window within the same day: [gameStart, bedtime)
+                            outsidePlayWindow = (gameStartTime > 0 && adjustedTimeMinutes < gameStartTime) ||
+                                                (bedtime > 0 && adjustedTimeMinutes >= bedtime);
+                        } else {
+                            // Window crossing midnight: [gameStart, 24:00) ∪ [00:00, bedtime)
+                            outsidePlayWindow = adjustedTimeMinutes >= bedtime && adjustedTimeMinutes < gameStartTime;
+                        }
+
+                        if(outsidePlayWindow) {
+                            logInfo("[Monitor] Current time %s is outside the play window (%s to %s) for user %s\n", formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(gameStartTime).c_str(), formatTimeInMinutes(bedtime).c_str(), user.nickname.c_str());
                         }
                     }
 
-                    if(remainingTimeInMinutes > 0 && !bedtimeReached && !tooEarlyForPlay) {
+                    if(remainingTimeInMinutes > 0 && !outsidePlayWindow) {
                         if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
                             const auto& showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;                                                
                             if(showRemainingTime) {                            

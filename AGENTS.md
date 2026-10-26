@@ -52,6 +52,10 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 - Sysmodule: `make` in `sysmodule/` → `out.nosync/exefs.nsp`.
 - Overlay: `make` in `overlay/` → `parental_control.ovl`.
 - Both Makefiles carry an `APP_VERSION`; when a feature spans both components, bump both to the same value and update `sysmodule/toolbox.json` (`version` field).
+- Versioning rule (scheme `MAJOR.MINOR.PATCH`, e.g. `2.2.0`):
+  - A bug fix bumps the last digit (patch) only.
+  - A new feature bumps the second digit (minor) and resets the last digit to 0.
+  - The first digit (major) is bumped only by the product maintainer.
 
 ## Coding standards
 

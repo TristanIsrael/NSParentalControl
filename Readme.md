@@ -184,6 +184,14 @@ In order for the parental control to load on startup you have to create a new fo
 
 In this folder create an empty file named `boot2.flag`.
 
+### Versioning
+
+The version follows the `MAJOR.MINOR.PATCH` scheme (e.g. `2.2.0`):
+
+- A bug fix bumps the last digit (patch) only.
+- A new feature bumps the second digit (minor) and resets the last digit to 0.
+- The first digit (major) is bumped only by the product maintainer.
+
 ## References
 
 https://github.com/switchbrew/switch-examples/tree/master

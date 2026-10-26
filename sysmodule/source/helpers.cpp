@@ -452,7 +452,110 @@ namespace alefbet::pctrl::helpers {
         return true;
     }
 
+    namespace {
+        constexpr size_t HdlsWorkBufferSize = 0x1000;
+
+        /*! @brief Waits until the application process exits.
+         *
+         * @param pid Process ID of the application.
+         * @param timeoutInMillis Maximum waiting time in milliseconds.
+         * @return true if the application is no longer running, false otherwise.
+         */
+        bool waitForApplicationExit(u64 pid, u64 timeoutInMillis) {
+            for(u64 elapsed = 0 ; elapsed < timeoutInMillis ; elapsed += 100) {
+                if(getRunningApplicationPid() != pid) return true;
+                svcSleepThread(100'000'000); // 100 ms
+            }
+
+            return getRunningApplicationPid() != pid;
+        }
+
+        /*! @brief Presses then releases a button of a virtual controller.
+         *
+         * @param handle Handle of the virtual controller.
+         * @param state State of the virtual controller, updated in place.
+         * @param button Button to press (HidNpadButton or HiddbgNpadButton).
+         */
+        void pressButton(HiddbgHdlsHandle handle, HiddbgHdlsState& state, u64 button) {
+            state.buttons = button;
+            hiddbgSetHdlsState(handle, &state);
+            svcSleepThread(100'000'000); // 100 ms
+            state.buttons = 0;
+            hiddbgSetHdlsState(handle, &state);
+        }
+
+        /*! @brief Closes the running application as a user would do it in the HOME menu.
+         *
+         * A virtual Pro Controller presses HOME, then X (close software) and A
+         * (confirm). As the HOME menu closes the application itself, it does not
+         * report that the application exited with an error, unlike a termination
+         * through ns or pm.
+         *
+         * @param pid Process ID of the application.
+         * @return true if the application has been closed, false otherwise.
+         */
+        bool closeApplicationFromHomeMenu(u64 pid) {
+            if(R_FAILED(hiddbgInitialize())) {
+                logError("[Helpers] Could not initialize hiddbg\n");
+                return false;
+            }
+
+            void* workBuffer = aligned_alloc(0x1000, HdlsWorkBufferSize);
+            if(workBuffer == nullptr) {
+                logError("[Helpers] Could not allocate the HDLS work buffer\n");
+                hiddbgExit();
+                return false;
+            }
+
+            bool closed = false;
+            HiddbgHdlsSessionId sessionId = {0};
+            HiddbgHdlsHandle handle = {0};
+
+            if(R_SUCCEEDED(hiddbgAttachHdlsWorkBuffer(&sessionId, workBuffer, HdlsWorkBufferSize))) {
+                HiddbgHdlsDeviceInfo device = {0};
+                device.deviceType = HidDeviceType_FullKey3; // Pro Controller
+                device.npadInterfaceType = HidNpadInterfaceType_Bluetooth;
+                device.singleColorBody = RGBA8_MAXALPHA(255, 255, 255);
+                device.singleColorButtons = RGBA8_MAXALPHA(0, 0, 0);
+                device.colorLeftGrip = RGBA8_MAXALPHA(255, 255, 255);
+                device.colorRightGrip = RGBA8_MAXALPHA(255, 255, 255);
+
+                if(R_SUCCEEDED(hiddbgAttachHdlsVirtualDevice(&handle, &device))) {
+                    HiddbgHdlsState state = {0};
+                    state.battery_level = 4;
+                    hiddbgSetHdlsState(handle, &state);
+                    svcSleepThread(500'000'000); // Let the system register the controller
+
+                    pressButton(handle, state, HiddbgNpadButton_Home);
+                    svcSleepThread(2'000'000'000); // HOME menu animation
+                    pressButton(handle, state, HidNpadButton_X);
+                    svcSleepThread(3'000'000'000); // Let the user see the confirmation dialog
+                    pressButton(handle, state, HidNpadButton_A);
+
+                    closed = waitForApplicationExit(pid, 5000);
+
+                    hiddbgDetachHdlsVirtualDevice(handle);
+                } else {
+                    logError("[Helpers] Could not attach the virtual controller\n");
+                }
+
+                hiddbgReleaseHdlsWorkBuffer(sessionId);
+            } else {
+                logError("[Helpers] Could not attach the HDLS work buffer\n");
+            }
+
+            hiddbgExit();
+            free(workBuffer);
+
+            return closed;
+        }
+    }
+
     /*! @brief Terminates the currently running application title.
+     *
+     * The application is closed from the HOME menu first (no error reported by
+     * the system). If it is still running, it is terminated through ns:dev, then
+     * through pm:shell.
      *
      * @return true on success, false on failure.
      */
@@ -461,25 +564,51 @@ namespace alefbet::pctrl::helpers {
 
         //Get the current title
         u64 pid = getRunningApplicationPid();
-        if(pid > 0) {
-            u64 titleId = getRunningApplicationTitleId(pid);
-            if(titleId > 0) {
-                pmshellInitialize();
-                if(R_FAILED(pmshellTerminateProgram(titleId))) {
-                    logError("[Helpers] Could not terminate the title with titleId %s\n", titleIdToString(titleId).c_str());
-                    pmshellExit();
-                    return false;
-                }
-                pmshellExit();
-            } else {
-                logDebug("[Helpers] No title id found for PID %llu\n", pid);
-                return false;
-            }
-        } else {
+        if(pid == 0) {
             logDebug("[Helpers] No PID found (No running app?)\n");
             return false;
         }
 
+        u64 titleId = getRunningApplicationTitleId(pid);
+        if(titleId == 0) {
+            logDebug("[Helpers] No title id found for PID %llu\n", pid);
+            return false;
+        }
+
+        if(closeApplicationFromHomeMenu(pid)) {
+            logInfo("[Helpers] Application closed from the HOME menu\n");
+            return true;
+        }
+
+        logError("[Helpers] The application could not be closed from the HOME menu, terminating it\n");
+
+        // The application may have exited meanwhile
+        if(getRunningApplicationPid() != pid) {
+            return true;
+        }
+
+        if(R_SUCCEEDED(nsdevInitialize())) {
+            ::Result rc = nsdevTerminateApplication();
+            nsdevExit();
+
+            if(R_SUCCEEDED(rc)) {
+                logInfo("[Helpers] Application terminated by ns:dev\n");
+                return true;
+            }
+
+            logError("[Helpers] ns:dev could not terminate the application (err %i:%i)\n", R_MODULE(rc), R_DESCRIPTION(rc));
+        }
+
+        pmshellInitialize();
+        ::Result rc = pmshellTerminateProgram(titleId);
+        pmshellExit();
+
+        if(R_FAILED(rc)) {
+            logError("[Helpers] Could not terminate the title with titleId %s\n", titleIdToString(titleId).c_str());
+            return false;
+        }
+
+        logInfo("[Helpers] Application terminated by pm:shell\n");
         return true;
     }
 

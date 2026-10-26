@@ -47,6 +47,7 @@ void UltraHandInterface::writeNotification(const std::string& message, int fontS
 
     if (R_FAILED(fsFsGetEntryType(&sdmc, FLAGPATH, &fileType))) {
         logInfo("[Ultrahand] Notifications are not enabled in Ultrahand\n");
+        fsFsClose(&sdmc);
         return;
     }
 
@@ -56,6 +57,7 @@ void UltraHandInterface::writeNotification(const std::string& message, int fontS
 
     if(R_FAILED(fsFsCreateFile(&sdmc, fullPath.c_str(), 0, 0))) {
         logError("[Ultrahand] Could not create notification file\n");
+        fsFsClose(&sdmc);
         return;
     }
 

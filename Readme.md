@@ -65,6 +65,7 @@ Parental control has the following features:
 - Choose the log level between Debug and Information (since 1.2)
 - Define individual limits (since 1.3)
 - Define bed time (since 2.1)
+- Define the playtime window: earliest allowed play time and bed time (since 2.2)
 
 ## Coming features
 

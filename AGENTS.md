@@ -68,6 +68,7 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 ## Chat rules
 
 - Respond in the same language as the prompt's
+- Never commit or push unless explicitly asked to do so
 
 ## Documentation standards
 

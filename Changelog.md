@@ -13,6 +13,10 @@
 - The usage time request now always replies a value, even when there is no current user
 - Fixed an SD card file system handle leak when Ultrahand notifications are disabled
 
+### Tools
+
+- Added `scripts/migrate_json_to_bin.py` to convert the 1.x data files (`settings.json`, `sessions.json`) into the binary files, so that upgrading from 1.x keeps the PIN, the limits and the history
+
 ## Release 2.3.1
 
 ### Sysmodule

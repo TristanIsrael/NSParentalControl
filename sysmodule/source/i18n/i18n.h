@@ -51,7 +51,7 @@ namespace alefbet::pctrl::i18n {
     const char* tr(const char* sourceText);
 
     /*! @brief Translates an English template and replaces its "%s" placeholder with the value. */
-    std::string format(const char* sourceTemplate, const std::string& value);
+    std::string trf(const char* sourceTemplate, const std::string& value);
 
     /*! @brief Formats a duration in minutes in the active language (e.g. "2h 30mn" or "2h 30 min"). */
     std::string formatDuration(int durationInMinutes);

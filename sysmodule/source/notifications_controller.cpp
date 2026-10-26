@@ -35,7 +35,7 @@ void NotificationsController::notifyMonitoringStarted()
  * @param remainingTimeInMinutes The remaining time in minutes. */
 void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
 {
-    std::string message = format("%s left", formatDuration(remainingTimeInMinutes));
+    std::string message = trf("%s left", formatDuration(remainingTimeInMinutes));
 
     UltraHandInterface::drawAttention();
     UltraHandInterface::writeNotification(message);
@@ -45,7 +45,7 @@ void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
  * @param remainingSeconds The remaining time in seconds. */
 void NotificationsController::notifyRemainingSeconds(int remainingSeconds)
 {
-    std::string message = format("%s left", std::to_string(remainingSeconds) + "s");
+    std::string message = trf("%s left", std::to_string(remainingSeconds) + "s");
 
     UltraHandInterface::drawAttention();
     UltraHandInterface::writeNotification(message);

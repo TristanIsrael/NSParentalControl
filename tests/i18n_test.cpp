@@ -55,19 +55,19 @@ TEST(tr_unknown_string_falls_back_to_source) {
 
 TEST(format_replaces_placeholder_english) {
     setLanguage(Language::English);
-    CHECK_EQ(format("%s left", "2h 30mn"), std::string("2h 30mn left"));
-    CHECK_EQ(format("%s left", "60s"), std::string("60s left"));
+    CHECK_EQ(trf("%s left", "2h 30mn"), std::string("2h 30mn left"));
+    CHECK_EQ(trf("%s left", "60s"), std::string("60s left"));
 }
 
 TEST(format_replaces_placeholder_french) {
     setLanguage(Language::French);
-    CHECK_EQ(format("%s left", "2h 30 min"), std::string("Il reste 2h 30 min"));
-    CHECK_EQ(format("%s left", "60s"), std::string("Il reste 60s"));
+    CHECK_EQ(trf("%s left", "2h 30 min"), std::string("Il reste 2h 30 min"));
+    CHECK_EQ(trf("%s left", "60s"), std::string("Il reste 60s"));
 }
 
 TEST(format_without_placeholder_is_unchanged) {
     setLanguage(Language::English);
-    CHECK_EQ(format("Parental Control", "x"), std::string("Parental Control"));
+    CHECK_EQ(trf("Parental Control", "x"), std::string("Parental Control"));
 }
 
 TEST(format_duration_english) {

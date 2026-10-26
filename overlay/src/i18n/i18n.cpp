@@ -95,7 +95,7 @@ const char* tr(const char* sourceText) {
 }
 
 /*! @brief Translates an English template and replaces its "%s" placeholder with the value. */
-std::string format(const char* sourceTemplate, const std::string& value) {
+std::string trf(const char* sourceTemplate, const std::string& value) {
     std::string result = tr(sourceTemplate);
     const size_t placeholder = result.find("%s");
     if(placeholder != std::string::npos) {

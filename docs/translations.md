@@ -50,7 +50,7 @@ Both modules expose the same API in the namespace `alefbet::pctrl::i18n`:
 - `void setLanguage(Language)` — override the language (used by the host tests).
 - `void detectSystemLanguage()` — read the console language (SET service, target only).
 - `const char* tr(const char* sourceText)` — the string in the active language. The argument is the **English source text**; it is returned unchanged when no translation exists.
-- `std::string format(const char* sourceTemplate, const std::string& value)` — like `tr`, but replaces the single `%s` placeholder of the translated template (e.g. the remaining-time notification: `"%s left"` / `"Il reste %s"`).
+- `std::string trf(const char* sourceTemplate, const std::string& value)` — like `tr`, but replaces the single `%s` placeholder of the translated template (e.g. the remaining-time notification: `"%s left"` / `"Il reste %s"`). Named `trf` (and not `format`) to avoid clashing with `std::format`.
 
 ### Translation tables (one file per language)
 
@@ -72,7 +72,7 @@ Durations are formatted from the `"h"` / `"mn"` source strings:
 
 ## Rules for contributors
 
-- Every string that is rendered on screen (overlay) or sent in a notification (sysmodule) must go through `tr()` / `format()` with the English source text; do not hardcode user-facing literals in the panels or in `NotificationsController` / `UltraHandInterface`.
+- Every string that is rendered on screen (overlay) or sent in a notification (sysmodule) must go through `tr()` / `trf()` with the English source text; do not hardcode user-facing literals in the panels or in `NotificationsController` / `UltraHandInterface`.
 - To add a translatable string: call `tr("English text")` at the call site and add one row for that English text to the table of **every non-source language** of the component (`i18n/i18n_fr.cpp`, ...).
 - To add a language: extend the `Language` enum, create the `i18n/i18n_<lang>.cpp` file with its table function, add its case to `tableFor()` in `i18n/i18n.cpp`, and add the language to the `detectSystemLanguage()` mapping.
 - Keep the Doxygen comments and this document in sync when the mechanism changes.
@@ -80,4 +80,4 @@ Durations are formatted from the `"h"` / `"mn"` source strings:
 ## Tests
 
 - Host: `make -C tests` runs `i18n_test.cpp`, which checks the English/French strings, the fallback to the source text for untranslated strings, the `%s` substitution, the duration formatting in both languages, and the host fallback of `detectSystemLanguage()`.
-- The overlay tables cannot be host-tested (the overlay needs the Tesla framework), so keep them consistent by hand: every `tr("...")` / `format("...")` argument used in `overlay/src` must exist in `i18n/i18n_fr.cpp`, and every table row must be used.
+- The overlay tables cannot be host-tested (the overlay needs the Tesla framework), so keep them consistent by hand: every `tr("...")` / `trf("...")` argument used in `overlay/src` must exist in `i18n/i18n_fr.cpp`, and every table row must be used.

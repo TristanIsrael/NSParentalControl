@@ -51,6 +51,6 @@ namespace alefbet::pctrl::i18n {
     const char* tr(const char* sourceText);
 
     /*! @brief Translates an English template and replaces its "%s" placeholder with the value. */
-    std::string format(const char* sourceTemplate, const std::string& value);
+    std::string trf(const char* sourceTemplate, const std::string& value);
 
 }

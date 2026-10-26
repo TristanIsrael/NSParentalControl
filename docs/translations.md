@@ -11,7 +11,7 @@ Only the strings that reach the user are translated:
 
 What is **not** translated: log messages, debug/error sentinels (`Err#...`, `ERR#...`), IPC names, setting keys, and file names.
 
-Supported languages: **English** (fallback) and **French**.
+Supported languages: **English** (fallback), **French** and **Simplified Chinese**.
 
 ## Language detection
 
@@ -25,7 +25,7 @@ setExit();
 
 - `setGetSystemLanguage()` returns the console `LanguageCode`;
 - `setMakeLanguage()` converts it to the `SetLanguage` enum;
-- French (including Canadian French) selects the French strings, every other language (or an error) falls back to English.
+- French (including Canadian French) selects the French strings, Simplified Chinese (`SetLanguage_ZHCN` or `SetLanguage_ZHHANS`) selects the Simplified Chinese strings, and every other language (or an error) falls back to English.
 
 Detection happens once at startup:
 
@@ -56,10 +56,10 @@ Both modules expose the same API in the namespace `alefbet::pctrl::i18n`:
 
 English is the source language: it has **no table**, the English strings live in the call sites themselves. Every other supported language has its own table file in the same `i18n/` directory, a `std::unordered_map<std::string, const char*>` (English source text -> translated text):
 
-| Component | French table |
-|-----------|--------------|
-| Sysmodule | `sysmodule/source/i18n/i18n_fr.cpp` (`french()`) |
-| Overlay   | `overlay/src/i18n/i18n_fr.cpp` (`french()`)      |
+| Component | French table | Simplified Chinese table |
+|-----------|--------------|--------------------------|
+| Sysmodule | `sysmodule/source/i18n/i18n_fr.cpp` (`french()`) | `sysmodule/source/i18n/i18n_zh_hans.cpp` (`chineseSimplified()`) |
+| Overlay   | `overlay/src/i18n/i18n_fr.cpp` (`french()`)      | `overlay/src/i18n/i18n_zh_hans.cpp` (`chineseSimplified()`)     |
 
 `tr()` looks the source text up in the active language's table and falls back to the source text itself when the language has no table (English) or the entry is missing (a stale or missing translation therefore degrades to English, never to an empty string). The tables are function-local statics, so they are initialized on first use (after the heap is up on the target). The SET-service call is isolated in `detectSystemLanguage()` behind `#ifdef __SWITCH__`, which keeps the module host-compilable and unit-testable.
 
@@ -80,4 +80,4 @@ Durations are formatted from the `"h"` / `"mn"` source strings:
 ## Tests
 
 - Host: `make -C tests` runs `i18n_test.cpp`, which checks the English/French strings, the fallback to the source text for untranslated strings, the `%s` substitution, the duration formatting in both languages, and the host fallback of `detectSystemLanguage()`.
-- The overlay tables cannot be host-tested (the overlay needs the Tesla framework), so keep them consistent by hand: every `tr("...")` / `trf("...")` argument used in `overlay/src` must exist in `i18n/i18n_fr.cpp`, and every table row must be used.
+- The overlay tables cannot be host-tested (the overlay needs the Tesla framework), so keep them consistent by hand: every `tr("...")` / `trf("...")` argument used in `overlay/src` must exist in `i18n/i18n_fr.cpp` and `i18n/i18n_zh_hans.cpp`, and every table row must be used.

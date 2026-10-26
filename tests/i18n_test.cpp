@@ -46,6 +46,15 @@ TEST(tr_french_returns_translated_strings) {
     CHECK_EQ(tr("mn"), std::string(" min"));
 }
 
+TEST(tr_chinese_simplified_returns_translated_strings) {
+    setLanguage(Language::ChineseSimplified);
+    CHECK_EQ(tr("Parental Control"), std::string("家长控制"));
+    CHECK_EQ(tr("Parental control enabled"), std::string("家长控制已启用"));
+    CHECK_EQ(tr("%s left"), std::string("剩余 %s"));
+    CHECK_EQ(tr("h"), std::string("小时"));
+    CHECK_EQ(tr("mn"), std::string("分钟"));
+}
+
 TEST(tr_unknown_string_falls_back_to_source) {
     setLanguage(Language::French);
     CHECK_EQ(tr("Not translated yet"), std::string("Not translated yet"));
@@ -82,6 +91,13 @@ TEST(format_duration_french) {
     CHECK_EQ(formatDuration(150), std::string("2h 30 min"));
     CHECK_EQ(formatDuration(30), std::string("0h 30 min"));
     CHECK_EQ(formatDuration(0), std::string("0h 0 min"));
+}
+
+TEST(format_duration_chinese_simplified) {
+    setLanguage(Language::ChineseSimplified);
+    CHECK_EQ(formatDuration(150), std::string("2小时 30分钟"));
+    CHECK_EQ(formatDuration(30), std::string("0小时 30分钟"));
+    CHECK_EQ(formatDuration(0), std::string("0小时 0分钟"));
 }
 
 TEST(detect_system_language_falls_back_to_english_on_host) {

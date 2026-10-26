@@ -8,7 +8,7 @@ The last version (> 2.0.0) has a different behaviour from the versions before, i
 
 ## Language
 
-Since version 2.3, the overlay interface and the notifications are shown in the language configured on the console. English and French are supported; any other console language falls back to English.
+Since version 2.3, the overlay interface and the notifications are shown in the language configured on the console. English, French and Simplified Chinese are supported; any other console language falls back to English.
 
 - The overlay picks up the console language each time it is opened.
 - The notifications use the language detected when the sysmodule started: after changing the console language, restart the sysmodule to apply it to the notifications.

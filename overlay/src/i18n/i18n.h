@@ -26,7 +26,8 @@ namespace alefbet::pctrl::i18n {
     /*! @brief Languages supported by the overlay interface. */
     enum class Language {
         English,
-        French
+        French,
+        ChineseSimplified
     };
 
     /*! @brief Translation table type: English source text -> translated text. */
@@ -34,6 +35,9 @@ namespace alefbet::pctrl::i18n {
 
     /*! @brief French table, defined in i18n_fr.cpp. */
     const StringMap& french();
+
+    /*! @brief Simplified Chinese table, defined in i18n_zh_hans.cpp. */
+    const StringMap& chineseSimplified();
 
     /*! @brief Returns the currently active language. */
     Language current();

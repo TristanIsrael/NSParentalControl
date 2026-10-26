@@ -36,7 +36,7 @@ $(BUILDDIR)/switch:
 	mkdir -p $(BUILDDIR)/switch
 
 $(BUILDDIR)/%: %.cpp ../sysmodule/source/playtime_rules.cpp ../sysmodule/source/i18n/i18n.cpp \
-	../sysmodule/source/i18n/i18n_fr.cpp | $(BUILDDIR)
+	../sysmodule/source/i18n/i18n_fr.cpp ../sysmodule/source/i18n/i18n_zh_hans.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 $(BUILDDIR):

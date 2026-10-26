@@ -4,11 +4,11 @@
 
 ### Overlay
 
-- The interface is displayed in the console language: English and French are supported (other console languages fall back to English)
+- The interface is displayed in the console language: English, French and Simplified Chinese are supported (other console languages fall back to English)
 
 ### Sysmodule
 
-- The notifications are displayed in the console language: English and French are supported (other console languages fall back to English)
+- The notifications are displayed in the console language: English, French and Simplified Chinese are supported (other console languages fall back to English)
 - The language is detected from the console settings at startup; change the console language and restart the sysmodule to apply it
 
 ## Release 2.2

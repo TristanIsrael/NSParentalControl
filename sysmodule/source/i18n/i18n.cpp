@@ -30,8 +30,9 @@ Language g_language = Language::English;
 
 const StringMap* tableFor(Language language) {
     switch(language) {
-        case Language::French:  return &french();
-        case Language::English: return nullptr;  // source language
+        case Language::French:            return &french();
+        case Language::ChineseSimplified: return &chineseSimplified();
+        case Language::English:           return nullptr;  // source language
     }
 
     return nullptr;
@@ -56,8 +57,9 @@ void setLanguage(Language language) {
 /*! @brief Reads the console language (SET service) and activates the matching language.
  *
  * French is selected when the console language is French (including Canadian
- * French); any other console language falls back to English. The SET service
- * must be initialized (setInitialize) before calling this function.
+ * French), and Simplified Chinese when it is Simplified Chinese ("Chinese" or
+ * "ChineseSimplified"); any other console language falls back to English. The
+ * SET service must be initialized (setInitialize) before calling this function.
  */
 void detectSystemLanguage() {
 #ifdef __SWITCH__
@@ -65,12 +67,22 @@ void detectSystemLanguage() {
     SetLanguage consoleLanguage = SetLanguage_ENUS;
 
     if(R_SUCCEEDED(setGetSystemLanguage(&languageCode)) &&
-       R_SUCCEEDED(setMakeLanguage(languageCode, &consoleLanguage)) &&
-       (consoleLanguage == SetLanguage_FR || consoleLanguage == SetLanguage_FRCA)) {
-        g_language = Language::French;
-    } else {
-        g_language = Language::English;
+       R_SUCCEEDED(setMakeLanguage(languageCode, &consoleLanguage))) {
+        switch(consoleLanguage) {
+            case SetLanguage_FR:
+            case SetLanguage_FRCA:
+                g_language = Language::French;
+                return;
+            case SetLanguage_ZHCN:
+            case SetLanguage_ZHHANS:
+                g_language = Language::ChineseSimplified;
+                return;
+            default:
+                break;
+        }
     }
+
+    g_language = Language::English;
 #else
     g_language = Language::English;
 #endif

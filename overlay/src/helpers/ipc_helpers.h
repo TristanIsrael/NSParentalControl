@@ -66,6 +66,9 @@ namespace alefbet::pctrl::ipc {
     u16 getBedtime(const UserData& user);
     bool setBedtime(const UserData& user, u16 bedtime);
 
+    u16 getGameStartTime(const UserData& user);
+    bool setGameStartTime(const UserData& user, u16 gameStartTime);
+
     bool isDebugLogEnabled();
     bool enableDebugLog(bool enable);
 

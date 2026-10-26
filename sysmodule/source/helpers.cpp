@@ -730,6 +730,32 @@ namespace alefbet::pctrl::helpers {
         return result;
     }
 
+    static std::string serializeGameStartTimes(const std::map<std::string, u16>& gameStartsMap) {
+        std::ostringstream oss;
+        bool first = true;
+        for(const auto& [userId, limit] : gameStartsMap) {
+            if(!first) oss << ';';
+            first = false;
+            oss << userId << '=' << limit;
+        }
+        return oss.str();
+    }
+
+    static std::map<std::string, u16> deserializeGameStartTimes(const std::string& data) {
+        std::map<std::string, u16> result;
+        std::istringstream stream(data);
+        std::string line;
+        while(std::getline(stream, line, ';')) {
+            if(line.empty()) continue;
+            auto eqPos = line.find('=');
+            if(eqPos == std::string::npos) continue;
+            std::string userId = line.substr(0, eqPos);
+            u16 limit = static_cast<u16>(std::stoul(line.substr(eqPos + 1)));
+            result[userId] = limit;
+        }
+        return result;
+    }
+
     /*! @brief Retrieves the daily usage limit for a specific user.
      *
      * @param userId The user ID string.
@@ -828,6 +854,57 @@ namespace alefbet::pctrl::helpers {
             .key = SETTING_BEDTIME_USERS,
             .type = STRING,
             .string_value = serializeBedtimes(limitsMap)
+        };
+
+        saveSetting(setting);
+    }
+
+    /*! @brief Gets the earliest allowed play time for a user
+      *
+      * @param userId The user ID string.
+      */
+    u16 getGameStartTime(const std::string& userId) {
+        auto& settings = loadSettings();
+
+        if(!settings.contains(SETTING_GAME_START_USERS)) {
+            return 0;
+        }
+
+        const auto& gameStartsStr = settings[SETTING_GAME_START_USERS].string_value;
+        if(gameStartsStr.empty()) {
+            logDebug("[Helpers] No game start time for user %s\n", userId.c_str());
+            return 0;
+        }
+
+        auto gameStartsMap = deserializeGameStartTimes(gameStartsStr);
+        auto it = gameStartsMap.find(userId);
+        if(it != gameStartsMap.end()) {
+            return it->second;
+        }
+
+        logDebug("[Helpers] No game start time for user %s\n", userId.c_str());
+        return 0;
+    }
+        
+    /*! @brief Sets the earliest allowed play time for a specific user.
+      *
+      * @param userId The user ID string.
+      * @param game_start_in_minutes The earliest allowed play time in minutes from midnight.
+      */
+    void setGameStartTime(const std::string& userId, u16 game_start_in_minutes) {
+        auto gameStartsMap = deserializeGameStartTimes("");
+        
+        auto& settings = loadSettings();
+        if(settings.contains(SETTING_GAME_START_USERS)) {
+            gameStartsMap = deserializeGameStartTimes(settings[SETTING_GAME_START_USERS].string_value);
+        }
+
+        gameStartsMap[userId] = game_start_in_minutes;
+
+        Setting setting {
+            .key = SETTING_GAME_START_USERS,
+            .type = STRING,
+            .string_value = serializeGameStartTimes(gameStartsMap)
         };
 
         saveSetting(setting);

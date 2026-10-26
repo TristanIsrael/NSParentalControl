@@ -70,6 +70,13 @@ tsl::elm::Element* SetupLimitsUserPanel::createUI() {
     bedtimeHours_ = std::min(hoursPart.count(), 24L);
     bedtimeMinutes_ = std::min(minutesPart.count(), 59L);
 
+    const u16 gameStartInMinutes = ipc::getGameStartTime(user_);
+    duration = minutes{gameStartInMinutes};
+    hoursPart = duration_cast<hours>(duration);
+    minutesPart = duration_cast<minutes>(duration - hoursPart);
+    gameStartHours_ = std::min(hoursPart.count(), 24L);
+    gameStartMinutes_ = std::min(minutesPart.count(), 59L);
+
     rebuildUI();
 
     return rootFrame_;
@@ -124,7 +131,29 @@ void SetupLimitsUserPanel::rebuildUI() {
         renderer->drawString(str.c_str(), false, w-110 -(bedtimeHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == BedtimeHours ? ColorSelected : ColorWhite));            
 
     }), 60);
-    
+
+    // Game start time
+    rootList_->addItem(new tsl::elm::CategoryHeader("Play time"));
+    rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
+        renderer->drawString("Set time to 0h 0mn to disable.", false, x, y + 30, 16, renderer->a(ColorWhite));
+    }), 30);
+    rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
+        s32 yPos = y;
+
+        yPos += 35;
+        renderer->drawString("Allow games from", false, x, yPos, 20, renderer->a(ColorWhite));
+        
+        // Minutes
+        std::string str = std::to_string(gameStartMinutes_);
+        renderer->drawString(str.c_str(), false, w-60 -(gameStartMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartMinutes ? ColorSelected : ColorWhite));
+                
+        // Hours
+        renderer->drawString(":", false, w-90, yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));
+        str = std::to_string(gameStartHours_);
+        renderer->drawString(str.c_str(), false, w-110 -(gameStartHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == GameStartHours ? ColorSelected : ColorWhite));            
+
+    }), 60);
+
     rootFrame_->setContent(rootList_);
 }
 
@@ -154,6 +183,10 @@ bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouc
         ipc::setBedtime(user_, bedtime);
         logDebug("bedTime=%i, hours=%i, minutes=%i\n", bedtime, bedtimeHours_, bedtimeMinutes_);
 
+        u32 gameStart = gameStartHours_*60 + gameStartMinutes_;
+        ipc::setGameStartTime(user_, gameStart);
+        logDebug("gameStart=%i, hours=%i, minutes=%i\n", gameStart, gameStartHours_, gameStartMinutes_);
+
         tsl::goBack();
         return true;
     } else if(keysDown & HidNpadButton_AnyDown) {
@@ -175,7 +208,9 @@ void SetupLimitsUserPanel::selectNextItem() {
         case DailyLimitHours: selectedItem_ = DailyLimitMinutes; break;
         case DailyLimitMinutes: selectedItem_ = BedtimeHours; break;
         case BedtimeHours: selectedItem_ = BedtimeMinutes; break;
-        case BedtimeMinutes: selectedItem_ = DailyLimitMinutes; break;
+        case BedtimeMinutes: selectedItem_ = GameStartHours; break;
+        case GameStartHours: selectedItem_ = GameStartMinutes; break;
+        case GameStartMinutes: selectedItem_ = DailyLimitHours; break;
         default: break;
     }
 }
@@ -183,10 +218,12 @@ void SetupLimitsUserPanel::selectNextItem() {
 /*! @brief Selects the previous item in the limit fields (minutes <-> hours). */
 void SetupLimitsUserPanel::selectBeforeItem() {
     switch(selectedItem_) {
+        case GameStartMinutes: selectedItem_ = GameStartHours; break;
+        case GameStartHours: selectedItem_ = BedtimeMinutes; break;
         case BedtimeMinutes: selectedItem_ = BedtimeHours; break;
         case BedtimeHours: selectedItem_ = DailyLimitMinutes; break;
         case DailyLimitMinutes: selectedItem_ = DailyLimitHours; break;
-        case DailyLimitHours: selectedItem_ = BedtimeMinutes; break;        
+        case DailyLimitHours: selectedItem_ = GameStartMinutes; break;
         default: break;
     }
 }
@@ -198,6 +235,8 @@ void SetupLimitsUserPanel::decreaseValue() {
         case DailyLimitMinutes: dailyLimitMinutes_ = valueRanged(dailyLimitMinutes_, -1, 0, 59); break;
         case BedtimeHours: bedtimeHours_ = valueRanged(bedtimeHours_, -1, 0, 23); break;
         case BedtimeMinutes: bedtimeMinutes_ = valueRanged(bedtimeMinutes_, -1, 0, 59); break;
+        case GameStartHours: gameStartHours_ = valueRanged(gameStartHours_, -1, 0, 23); break;
+        case GameStartMinutes: gameStartMinutes_ = valueRanged(gameStartMinutes_, -1, 0, 59); break;
         default: break;
     }
 }
@@ -209,6 +248,8 @@ void SetupLimitsUserPanel::increaseValue() {
         case DailyLimitMinutes: dailyLimitMinutes_ = valueRanged(dailyLimitMinutes_, +1, 0, 59); break;
         case BedtimeHours: bedtimeHours_ = valueRanged(bedtimeHours_, +1, 0, 23); break;
         case BedtimeMinutes: bedtimeMinutes_ = valueRanged(bedtimeMinutes_, +1, 0, 59); break;
+        case GameStartHours: gameStartHours_ = valueRanged(gameStartHours_, +1, 0, 23); break;
+        case GameStartMinutes: gameStartMinutes_ = valueRanged(gameStartMinutes_, +1, 0, 59); break;
         default: break;
     }
 }

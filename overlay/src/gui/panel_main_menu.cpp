@@ -164,7 +164,18 @@ void MainMenuPanel::rebuildUI() {
             std::snprintf(bedtimeStr, sizeof(bedtimeStr), "%02d:%02d", bedtimeHours, bedtimeMinutes);
             auto entryBedtime = new tsl::elm::ListItem("Bedtime: " + std::string(bedtimeStr));
             rootList_->addItem(entryBedtime);
-        }        
+        }
+
+        // Game start time
+        auto gameStartTime = ipc::getGameStartTime(currentUserData);
+        if(gameStartTime > 0) {
+            u16 gameStartHours = gameStartTime / 60;
+            u16 gameStartMinutes = gameStartTime % 60;
+            char gameStartStr[6] = {0};
+            std::snprintf(gameStartStr, sizeof(gameStartStr), "%02d:%02d", gameStartHours, gameStartMinutes);
+            auto entryGameStart = new tsl::elm::ListItem("Play from: " + std::string(gameStartStr));
+            rootList_->addItem(entryGameStart);
+        }
 
         // Time until next deadline
         u16 currentMinutesSinceMidnight = ipc::getAdjustedCurrentTime();

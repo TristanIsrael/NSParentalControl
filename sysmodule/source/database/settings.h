@@ -56,3 +56,4 @@ constexpr const char* SETTING_LOGLEVEL = "log_level";
 constexpr const char* SETTING_BLACKLIST = "blacklist";
 constexpr const char* SETTING_AUTHENTICATION = "authentication";
 constexpr const char* SETTING_BEDTIME_USERS = "bedtime_users";
+constexpr const char* SETTING_GAME_START_USERS = "game_start_users";

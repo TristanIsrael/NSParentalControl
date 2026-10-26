@@ -118,7 +118,16 @@ namespace alefbet::pctrl::srv {
                         }
                     }
 
-                    if(remainingTimeInMinutes > 0 && !bedtimeReached) {
+                    bool tooEarlyForPlay = false;
+                    const auto gameStartTime = getGameStartTime(userId);
+                    if(gameStartTime > 0) {
+                        if(adjustedTimeMinutes < gameStartTime) {
+                            tooEarlyForPlay = true;
+                            logInfo("[Monitor] Too early for user %s at %s (adjusted: %s, game start: %s)\n", user.nickname.c_str(), formatTimeInMinutes(currentTimeMinutes).c_str(), formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(gameStartTime).c_str());
+                        }
+                    }
+
+                    if(remainingTimeInMinutes > 0 && !bedtimeReached && !tooEarlyForPlay) {
                         if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
                             const auto& showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;                                                
                             if(showRemainingTime) {                            

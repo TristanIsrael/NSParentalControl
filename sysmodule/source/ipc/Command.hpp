@@ -35,6 +35,8 @@ namespace Ipc {
         CancelScreenTimeout,        /*! Cancels the active screen timeout countdown */
         SetBedtime,                 /*! Sets the bed time for a user */
         GetBedtime,                 /*! Gets the bed time for a user */
+        SetGameStartTime,           /*! Sets the earliest allowed play time for a user */
+        GetGameStartTime,           /*! Gets the earliest allowed play time for a user */
         GetAdjustedCurrentTime      /*! Gets the current time adjusted for time jumps */
     };
 
@@ -72,6 +74,8 @@ namespace Ipc {
             case Command::CancelScreenTimeout: return "CancelScreenTimeout";
             case Command::SetBedtime: return "SetBedtime";
             case Command::GetBedtime: return "GetBedtime";
+            case Command::SetGameStartTime: return "SetGameStartTime";
+            case Command::GetGameStartTime: return "GetGameStartTime";
             case Command::GetAdjustedCurrentTime: return "GetAdjustedCurrentTime";
             default: return "Unknown";
         }

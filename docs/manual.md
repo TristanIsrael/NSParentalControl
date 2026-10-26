@@ -6,6 +6,8 @@ This document describes how to use Parental Control for the Switch.
 
 The last version (> 2.0.0) has a different behaviour from the versions before, it shows a notification every 10 seconds during the last minute and finally it closes the running game. The versions before showed a bug "Time's up" screen and forced the user to reboot the console.
 
+Since version 2.3.2, the game is closed from the HOME menu, as a user would do it: the HOME menu is shown, then the "Close software" dialog, which is confirmed automatically a few seconds later. Do not use the controller during this sequence. A game launched again while the user is not allowed to play is detected within a few seconds and closed after the same countdown.
+
 ## Language
 
 Since version 2.3, the overlay interface and the notifications are shown in the language configured on the console. English, French and Simplified Chinese are supported; any other console language falls back to English.

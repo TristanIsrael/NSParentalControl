@@ -33,8 +33,9 @@ The binary format was chosen over JSON for the following reasons:
 
 - Cache: `History history_`
 - Sync flag: `data_synchronized_`
-- Mutex: `mutex_database_`
-- Trigger: `loadDatabase()` called by `getHistory()`
+- Mutex: `mutex_database_`, held by `getHistory()` and `addToHistory()` for the whole operation (load, read or update, save)
+- Trigger: `loadDatabase()` called by `getHistory()` and by `addToHistory()`. The history is always loaded before it is updated: otherwise, after a reboot, the usage already recorded that day would be ignored and the file would be overwritten with the new entry only. If the history cannot be loaded, the usage is not recorded.
+- Unreadable file: when `sessions.bin` cannot be parsed (bad magic, unsupported version, truncated entry), it is moved to `sessions.corrupted.bin` (kept for analysis) and a new history is started, so that the usage recording is not blocked.
 
 ### Uniqueness Rules
 

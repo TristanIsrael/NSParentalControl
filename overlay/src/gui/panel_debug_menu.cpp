@@ -22,8 +22,10 @@
 #include "Command.hpp"
 #include "AppContext.h"
 #include "helpers/ipc_helpers.h"
+#include "i18n.h"
 
 using namespace alefbet::pctrl;
+using namespace alefbet::pctrl::i18n;
 
 /*! @brief Constructs a DebugMenu instance. */
 DebugMenu::DebugMenu() {}
@@ -41,9 +43,9 @@ void DebugMenu::closeAndClean() {
 /*! @brief Creates and returns the root UI element for the debug menu panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* DebugMenu::createUI() {
-    std::string subTitle = "Debug options";
+    std::string subTitle = tr(Key::DebugOptions);
 
-    rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", subTitle);
+    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), subTitle);
     rootList_ = new tsl::elm::List();
     
     rebuildUI();
@@ -56,7 +58,7 @@ tsl::elm::Element* DebugMenu::createUI() {
 void DebugMenu::rebuildUI() {
    
     // Run Test
-    auto entryTest = new tsl::elm::ListItem("Run test");
+    auto entryTest = new tsl::elm::ListItem(tr(Key::RunTest));
     rootList_->addItem(entryTest);
     entryTest->setClickListener([this](u64 keys) {
         if(keys & HidNpadButton_A) {
@@ -69,12 +71,12 @@ void DebugMenu::rebuildUI() {
 
     // Current User
     auto currentUser = ipc::getCurrentUserNickname();
-    auto entryUser = new tsl::elm::ListItem("Current user: " +currentUser);
+    auto entryUser = new tsl::elm::ListItem(tr(Key::CurrentUserPrefix) +currentUser);
     rootList_->addItem(entryUser);
     
     // Current game
     auto currentTitle = ipc::getCurrentTitle();
-    auto entryTitle = new tsl::elm::ListItem("Current title: " +currentTitle);
+    auto entryTitle = new tsl::elm::ListItem(tr(Key::CurrentTitlePrefix) +currentTitle);    
     rootList_->addItem(entryTitle);    
     
     rootFrame_->setContent(rootList_);

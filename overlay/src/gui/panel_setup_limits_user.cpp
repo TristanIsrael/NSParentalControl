@@ -26,9 +26,11 @@
 #include "AppContext.h"
 #include "helpers/ipc_helpers.h"
 #include "panel_admin_menu.h"
+#include "i18n.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::logger;
+using namespace alefbet::pctrl::i18n;
 using namespace std::chrono;
 
 constexpr tsl::Color ColorSelected = tsl::style::color::ColorHighlight;
@@ -52,7 +54,7 @@ void SetupLimitsUserPanel::closeAndClean() {
 /*! @brief Creates and returns the root UI element for the user limits panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* SetupLimitsUserPanel::createUI() {
-    rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Set limits for " +user_.nickname);
+    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), std::string(tr(Key::SetLimitsForPrefix)) +user_.nickname);
     rootList_ = new tsl::elm::List();
     
     // Load settings
@@ -85,40 +87,40 @@ tsl::elm::Element* SetupLimitsUserPanel::createUI() {
 /*! @brief Rebuilds the UI displaying play limit controls for the user. */
 void SetupLimitsUserPanel::rebuildUI() {    
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
-        renderer->drawString("Please use \u2190 and \u2192 to move.", false, x + 50, y + 30, 16, renderer->a(ColorWhite));
-        renderer->drawString("Modify the limits with \u2191 and \u2193.", false, x + 45, y + 55, 16, renderer->a(ColorWhite));
+        renderer->drawString(tr(Key::HintLeftRight), false, x + 50, y + 30, 16, renderer->a(ColorWhite));
+        renderer->drawString(tr(Key::HintUpDown), false, x + 45, y + 55, 16, renderer->a(ColorWhite));
     }), 60);
 
     // Daily Limit
-    rootList_->addItem(new tsl::elm::CategoryHeader("Play limits"));    
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::PlayLimits)));    
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         s32 yPos = y;
 
         yPos += 35;
-        renderer->drawString("Daily", false, x, yPos, 20, renderer->a(ColorWhite));
+        renderer->drawString(tr(Key::Daily), false, x, yPos, 20, renderer->a(ColorWhite));
         
         // Minutes
-        renderer->drawString("mn", false, w-40, yPos, 20, renderer->a(selectedItem_ == DailyLimitMinutes ? ColorSelected : ColorWhite));
+        renderer->drawString(tr(Key::UnitMinutes), false, w-40, yPos, 20, renderer->a(selectedItem_ == DailyLimitMinutes ? ColorSelected : ColorWhite));
         std::string str = std::to_string(dailyLimitMinutes_);
         renderer->drawString(str.c_str(), false, w-60 -(dailyLimitMinutes_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == DailyLimitMinutes ? ColorSelected : ColorWhite));
                 
         // Hours
-        renderer->drawString("h", false, w-90, yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));
+        renderer->drawString(tr(Key::UnitHours), false, w-90, yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));
         str = std::to_string(dailyLimitHours_);
         renderer->drawString(str.c_str(), false, w-110 -(dailyLimitHours_ > 9 ? 10 : 0), yPos, 20, renderer->a(selectedItem_ == DailyLimitHours ? ColorSelected : ColorWhite));            
 
     }), 60);
 
     // Playtime window
-    rootList_->addItem(new tsl::elm::CategoryHeader("Playtime window"));
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::PlaytimeWindow)));
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
-        renderer->drawString("Set time to 0h 0mn to disable.", false, x, y + 30, 16, renderer->a(ColorWhite));
+        renderer->drawString(tr(Key::SetTimeZeroHint), false, x, y + 30, 16, renderer->a(ColorWhite));
     }), 30);
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         s32 yPos = y;
 
         yPos += 35;
-        renderer->drawString("Allow games from", false, x, yPos, 20, renderer->a(ColorWhite));
+        renderer->drawString(tr(Key::AllowGamesFrom), false, x, yPos, 20, renderer->a(ColorWhite));
         
         // Minutes
         std::string str = std::to_string(gameStartMinutes_);
@@ -134,7 +136,7 @@ void SetupLimitsUserPanel::rebuildUI() {
         s32 yPos = y;
 
         yPos += 35;
-        renderer->drawString("Stop games after", false, x, yPos, 20, renderer->a(ColorWhite));
+        renderer->drawString(tr(Key::StopGamesAfter), false, x, yPos, 20, renderer->a(ColorWhite));
         
         // Minutes
         std::string str = std::to_string(bedtimeMinutes_);

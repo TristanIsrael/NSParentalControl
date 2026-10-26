@@ -6,6 +6,13 @@ This document describes how to use Parental Control for the Switch.
 
 The last version (> 2.0.0) has a different behaviour from the versions before, it shows a notification every 10 seconds during the last minute and finally it closes the running game. The versions before showed a bug "Time's up" screen and forced the user to reboot the console.
 
+## Language
+
+Since version 2.3, the overlay interface and the notifications are shown in the language configured on the console. English and French are supported; any other console language falls back to English.
+
+- The overlay picks up the console language each time it is opened.
+- The notifications use the language detected when the sysmodule started: after changing the console language, restart the sysmodule to apply it to the notifications.
+
 ## Overlay
 
 Interactions with the Parental Control are made thru the overlay.

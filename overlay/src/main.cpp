@@ -30,10 +30,12 @@
 #include "logger.h"
 #include "helpers/ipc_helpers.h"
 #include "AppContext.h"
+#include "i18n.h"
 
 //Examples : https://github.com/masagrator/Status-Monitor-Overlay/blob/master/source/main.cpp
 
 using namespace alefbet::pctrl::logger;
+using namespace alefbet::pctrl::i18n;
 
 constexpr SmServiceName service_name = smEncodeName("pctrl");
 
@@ -75,14 +77,20 @@ int main(int argc, char** argv) {
 
     clearLog();
 
-    connectToService();  
+    connectToService();
+
+    // Detect the console language for the interface
+    setInitialize();
+    detectSystemLanguage();
+    setExit();
+    logDebug("[Main] Interface language: %s\n", current() == Language::French ? "French" : "English");
 
     // Get current log level
     bool debugEnabled = alefbet::pctrl::ipc::isDebugLogEnabled();
     getAppContext().is_debug = debugEnabled;
-    setLogLevel(debugEnabled ? DEBUG : INFO);  
+    setLogLevel(debugEnabled ? DEBUG : INFO);
 
-    tsl::loop<MainOverlay>(argc, argv);    
+    tsl::loop<MainOverlay>(argc, argv);
 
     logDebug("[Main] Close session\n");
     if(getAppContext().is_enabled) {

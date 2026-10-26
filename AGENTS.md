@@ -39,6 +39,15 @@ A running game is stopped when **any** of the following is true:
 
 Time comparisons must always use the tamper-protected time (`helpers::getAdjustedTime`, which compensates system clock jumps), never the raw system clock. The playtime window must keep supporting windows that cross midnight (start > end). The authoritative description of these rules is `docs/playtime-window.md` — keep it in sync when changing the logic.
 
+## Translations (i18n)
+
+Only the strings that reach the user are translated: the on-screen strings (overlay) and the notification strings (sysmodule). English and French are supported; the language is the console language, read once at startup with the SET service (`setGetSystemLanguage` + `setMakeLanguage`, French including Canadian French, everything else falls back to English).
+
+- Each component has its own module — `sysmodule/source/i18n.{h,cpp}` and `overlay/src/i18n.{h,cpp}` — exposing `alefbet::pctrl::i18n::{Language, Key, tr, format, current, setLanguage, detectSystemLanguage}`. The two tables are independent (same convention as the duplicated IPC enum).
+- Every on-screen string (overlay) and every notification string (sysmodule) must go through `tr(Key::...)` / `format(Key::..., value)`; do not hardcode user-facing literals.
+- The SET-service call is isolated in `detectSystemLanguage()` behind `#ifdef __SWITCH__`, so the module stays host-compilable and covered by `tests/i18n_test.cpp`.
+- The authoritative description is `docs/translations.md` — keep it in sync when adding strings or languages.
+
 ## Data storage
 
 - Settings (`settings.bin`) and history (`sessions.bin`) are stored in binary files under `/config/parental_control/`. Format specification: `docs/database-binary-format.md`.
@@ -58,7 +67,7 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 
 ### Build commands
 
-- Host unit tests (no Switch SDK required): `make -C tests` builds and runs the host test suites — the pure playtime rules (`tests/playtime_rules_test.cpp`) and the IPC command contract (`tests/command_test.cpp`).
+- Host unit tests (no Switch SDK required): `make -C tests` builds and runs the host test suites — the pure playtime rules (`tests/playtime_rules_test.cpp`), the IPC command contract (`tests/command_test.cpp`), and the translation module (`tests/i18n_test.cpp`).
 - Toolchain check (requires the devkitPro toolchain, not run on the host): `make -C tests switch` cross-compiles `tests/switch_only_test.cpp` for the Switch target.
 - Sysmodule: `make` in `sysmodule/` → `out.nosync/exefs.nsp`.
 - Overlay: `make` in `overlay/` → `parental_control.ovl`.
@@ -73,6 +82,7 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 - Use C++-20 for all new files
 - Follow the existing naming conventions
 - New source files must keep the GPLv3 license header used by the other files
+- User-facing strings (on-screen in the overlay, notifications in the sysmodule) must be translated through the i18n modules (see the Translations section and `docs/translations.md`)
 - Log with `logDebug` / `logInfo` / `logError` using the `[Component] ` prefix convention (e.g. `[Monitor]`, `[Service]`, `[IPC]`)
 - The pure playtime logic (no Switch dependency) lives in `sysmodule/source/playtime_rules.{h,cpp}` and is unit-tested on the host: `make -C tests`. It covers the window check, tamper-protected time, the `evaluatePlayRules` block/notify decision, the `shouldSendNotification` cadence, per-user serialization, and (in `tests/command_test.cpp`) the IPC command contract. Keep the module free of any Switch *runtime* dependency (the libnx base types from `<switch/types.h>` are allowed, as they are plain typedefs), and add or update the matching tests in `/tests` when changing the play rules. Tests that require the toolchain/console go in `tests/switch_only_test.cpp` (built via `make -C tests switch`).
 - Verify remaining changes by building both components

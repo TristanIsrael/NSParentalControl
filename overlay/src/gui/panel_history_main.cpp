@@ -25,9 +25,11 @@
 #include "helpers/ipc_helpers.h"
 #include "helpers/switch_helpers.h"
 #include "panel_history_user.h"
+#include "i18n.h"
 
 using namespace alefbet::pctrl;
 using namespace alefbet::pctrl::helpers;
+using namespace alefbet::pctrl::i18n;
 
 /*! @brief Constructs a HistoryMainPanel instance. */
 HistoryMainPanel::HistoryMainPanel() {    
@@ -40,7 +42,7 @@ HistoryMainPanel::~HistoryMainPanel() {
 /*! @brief Creates and returns the root UI element for the history main panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* HistoryMainPanel::createUI() {
-    rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Usage history");
+    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), tr(Key::UsageHistory));
     rootList_ = new tsl::elm::List();
     
     rebuildUI();        
@@ -51,7 +53,7 @@ tsl::elm::Element* HistoryMainPanel::createUI() {
 
 /*! @brief Rebuilds the user selection list for viewing history. */
 void HistoryMainPanel::rebuildUI() {
-    rootList_->addItem(new tsl::elm::CategoryHeader("Choose a user"));
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::ChooseUser)));
 
     const auto& users = helpers::getUsersList();    
 

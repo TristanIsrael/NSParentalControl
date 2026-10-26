@@ -23,8 +23,10 @@
 #include <sstream>
 #include <switch.h>
 #include "logger.h"
+#include "i18n.h"
 
 using namespace alefbet::pctrl::logger;
+using namespace alefbet::pctrl::i18n;
 
 const char* FLAGPATH = "/config/ultrahand/flags/NOTIFICATIONS.flag";
 static FsFileSystem sdmc;
@@ -82,5 +84,5 @@ void UltraHandInterface::writeNotification(const std::string& message, int fontS
 /*! \brief Shows a short notification to draw users attention */
 void UltraHandInterface::drawAttention() 
 {    
-    writeNotification("Parental Control", 32, 2);
+    writeNotification(tr(Key::NotificationTitle), 32, 2);
 }

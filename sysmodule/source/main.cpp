@@ -28,9 +28,11 @@
 #include "ipc/Server.hpp"
 #include "service.h"
 #include "monitor.h"
+#include "i18n.h"
 
 using namespace alefbet::pctrl::logger;
 using namespace alefbet::pctrl::database::settings;
+using namespace alefbet::pctrl::i18n;
 
 #ifdef __cplusplus
 extern "C" {
@@ -182,6 +184,12 @@ int main(int argc, char **argv)
     logInfo("[Main] Parental control starting\n");
 
     //testMemory();
+
+    // Detect the console language for the notifications
+    setInitialize();
+    detectSystemLanguage();
+    setExit();
+    logInfo("[Main] Notification language: %s\n", current() == Language::French ? "French" : "English");
 
     ::Result rc = 0;
 

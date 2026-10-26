@@ -67,6 +67,9 @@ Parental control has the following features:
 - Define bed time (since 2.1)
 - Define the playtime window: earliest allowed play time and bed time (since 2.2)
 
+**All users**
+- Interface and notifications are shown in the console language (English and French, since 2.3)
+
 ## Coming features
 
 Coming features are in the [GitHub project](https://github.com/users/TristanIsrael/projects/6/views/1) page.

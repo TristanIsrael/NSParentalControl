@@ -27,7 +27,7 @@ The reference for the expected behavior is [`docs/playtime-window.md`](playtime-
 | Game | Any game with a fast load (used for all "game running" preconditions) |
 | Access | SD card readable (USB/MTP) to inspect `settings.bin` and `sysmodule.log` |
 
-**Unit tests (host):** the pure logic — play window rule, tamper-protected time, the block/notify decision (`evaluatePlayRules`), the notification cadence (`shouldSendNotification`), per-user serialization — and the IPC command contract are covered by a host unit test suite that does not require the Switch: `make -C tests` (see section 6).
+**Unit tests (host):** the pure logic — play window rule, tamper-protected time, the block/notify decision (`evaluatePlayRules`), the notification cadence (`shouldSendNotification`), per-user serialization — the IPC command contract, and the translation module (English/French strings, `%s` substitution, duration formatting, host fallback of the language detection) are covered by a host unit test suite that does not require the Switch: `make -C tests` (see section 6).
 
 **Setup steps:**
 1. Install the v2.2.0 sysmodule (`exefs.nsp` → `/atmosphere/contents/4200000000003103`) and the overlay (`parental_control.ovl` → `/switch/.overlays/`).
@@ -164,6 +164,7 @@ In addition to the on-device cases of sections 3–5, the logic is covered by co
 |---|---|---|
 | `tests/playtime_rules_test.cpp` | Host — `make -C tests` | Window check (incl. crossing midnight), tamper-protected time, the `evaluatePlayRules` block/notify decision, the `shouldSendNotification` cadence, per-user serialization |
 | `tests/command_test.cpp` | Host — `make -C tests` | IPC command contract: command count, first/last ordinals, `commandToString` covers every enumerator |
+| `tests/i18n_test.cpp` | Host — `make -C tests` | Translation module (sysmodule `i18n.{h,cpp}`): English/French strings, `%s` substitution, duration formatting in both languages, host fallback of `detectSystemLanguage()` |
 | `tests/switch_only_test.cpp` | Toolchain only — `make -C tests switch` (needs devkitPro, not run on the host) | Checks the libnx base types (`u8`/`u16`/`u32`/`u64`/`s32`/`s64`) have the target ABI sizes, and that the pure logic + command contract also build and run under the real AArch64 toolchain |
 
 The on-device **integration** tests — an IPC round-trip against the running service, `Monitor::loop` with real time/account, and actual game blocking — are the cases of sections 3–5 above. They require a console and cannot be compiled or run on the development host.

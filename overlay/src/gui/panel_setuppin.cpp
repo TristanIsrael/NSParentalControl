@@ -24,8 +24,10 @@
 #include "AppContext.h"
 #include "helpers/ipc_helpers.h"
 #include "panel_admin_menu.h"
+#include "i18n.h"
 
 using namespace alefbet::pctrl;
+using namespace alefbet::pctrl::i18n;
 
 static std::mutex updateMutex_;
 constexpr tsl::Color ColorReady = tsl::Color(0xffff);
@@ -46,7 +48,7 @@ void SetupPinPanel::closeAndClean() {
 /*! @brief Creates and returns the root UI element for the PIN setup panel.
  * @return A pointer to the root UI element (OverlayFrame). */
 tsl::elm::Element* SetupPinPanel::createUI() {
-    rootFrame_ = new tsl::elm::OverlayFrame("Parental Control", "Setup PIN");
+    rootFrame_ = new tsl::elm::OverlayFrame(tr(Key::AppTitle), tr(Key::SetupPin));
     rootList_ = new tsl::elm::List();
     
     rebuildUI();
@@ -57,7 +59,7 @@ tsl::elm::Element* SetupPinPanel::createUI() {
 /*! @brief Rebuilds the PIN entry UI with circle indicators and error messages. */
 void SetupPinPanel::rebuildUI() {    
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
-        renderer->drawString("Please enter the new PIN", false, x + 20, y + 20, 20, renderer->a(0xFFFF));  
+        renderer->drawString(tr(Key::EnterNewPin), false, x + 20, y + 20, 20, renderer->a(0xFFFF));  
         //renderer->drawString("Use all pad keys except B", false, 0, 0, 20, renderer->a(0xff0f));
     }), 30);
 
@@ -72,7 +74,7 @@ void SetupPinPanel::rebuildUI() {
         }
     }), 30);*/
 
-    rootList_->addItem(new tsl::elm::CategoryHeader("New PIN"));
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::NewPin)));
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         u16 spacing = w/5;
         bool active = false;
@@ -83,7 +85,7 @@ void SetupPinPanel::rebuildUI() {
         }
     }), 30);
 
-    rootList_->addItem(new tsl::elm::CategoryHeader("Verify PIN"));
+    rootList_->addItem(new tsl::elm::CategoryHeader(tr(Key::VerifyPin)));
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         u16 spacing = w/5;
         bool active = false;
@@ -96,10 +98,10 @@ void SetupPinPanel::rebuildUI() {
 
     rootList_->addItem(new tsl::elm::CustomDrawer([this](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
         if(error_ != NO_ERROR) {
-            const char* lblError = error_ == VERIFY_ERROR ? "PINs do not match" : "unknown error";
+            const char* lblError = error_ == VERIFY_ERROR ? tr(Key::PinsMismatch) : tr(Key::UnknownError);
 
             renderer->drawString(lblError, false, x + 90, y + 30, 20, renderer->a(RGBA4(0xf, 0x0, 0x0, 0xf)));
-            renderer->drawString("Press A to retry, B to cancel", false, x + 50, y + 55, 20, renderer->a(RGBA4(0xf, 0xf, 0xf, 0xf)));
+            renderer->drawString(tr(Key::PressARetry), false, x + 50, y + 55, 20, renderer->a(RGBA4(0xf, 0xf, 0xf, 0xf)));
         }
     }), 60);
     

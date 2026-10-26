@@ -1,12 +1,12 @@
-# Host unit tests for the pure playtime logic and the IPC command contract.
-# These do not require the Switch SDK to build or run.
+# Host unit tests for the pure playtime logic, the IPC command contract and
+# the translation module. These do not require the Switch SDK to build or run.
 
 CXX ?= g++
 DEVKITPRO ?= /opt/devkitpro
 CXXFLAGS ?= -std=c++20 -Wall -Wextra -I../sysmodule/source -I$(DEVKITPRO)/libnx/include
 
 BUILDDIR = build
-TESTS = playtime_rules_test command_test
+TESTS = playtime_rules_test command_test i18n_test
 
 # devkitA64 cross-compiler (used only by the `switch` target).
 A64CXX ?= $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-g++
@@ -35,7 +35,7 @@ $(BUILDDIR)/switch/switch_only_test.o: switch_only_test.cpp ../sysmodule/source/
 $(BUILDDIR)/switch:
 	mkdir -p $(BUILDDIR)/switch
 
-$(BUILDDIR)/%: %.cpp ../sysmodule/source/playtime_rules.cpp | $(BUILDDIR)
+$(BUILDDIR)/%: %.cpp ../sysmodule/source/playtime_rules.cpp ../sysmodule/source/i18n.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 $(BUILDDIR):

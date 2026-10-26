@@ -23,9 +23,9 @@
 
 namespace alefbet::pctrl::core {
 
-    std::string formatTimeInMinutes(uint16_t minutesSinceMidnight) {
-        const uint16_t hours = minutesSinceMidnight / 60;
-        const uint16_t minutes = minutesSinceMidnight % 60;
+    std::string formatTimeInMinutes(u16 minutesSinceMidnight) {
+        const u16 hours = minutesSinceMidnight / 60;
+        const u16 minutes = minutesSinceMidnight % 60;
 
         char buffer[12] = {0};
         std::snprintf(buffer, sizeof(buffer), "%02d:%02d", hours, minutes);
@@ -33,11 +33,11 @@ namespace alefbet::pctrl::core {
         return std::string(buffer);
     }
 
-    AdjustedTimeResult computeAdjustedTime(uint16_t currentTime, uint16_t lastTime, int32_t& offset) {
-        int32_t jump = 0;
+    AdjustedTimeResult computeAdjustedTime(u16 currentTime, u16 lastTime, s32& offset) {
+        s32 jump = 0;
 
         if(lastTime != 0) {
-            const int32_t apparentDiff = static_cast<int32_t>(currentTime) - static_cast<int32_t>(lastTime);
+            const s32 apparentDiff = static_cast<s32>(currentTime) - static_cast<s32>(lastTime);
 
             if(std::abs(apparentDiff) > kTimeJumpThreshold) {
                 jump = apparentDiff;
@@ -45,26 +45,26 @@ namespace alefbet::pctrl::core {
             }
         }
 
-        const int32_t adjusted = static_cast<int32_t>(currentTime) + offset;
+        const s32 adjusted = static_cast<s32>(currentTime) + offset;
 
-        uint16_t result;
+        u16 result;
         if(adjusted < 0) {
-            result = static_cast<uint16_t>(1440 + adjusted);
+            result = static_cast<u16>(1440 + adjusted);
         } else if(adjusted >= 1440) {
-            result = static_cast<uint16_t>(adjusted - 1440);
+            result = static_cast<u16>(adjusted - 1440);
         } else {
-            result = static_cast<uint16_t>(adjusted);
+            result = static_cast<u16>(adjusted);
         }
 
         return {result, jump};
     }
 
-    void resetAdjustedTimeState(uint16_t& lastTime, int32_t& offset) {
+    void resetAdjustedTimeState(u16& lastTime, s32& offset) {
         lastTime = 0;
         offset = 0;
     }
 
-    bool isInsidePlayWindow(uint16_t time, uint16_t start, uint16_t end) {
+    bool isInsidePlayWindow(u16 time, u16 start, u16 end) {
         if(start == 0 && end == 0) {
             return true;
         }
@@ -79,7 +79,7 @@ namespace alefbet::pctrl::core {
         return time >= start || time < end;
     }
 
-    std::string serializeUserValues(const std::map<std::string, uint16_t>& values) {
+    std::string serializeUserValues(const std::map<std::string, u16>& values) {
         std::ostringstream oss;
         bool first = true;
         for(const auto& [userId, value] : values) {
@@ -90,8 +90,8 @@ namespace alefbet::pctrl::core {
         return oss.str();
     }
 
-    std::map<std::string, uint16_t> deserializeUserValues(const std::string& data) {
-        std::map<std::string, uint16_t> result;
+    std::map<std::string, u16> deserializeUserValues(const std::string& data) {
+        std::map<std::string, u16> result;
         std::istringstream stream(data);
         std::string line;
         while(std::getline(stream, line, ';')) {
@@ -99,9 +99,36 @@ namespace alefbet::pctrl::core {
             auto eqPos = line.find('=');
             if(eqPos == std::string::npos) continue;
             std::string userId = line.substr(0, eqPos);
-            uint16_t value = static_cast<uint16_t>(std::stoul(line.substr(eqPos + 1)));
+            u16 value = static_cast<u16>(std::stoul(line.substr(eqPos + 1)));
             result[userId] = value;
         }
+        return result;
+    }
+
+    bool shouldSendNotification(u16 remainingTimeInMinutes) {
+        // Remaining time notifications are sent every 15 minutes and every minute during the last 5 minutes
+        return (remainingTimeInMinutes % 15) == 0 || remainingTimeInMinutes <= 5;
+    }
+
+    PlayRuleEvaluation evaluatePlayRules(u16 dailyLimit,
+                                         u16 totalDurationToday,
+                                         u16 adjustedTimeMinutes,
+                                         u16 gameStartTime,
+                                         u16 bedtime,
+                                         bool showRemainingTime) {
+        PlayRuleEvaluation result{};
+
+        result.remainingTimeInMinutes = (dailyLimit > totalDurationToday) ? (dailyLimit - totalDurationToday) : 0;
+
+        result.outsidePlayWindow = (gameStartTime > 0 || bedtime > 0) &&
+                                   !isInsidePlayWindow(adjustedTimeMinutes, gameStartTime, bedtime);
+
+        result.shouldBlock = !(result.remainingTimeInMinutes > 0 && !result.outsidePlayWindow);
+
+        result.shouldNotify = !result.shouldBlock &&
+                              showRemainingTime &&
+                              shouldSendNotification(result.remainingTimeInMinutes);
+
         return result;
     }
 

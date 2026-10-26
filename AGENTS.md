@@ -58,7 +58,8 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 
 ### Build commands
 
-- Host unit tests (no Switch SDK required): `make -C tests` builds and runs the tests for the pure playtime logic.
+- Host unit tests (no Switch SDK required): `make -C tests` builds and runs the host test suites — the pure playtime rules (`tests/playtime_rules_test.cpp`) and the IPC command contract (`tests/command_test.cpp`).
+- Toolchain check (requires the devkitPro toolchain, not run on the host): `make -C tests switch` cross-compiles `tests/switch_only_test.cpp` for the Switch target.
 - Sysmodule: `make` in `sysmodule/` → `out.nosync/exefs.nsp`.
 - Overlay: `make` in `overlay/` → `parental_control.ovl`.
 - Both Makefiles carry an `APP_VERSION`; when a feature spans both components, bump both to the same value and update `sysmodule/toolbox.json` (`version` field).
@@ -73,7 +74,7 @@ Time comparisons must always use the tamper-protected time (`helpers::getAdjuste
 - Follow the existing naming conventions
 - New source files must keep the GPLv3 license header used by the other files
 - Log with `logDebug` / `logInfo` / `logError` using the `[Component] ` prefix convention (e.g. `[Monitor]`, `[Service]`, `[IPC]`)
-- The pure playtime logic (no Switch dependency) lives in `sysmodule/source/playtime_rules.{h,cpp}` and is unit-tested on the host: `make -C tests`. Keep it free of any Switch dependency, and add or update the matching tests in `/tests` when changing the play rules
+- The pure playtime logic (no Switch dependency) lives in `sysmodule/source/playtime_rules.{h,cpp}` and is unit-tested on the host: `make -C tests`. It covers the window check, tamper-protected time, the `evaluatePlayRules` block/notify decision, the `shouldSendNotification` cadence, per-user serialization, and (in `tests/command_test.cpp`) the IPC command contract. Keep the module free of any Switch *runtime* dependency (the libnx base types from `<switch/types.h>` are allowed, as they are plain typedefs), and add or update the matching tests in `/tests` when changing the play rules. Tests that require the toolchain/console go in `tests/switch_only_test.cpp` (built via `make -C tests switch`).
 - Verify remaining changes by building both components
 
 ## Chat rules

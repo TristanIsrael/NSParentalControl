@@ -18,7 +18,6 @@
 
 #include "test_framework.h"
 #include "playtime_rules.h"
-#include <cstdint>
 #include <map>
 #include <string>
 
@@ -50,7 +49,7 @@ TEST(format_single_digits_padded) {
 // ---------------------------------------------------------------------------
 
 TEST(adjusted_first_iteration_no_jump) {
-    int32_t offset = 0;
+    s32 offset = 0;
     auto r = computeAdjustedTime(540, 0, offset);
     CHECK_EQ(r.time, 540);
     CHECK_EQ(r.jump, 0);
@@ -58,7 +57,7 @@ TEST(adjusted_first_iteration_no_jump) {
 }
 
 TEST(adjusted_normal_step) {
-    int32_t offset = 0;
+    s32 offset = 0;
     auto r = computeAdjustedTime(541, 540, offset);
     CHECK_EQ(r.time, 541);
     CHECK_EQ(r.jump, 0);
@@ -66,7 +65,7 @@ TEST(adjusted_normal_step) {
 }
 
 TEST(adjusted_step_within_threshold_ignored) {
-    int32_t offset = 0;
+    s32 offset = 0;
     auto r = computeAdjustedTime(545, 540, offset);
     CHECK_EQ(r.time, 545);
     CHECK_EQ(r.jump, 0);
@@ -75,7 +74,7 @@ TEST(adjusted_step_within_threshold_ignored) {
 
 TEST(adjusted_forward_jump_compensated) {
     // 09:00 -> 12:00: the clock was pushed forward by 3h, the adjusted time must stay at 09:00
-    int32_t offset = 0;
+    s32 offset = 0;
     auto r = computeAdjustedTime(720, 540, offset);
     CHECK_EQ(r.jump, 180);
     CHECK_EQ(offset, -180);
@@ -84,7 +83,7 @@ TEST(adjusted_forward_jump_compensated) {
 
 TEST(adjusted_backward_jump_compensated) {
     // 19:00 -> 10:00: the clock was pushed back by 9h, the adjusted time must stay at 19:00
-    int32_t offset = 0;
+    s32 offset = 0;
     auto r = computeAdjustedTime(600, 1140, offset);
     CHECK_EQ(r.jump, -540);
     CHECK_EQ(offset, 540);
@@ -92,8 +91,8 @@ TEST(adjusted_backward_jump_compensated) {
 }
 
 TEST(adjusted_jumps_accumulate_in_offset) {
-    int32_t offset = 0;
-    uint16_t last = 540;
+    s32 offset = 0;
+    u16 last = 540;
 
     auto r1 = computeAdjustedTime(720, last, offset); // +180
     CHECK_EQ(r1.jump, 180);
@@ -106,20 +105,20 @@ TEST(adjusted_jumps_accumulate_in_offset) {
 }
 
 TEST(adjusted_wraps_below_zero) {
-    int32_t offset = -20;
+    s32 offset = -20;
     auto r = computeAdjustedTime(10, 5, offset);
     CHECK_EQ(r.time, 1430);
 }
 
 TEST(adjusted_wraps_above_end_of_day) {
-    int32_t offset = 20;
+    s32 offset = 20;
     auto r = computeAdjustedTime(1430, 1425, offset);
     CHECK_EQ(r.time, 10);
 }
 
 TEST(adjusted_reset_state) {
-    uint16_t last = 100;
-    int32_t offset = 42;
+    u16 last = 100;
+    s32 offset = 42;
     resetAdjustedTimeState(last, offset);
     CHECK_EQ(last, 0u);
     CHECK_EQ(offset, 0);
@@ -159,7 +158,7 @@ TEST(window_crossing_midnight) {
 }
 
 TEST(window_empty_when_start_equals_end) {
-    for(uint16_t t = 0; t < 1440; t += 7) {
+    for(u16 t = 0; t < 1440; t += 7) {
         CHECK_TRUE(!isInsidePlayWindow(t, 480, 480));
     }
 }
@@ -195,12 +194,12 @@ TEST(serialize_empty) {
 }
 
 TEST(serialize_single_entry) {
-    std::map<std::string, uint16_t> m{{"uid1", 480}};
+    std::map<std::string, u16> m{{"uid1", 480}};
     CHECK_EQ(serializeUserValues(m), std::string("uid1=480"));
 }
 
 TEST(serialize_multiple_entries_sorted_by_key) {
-    std::map<std::string, uint16_t> m;
+    std::map<std::string, u16> m;
     m["uidB"] = 10;
     m["uidA"] = 20;
     m["uidC"] = 0;
@@ -208,7 +207,7 @@ TEST(serialize_multiple_entries_sorted_by_key) {
 }
 
 TEST(serialize_zero_value_preserved) {
-    std::map<std::string, uint16_t> m{{"uid1", 0}};
+    std::map<std::string, u16> m{{"uid1", 0}};
     CHECK_EQ(serializeUserValues(m), std::string("uid1=0"));
 }
 
@@ -232,12 +231,118 @@ TEST(deserialize_skips_malformed_segments) {
 }
 
 TEST(serialize_deserialize_roundtrip) {
-    std::map<std::string, uint16_t> m;
+    std::map<std::string, u16> m;
     m["00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"] = 1439;
     m["0000000000000000000000000000000000000000000000000000000000000001"] = 1;
 
     auto back = deserializeUserValues(serializeUserValues(m));
     CHECK_TRUE(back == m);
+}
+
+// ---------------------------------------------------------------------------
+// shouldSendNotification (notification cadence)
+// ---------------------------------------------------------------------------
+
+TEST(notify_every_15_minutes) {
+    CHECK_TRUE(shouldSendNotification(15));
+    CHECK_TRUE(shouldSendNotification(30));
+    CHECK_TRUE(shouldSendNotification(45));
+    CHECK_TRUE(shouldSendNotification(75));
+    CHECK_TRUE(!shouldSendNotification(16));
+    CHECK_TRUE(!shouldSendNotification(31));
+}
+
+TEST(notify_every_minute_in_last_5) {
+    CHECK_TRUE(shouldSendNotification(5));
+    CHECK_TRUE(shouldSendNotification(4));
+    CHECK_TRUE(shouldSendNotification(3));
+    CHECK_TRUE(shouldSendNotification(2));
+    CHECK_TRUE(shouldSendNotification(1));
+    CHECK_TRUE(!shouldSendNotification(6));
+    CHECK_TRUE(!shouldSendNotification(7));
+}
+
+// ---------------------------------------------------------------------------
+// evaluatePlayRules (enforcement decision)
+// ---------------------------------------------------------------------------
+
+TEST(eval_within_limit_inside_window_no_action) {
+    // limit 120, used 31 -> remaining 89 (not a multiple of 15, > 5), 12:00 inside 08:00-20:00
+    // -> keep playing, no notification
+    auto r = evaluatePlayRules(120, 31, 720, 480, 1200, true);
+    CHECK_EQ(r.remainingTimeInMinutes, 89);
+    CHECK_TRUE(!r.outsidePlayWindow);
+    CHECK_TRUE(!r.shouldBlock);
+    CHECK_TRUE(!r.shouldNotify);
+}
+
+TEST(eval_exhausted_limit_blocks) {
+    // limit 60, used 60 -> remaining 0 -> block
+    auto r = evaluatePlayRules(60, 60, 720, 0, 0, true);
+    CHECK_EQ(r.remainingTimeInMinutes, 0);
+    CHECK_TRUE(r.shouldBlock);
+    CHECK_TRUE(!r.shouldNotify);
+}
+
+TEST(eval_zero_limit_yields_zero_remaining) {
+    // Mirrors the monitor arithmetic: daily_limit 0 -> remaining 0 (0 > used is false).
+    // This is the existing product behavior for a user with no daily limit set.
+    auto r = evaluatePlayRules(0, 30, 720, 0, 0, true);
+    CHECK_EQ(r.remainingTimeInMinutes, 0);
+    CHECK_TRUE(r.shouldBlock);
+}
+
+TEST(eval_outside_window_blocks_even_with_time_left) {
+    // plenty of time left (limit 600, used 0) but 23:00 is after bed 22:00 -> block
+    auto r = evaluatePlayRules(600, 0, 1380, 0, 1320, true);
+    CHECK_EQ(r.remainingTimeInMinutes, 600);
+    CHECK_TRUE(r.outsidePlayWindow);
+    CHECK_TRUE(r.shouldBlock);
+    CHECK_TRUE(!r.shouldNotify);
+}
+
+TEST(eval_before_game_start_blocks) {
+    // 07:00 is before game start 08:00 -> block
+    auto r = evaluatePlayRules(600, 0, 420, 480, 0, true);
+    CHECK_TRUE(r.outsidePlayWindow);
+    CHECK_TRUE(r.shouldBlock);
+}
+
+TEST(eval_crossing_midnight_window_allows_night) {
+    // window 20:00-08:00, time 22:00, time left -> not blocked
+    auto r = evaluatePlayRules(600, 0, 1320, 1200, 480, true);
+    CHECK_TRUE(!r.outsidePlayWindow);
+    CHECK_TRUE(!r.shouldBlock);
+}
+
+TEST(eval_notifies_when_cadence_reached_and_panel_on) {
+    // remaining 30 (a multiple of 15), inside window, panel on -> notify
+    auto r = evaluatePlayRules(120, 90, 720, 480, 1200, true);
+    CHECK_EQ(r.remainingTimeInMinutes, 30);
+    CHECK_TRUE(!r.shouldBlock);
+    CHECK_TRUE(r.shouldNotify);
+}
+
+TEST(eval_no_notification_when_panel_off) {
+    // remaining 30 but panel disabled -> no notify
+    auto r = evaluatePlayRules(120, 90, 720, 480, 1200, false);
+    CHECK_EQ(r.remainingTimeInMinutes, 30);
+    CHECK_TRUE(!r.shouldNotify);
+}
+
+TEST(eval_no_notification_when_cadence_not_reached) {
+    // remaining 90? 90%15==0 -> would notify; use remaining 91 (120-29) -> no notify
+    auto r = evaluatePlayRules(120, 29, 720, 480, 1200, true);
+    CHECK_EQ(r.remainingTimeInMinutes, 91);
+    CHECK_TRUE(!r.shouldBlock);
+    CHECK_TRUE(!r.shouldNotify);
+}
+
+TEST(eval_blocked_never_notifies) {
+    // exhausted + outside window: blocked, and must not notify
+    auto r = evaluatePlayRules(60, 60, 1380, 0, 1320, true);
+    CHECK_TRUE(r.shouldBlock);
+    CHECK_TRUE(!r.shouldNotify);
 }
 
 int main() {

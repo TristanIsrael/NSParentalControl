@@ -18,18 +18,18 @@
 
 #pragma once
 
-#include <cstdint>
 #include <map>
 #include <string>
+#include <switch/types.h>
 
 namespace alefbet::pctrl::core {
 
     /*! @brief Jump (in minutes) above which a system time change is considered a tampering attempt. */
-    constexpr int32_t kTimeJumpThreshold = 5;
+    constexpr s32 kTimeJumpThreshold = 5;
 
     struct AdjustedTimeResult {
-        uint16_t time;    ///< Adjusted time in minutes since midnight (0-1439).
-        int32_t jump = 0; ///< The detected jump in minutes, 0 if no jump was detected.
+        u16 time;    ///< Adjusted time in minutes since midnight (0-1439).
+        s32 jump = 0; ///< The detected jump in minutes, 0 if no jump was detected.
     };
 
     /*! @brief Formats minutes since midnight as an HH:mm string.
@@ -37,7 +37,7 @@ namespace alefbet::pctrl::core {
       * @param minutesSinceMidnight Minutes since midnight (0-1439).
       * @return Formatted time string (e.g. "21:30").
       */
-    std::string formatTimeInMinutes(uint16_t minutesSinceMidnight);
+    std::string formatTimeInMinutes(u16 minutesSinceMidnight);
 
     /*! @brief Computes the tamper-protected time.
       *
@@ -50,14 +50,14 @@ namespace alefbet::pctrl::core {
       * @param offset Cumulative compensation offset, updated in place.
       * @return The adjusted time and the detected jump (0 if none).
       */
-    AdjustedTimeResult computeAdjustedTime(uint16_t currentTime, uint16_t lastTime, int32_t& offset);
+    AdjustedTimeResult computeAdjustedTime(u16 currentTime, u16 lastTime, s32& offset);
 
     /*! @brief Resets the adjusted-time state (e.g. when the sysmodule starts).
       *
       * @param lastTime Last observed time, reset to 0.
       * @param offset Cumulative compensation offset, reset to 0.
       */
-    void resetAdjustedTimeState(uint16_t& lastTime, int32_t& offset);
+    void resetAdjustedTimeState(u16& lastTime, s32& offset);
 
     /*! @brief Checks whether a time is inside the playtime window.
       *
@@ -81,14 +81,14 @@ namespace alefbet::pctrl::core {
       * @param end Window end in minutes since midnight (0 = disabled).
       * @return true if the time is inside the window, false otherwise.
       */
-    bool isInsidePlayWindow(uint16_t time, uint16_t start, uint16_t end);
+    bool isInsidePlayWindow(u16 time, u16 start, u16 end);
 
     /*! @brief Serializes per-user values as a "uid=value;uid=value" string.
       *
       * @param values Map of user ID to value.
       * @return The serialized string (empty if the map is empty).
       */
-    std::string serializeUserValues(const std::map<std::string, uint16_t>& values);
+    std::string serializeUserValues(const std::map<std::string, u16>& values);
 
     /*! @brief Deserializes a "uid=value;uid=value" string into a map of user values.
       *
@@ -97,6 +97,47 @@ namespace alefbet::pctrl::core {
       * @param data The serialized string.
       * @return The deserialized map.
       */
-    std::map<std::string, uint16_t> deserializeUserValues(const std::string& data);
+    std::map<std::string, u16> deserializeUserValues(const std::string& data);
+
+    /*! @brief Determines whether a remaining-time notification should be sent.
+      *
+      * Notifications are sent every 15 minutes and every minute during the
+      * last 5 minutes.
+      *
+      * @param remainingTimeInMinutes The number of minutes remaining until the daily limit.
+      * @return true if a notification should be sent, false otherwise.
+      */
+    bool shouldSendNotification(u16 remainingTimeInMinutes);
+
+    struct PlayRuleEvaluation {
+        u16 remainingTimeInMinutes = 0; ///< Minutes left before the daily limit is reached (0 = exhausted).
+        bool outsidePlayWindow = false; ///< true if the adjusted time is outside the playtime window.
+        bool shouldBlock = false;       ///< true if the running game must be stopped.
+        bool shouldNotify = false;      ///< true if a remaining-time notification must be sent.
+    };
+
+    /*! @brief Evaluates the play rules and decides whether to block and/or notify.
+      *
+      * This is the pure, tamper-protected enforcement decision used by the
+      * monitoring loop. A game is blocked when the daily limit is exhausted
+      * (remaining minutes == 0) or when the adjusted time is outside the
+      * playtime window. A remaining-time notification is sent only when the
+      * game is not blocked, the remaining-time panel is enabled, and the
+      * notification cadence (see shouldSendNotification) is reached.
+      *
+      * @param dailyLimit The user's daily limit in minutes (0 = no limit).
+      * @param totalDurationToday Minutes already used today.
+      * @param adjustedTimeMinutes The tamper-protected current time (minutes since midnight).
+      * @param gameStartTime Earliest allowed play time in minutes (0 = disabled).
+      * @param bedtime Bed time in minutes (0 = disabled).
+      * @param showRemainingTime Whether the remaining-time panel is enabled.
+      * @return The evaluation result (remaining time, window state, block/notify decisions).
+      */
+    PlayRuleEvaluation evaluatePlayRules(u16 dailyLimit,
+                                         u16 totalDurationToday,
+                                         u16 adjustedTimeMinutes,
+                                         u16 gameStartTime,
+                                         u16 bedtime,
+                                         bool showRemainingTime);
 
 }

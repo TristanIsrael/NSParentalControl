@@ -56,7 +56,8 @@ The `S > B` case is mandatory: a window like 20:00 to 08:00 must allow play at 2
 ## Enforcement
 
 - The rules are evaluated in `Monitor::loop()` (`sysmodule/source/monitor.cpp`), once per minute while a game is running.
-- The pure decision logic (window membership, tamper-protected time, per-user serialization) lives in `sysmodule/source/playtime_rules.{h,cpp}`, which has **no Switch dependency** so it can be unit-tested on the host (`make -C tests`, see `/tests`).
+- The pure decision logic (window membership, tamper-protected time, the block/notify decision, the notification cadence, per-user serialization) lives in `sysmodule/source/playtime_rules.{h,cpp}`, which has **no Switch dependency** so it can be unit-tested on the host (`make -C tests`, see `/tests`).
+- The final block/notify decision is consolidated in `core::evaluatePlayRules(...)` (`playtime_rules.cpp`), which `Monitor::loop` calls once per minute. `core::shouldSendNotification(...)` implements the "every 15 minutes and every minute in the last 5" cadence.
 - **The rules must only be enforced in the sysmodule.** The overlay is a passive client: it displays state and settings but never decides to block.
 
 ## Code map
@@ -65,6 +66,9 @@ The `S > B` case is mandatory: a window like 20:00 to 08:00 must allow play at 2
 |----------------------------------|-----------------------------------------------------------------|
 | Pure playtime logic (no Switch dep) | `sysmodule/source/playtime_rules.{h,cpp}` (host unit tests: `make -C tests`) |
 | Rule evaluation                  | `sysmodule/source/monitor.cpp` (`Monitor::loop`)                |
+| Block/notify decision            | `sysmodule/source/playtime_rules.cpp` (`evaluatePlayRules`)      |
+| Notification cadence             | `sysmodule/source/playtime_rules.cpp` (`shouldSendNotification`) |
+| IPC command contract (host test) | `tests/command_test.cpp` (guards `sysmodule/source/ipc/Command.hpp`) |
 | Tamper-protected time            | `sysmodule/source/playtime_rules.cpp` (`computeAdjustedTime`) via `helpers.cpp` (`getAdjustedTime`) |
 | Window settings storage          | `sysmodule/source/helpers.cpp` (`getGameStartTime` / `setGameStartTime`, `getBedtime` / `setBedtime`) |
 | Setting keys                     | `sysmodule/source/database/settings.h`                          |

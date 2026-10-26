@@ -106,32 +106,26 @@ namespace alefbet::pctrl::srv {
                     const auto& userId = accountUidToString(user.uid);
                     daily_limit = getDailyLimitForUser(userId);
 
-                    u16 remainingTimeInMinutes = daily_limit > totalDuration ? daily_limit - totalDuration : 0;
-                    logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), remainingTimeInMinutes, daily_limit);
-
-                    // Check whether the adjusted (tamper-protected) time is inside the play window
                     const auto gameStartTime = getGameStartTime(userId);
                     const auto bedtime = getBedtime(userId);
 
-                    bool outsidePlayWindow = false;
-                    if(gameStartTime > 0 || bedtime > 0) {
-                        outsidePlayWindow = !core::isInsidePlayWindow(adjustedTimeMinutes, gameStartTime, bedtime);
-
-                        if(outsidePlayWindow) {
-                            logInfo("[Monitor] Current time %s is outside the play window (%s to %s) for user %s\n", formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(gameStartTime).c_str(), formatTimeInMinutes(bedtime).c_str(), user.nickname.c_str());
-                        }
+                    bool showRemainingTime = false;
+                    if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
+                        showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;
                     }
 
-                    if(remainingTimeInMinutes > 0 && !outsidePlayWindow) {
-                        if(settings.contains(SETTING_SHOW_REMAINING_TIME)) {
-                            const auto& showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;                                                
-                            if(showRemainingTime) {                            
-                                if(shouldSendNotification(remainingTimeInMinutes)) {
-                                    NotificationsController::notifyRemainingTime(remainingTimeInMinutes);
-                                }
-                            }
-                        }
-                    } else {            
+                    // Pure enforcement decision (tamper-protected time + play window + daily limit)
+                    const auto eval = core::evaluatePlayRules(daily_limit, totalDuration, adjustedTimeMinutes, gameStartTime, bedtime, showRemainingTime);
+
+                    logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), eval.remainingTimeInMinutes, daily_limit);
+
+                    if(eval.outsidePlayWindow) {
+                        logInfo("[Monitor] Current time %s is outside the play window (%s to %s) for user %s\n", formatTimeInMinutes(adjustedTimeMinutes).c_str(), formatTimeInMinutes(gameStartTime).c_str(), formatTimeInMinutes(bedtime).c_str(), user.nickname.c_str());
+                    }
+
+                    if(eval.shouldNotify) {
+                        NotificationsController::notifyRemainingTime(eval.remainingTimeInMinutes);
+                    } else if(eval.shouldBlock) {
                         logInfo("[Monitor] Timeout for the user %s\n", user.nickname.c_str());
                         service_->showScreenTimeout(pid);
                     }
@@ -162,15 +156,4 @@ namespace alefbet::pctrl::srv {
         notified_ = false;
     }
 
-    /*! @brief Determines whether a remaining-time notification should be sent.
-     *
-     * Notifications are sent every 15 minutes and every minute during the last 5 minutes.
-     *
-     * @param remainingTimeInMinutes The number of minutes remaining until the daily limit.
-     * @return true if a notification should be sent, false otherwise.
-     */
-    bool Monitor::shouldSendNotification(int remainingTimeInMinutes) {
-        // Remaining time notitications are sent every 15 minutes and every minute during the last 5 minutes
-        return remainingTimeInMinutes % 15 == 0 || remainingTimeInMinutes <= 5;
-    }
 }

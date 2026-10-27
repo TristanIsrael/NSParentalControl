@@ -546,6 +546,89 @@ namespace alefbet::pctrl::ipc {
         return true;
     }
 
+    /*! @brief Gets the titles blocked for a user via IPC.
+     * @param user The user data containing the UID.
+     * @return The blocked title IDs (empty on failure). */
+    std::vector<u64> getBlockedTitles(const UserData& user) {
+        std::vector<u64> titles;
+
+        if(!isAvailable()) {
+            logError("[IPC] service not available\n");
+            return titles;
+        }
+
+        char chUserId[80] = {0};
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(chUserId, sizeof(chUserId), "%s", userId.c_str());
+
+        auto& service = getAppContext().pctrl_service;
+        u32 count = 0;
+        Result res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetBlacklistedTitlesCount, chUserId, count);
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured while getting the blocked titles count.\n");
+            return titles;
+        }
+
+        typedef struct __attribute__((packed)) {
+            u32 index;
+            char userId[80];
+        } Args;
+
+        Args args{0};
+        std::memcpy(args.userId, chUserId, sizeof(args.userId));
+
+        for(u32 index = 0 ; index < count ; index++) {
+            args.index = index;
+            u64 titleId = 0;
+            res = serviceDispatchInOut(&service, (u32)Ipc::Command::GetBlacklistedTitle, args, titleId);
+            if(R_FAILED(res)) {
+                logError("[IPC] An error occured while getting a blocked title.\n");
+                break;
+            }
+
+            if(titleId != 0) {
+                titles.push_back(titleId);
+            }
+        }
+
+        return titles;
+    }
+
+    /*! @brief Blocks or unblocks a title for a user via IPC.
+     * @param user The user data containing the UID.
+     * @param titleId The title ID.
+     * @param blocked true to block the title, false to unblock it.
+     * @return true if successful, false otherwise. */
+    bool setTitleBlocked(const UserData& user, u64 titleId, bool blocked) {
+        if(!isAvailable()) {
+            logError("[IPC] service not available\n");
+            return false;
+        }
+
+        typedef struct __attribute__((packed)) {
+            u64 titleId;
+            char userId[80];
+        } Args;
+
+        Args args {
+            .titleId = titleId,
+        };
+
+        const auto& userId = helpers::accountUidToString(user.uid);
+        std::snprintf(args.userId, sizeof(args.userId), "%s", userId.c_str());
+
+        auto& service = getAppContext().pctrl_service;
+        const auto command = blocked ? Ipc::Command::AddTitleToBlacklist : Ipc::Command::RemoveTitleFromBlacklist;
+        Result res = serviceDispatchIn(&service, (u32)command, args);
+
+        if(R_FAILED(res)) {
+            logError("[IPC] An error occured while changing a blocked title.\n");
+            return false;
+        }
+
+        return true;
+    }
+
     /*! @brief Gets the bed time for a user via IPC.
      * @param user The user data containing the UID.
      * @return The bed time in minutes from midnight, or 0 on failure. */

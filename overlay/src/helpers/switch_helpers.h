@@ -20,6 +20,7 @@
 #include <switch.h>
 #include <list>
 #include <string>
+#include <vector>
 
 namespace alefbet {
     namespace pctrl {
@@ -43,6 +44,13 @@ namespace alefbet {
             AccountUid accountUidFromString(const UserUid& uid);
 
             std::string getTitleName(u64 titleId);
+
+            typedef struct {
+                u64 titleId;
+                std::string name;
+            } InstalledTitle;
+
+            std::vector<InstalledTitle> getInstalledTitles();
         }
     }
 }

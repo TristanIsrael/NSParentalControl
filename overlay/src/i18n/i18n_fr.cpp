@@ -67,6 +67,11 @@ const StringMap& french() {
         {"Current title: ", "Jeu actuel : "},
         // Usage history
         {"Choose a user", "Choisir un utilisateur"},
+        {"Blocked games", "Jeux bloqués"},
+        {"Blocked games for ", "Jeux bloqués pour "},
+        {"Blocked", "Bloqué"},
+        {"Allowed", "Autorisé"},
+        {"No game installed", "Aucun jeu installé"},
         {"Today", "Aujourd'hui"},
         {"Usage", "Utilisation"},
         {"Remaining", "Restant"},

@@ -22,6 +22,8 @@
 #include <string_view>
 #include <ranges>
 #include <vector>
+#include <memory>
+#include <algorithm>
 
 using namespace alefbet::pctrl::logger;
 
@@ -163,6 +165,64 @@ namespace alefbet {
 
                 nsExit();
                 return "#NoName#";
+            }
+
+            /*! @brief Lists the applications installed on the console, sorted by name.
+             * @return The installed titles (empty on failure). Titles without control
+             *         data are listed with their title ID as name. */
+            std::vector<InstalledTitle> getInstalledTitles() {
+                std::vector<InstalledTitle> titles;
+
+                if(R_FAILED(nsInitialize())) {
+                    logError("[Helpers] Could not initialize NS service\n");
+                    return titles;
+                }
+
+                // The control data includes the icon (~128 KB): allocate it on the heap
+                auto nacp = std::make_unique<NsApplicationControlData>();
+
+                constexpr s32 BatchSize = 30;
+                NsApplicationRecord records[BatchSize];
+                s32 offset = 0;
+                s32 count = 0;
+
+                do {
+                    count = 0;
+                    if(R_FAILED(nsListApplicationRecord(records, BatchSize, offset, &count))) {
+                        logError("[Helpers] Could not list the application records\n");
+                        break;
+                    }
+
+                    for(s32 i = 0 ; i < count ; i++) {
+                        const u64 titleId = records[i].application_id;
+                        std::string name;
+
+                        u64 actualSize = 0;
+                        NacpLanguageEntry* langEntry = nullptr;
+                        if(R_SUCCEEDED(nsGetApplicationControlData(NsApplicationControlSource_Storage, titleId, nacp.get(), sizeof(NsApplicationControlData), &actualSize))
+                           && R_SUCCEEDED(nacpGetLanguageEntry(&nacp->nacp, &langEntry)) && langEntry != nullptr) {
+                            name = langEntry->name;
+                        }
+
+                        if(name.empty()) {
+                            char buffer[17] = {0};
+                            std::snprintf(buffer, sizeof(buffer), "%016lX", titleId);
+                            name = buffer;
+                        }
+
+                        titles.push_back(InstalledTitle{ .titleId = titleId, .name = name });
+                    }
+
+                    offset += count;
+                } while(count == BatchSize);
+
+                nsExit();
+
+                std::sort(titles.begin(), titles.end(), [](const InstalledTitle& a, const InstalledTitle& b) {
+                    return a.name < b.name;
+                });
+
+                return titles;
             }
         }
     }

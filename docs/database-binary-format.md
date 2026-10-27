@@ -152,7 +152,7 @@ Defined in `settings.h`:
 | `show_remaining_time` | INTEGER | Display flag (0 or 1)                                              |
 | `enabled`           | INTEGER| Master enable flag (0 or 1)                                          |
 | `log_level`         | INTEGER| Logging verbosity level                                              |
-| `blacklist`         | STRING | Blacklisted title IDs                                                |
+| `blacklist`         | STRING | Per-user blocked title IDs, serialized as `uid=titleId,titleId;uid=titleId` (decimal title IDs) |
 | `authentication`    | INTEGER| Authentication mode                                                  |
 
 ### Per-user values

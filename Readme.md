@@ -63,6 +63,7 @@ Parental control has the following features:
 - Define a PIN to protect setup access - *default PIN is A A A A* (since 1.0)
 - Enable or disable the parental control (since 1.0)
 - Enable or disable the notifications (since 1.2)
+- Block some games per user (since 2.4)
 - Choose the log level between Debug and Information (since 1.2)
 - Define individual limits (since 1.3)
 - Define bed time (since 2.1)

@@ -8,9 +8,10 @@ The game is stopped (timeout screen shown) when **any** of the following conditi
 
 1. The user's **daily playtime is used up** (remaining minutes == 0),
 2. The **current time is before the playtime window** (too early to play),
-3. The **current time is after the playtime window** (bedtime reached).
+3. The **current time is after the playtime window** (bedtime reached),
+4. The **running game is blocked for the user** (see [Blocked games](#blocked-games)).
 
-The three conditions are independent and combined with a logical OR.
+The four conditions are independent and combined with a logical OR.
 
 ## Time source (tamper protection)
 
@@ -51,6 +52,15 @@ Allowed play periods by configuration:
 | S > B       |           | `[S, 24:00) ∪ [00:00, B)` (window crosses midnight) |
 
 The `S > B` case is mandatory: a window like 20:00 to 08:00 must allow play at 22:00. Any reimplementation of the window check must keep supporting it.
+
+## Blocked games
+
+The administrator can block games per user from the overlay (Admin menu → `Blocked games`).
+
+- Stored in the `blacklist` setting (STRING), serialized as `uid=titleId,titleId;uid=titleId` with decimal title IDs (`core::serializeUserTitles` / `core::deserializeUserTitles` in `playtime_rules.cpp`, which ignore invalid title IDs without throwing).
+- IPC commands: `GetBlacklistedTitlesCount`, `GetBlacklistedTitle`, `AddTitleToBlacklist`, `RemoveTitleFromBlacklist`.
+- The monitor passes `helpers::isTitleBlacklistedForUser(userId, titleId)` to `core::evaluatePlayRules(...)`, which blocks when it is true. The user is notified that the game is not allowed, then the game is closed after the usual countdown.
+- A blocked game is detected within 5 seconds of its launch, and the block is confirmed 10 seconds later with the current user (see [Enforcement](#enforcement)).
 
 ## Daily limit
 

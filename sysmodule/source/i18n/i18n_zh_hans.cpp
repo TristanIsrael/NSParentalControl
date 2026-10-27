@@ -26,6 +26,7 @@ const StringMap& chineseSimplified() {
         {"Parental Control", "家长控制"},
         {"Parental control enabled", "家长控制已启用"},
         {"%s left", "剩余 %s"},
+        {"This game is not allowed", "此游戏不允许"},
         {"h", "小时"},
         {"mn", "分钟"}
     };

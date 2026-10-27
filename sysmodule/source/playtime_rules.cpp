@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>
+#include <charconv>
 
 namespace alefbet::pctrl::core {
 
@@ -106,6 +107,47 @@ namespace alefbet::pctrl::core {
         return result;
     }
 
+    std::string serializeUserTitles(const std::map<std::string, std::vector<u64>>& titles) {
+        std::ostringstream oss;
+        bool firstUser = true;
+        for(const auto& [userId, titleIds] : titles) {
+            if(titleIds.empty()) continue;
+            if(!firstUser) oss << ';';
+            firstUser = false;
+            oss << userId << '=';
+            bool firstTitle = true;
+            for(u64 titleId : titleIds) {
+                if(!firstTitle) oss << ',';
+                firstTitle = false;
+                oss << titleId;
+            }
+        }
+        return oss.str();
+    }
+
+    std::map<std::string, std::vector<u64>> deserializeUserTitles(const std::string& data) {
+        std::map<std::string, std::vector<u64>> result;
+        std::istringstream stream(data);
+        std::string line;
+        while(std::getline(stream, line, ';')) {
+            if(line.empty()) continue;
+            auto eqPos = line.find('=');
+            if(eqPos == std::string::npos) continue;
+            std::string userId = line.substr(0, eqPos);
+            std::istringstream titleStream(line.substr(eqPos + 1));
+            std::string titlePart;
+            while(std::getline(titleStream, titlePart, ',')) {
+                // Exceptions are disabled on the Switch: parse without std::stoull
+                u64 titleId = 0;
+                const auto [end, ec] = std::from_chars(titlePart.data(), titlePart.data() + titlePart.size(), titleId);
+                if(ec == std::errc() && end == titlePart.data() + titlePart.size() && titleId != 0) {
+                    result[userId].push_back(titleId);
+                }
+            }
+        }
+        return result;
+    }
+
     bool shouldSendNotification(u16 remainingTimeInMinutes) {
         // Remaining time notifications are sent every 15 minutes and every minute during the last 5 minutes
         return (remainingTimeInMinutes % 15) == 0 || remainingTimeInMinutes <= 5;
@@ -116,7 +158,8 @@ namespace alefbet::pctrl::core {
                                          u16 adjustedTimeMinutes,
                                          u16 gameStartTime,
                                          u16 bedtime,
-                                         bool showRemainingTime) {
+                                         bool showRemainingTime,
+                                         bool titleBlocked) {
         PlayRuleEvaluation result{};
 
         result.remainingTimeInMinutes = (dailyLimit > totalDurationToday) ? (dailyLimit - totalDurationToday) : 0;
@@ -124,7 +167,9 @@ namespace alefbet::pctrl::core {
         result.outsidePlayWindow = (gameStartTime > 0 || bedtime > 0) &&
                                    !isInsidePlayWindow(adjustedTimeMinutes, gameStartTime, bedtime);
 
-        result.shouldBlock = !(result.remainingTimeInMinutes > 0 && !result.outsidePlayWindow);
+        result.titleBlocked = titleBlocked;
+
+        result.shouldBlock = titleBlocked || !(result.remainingTimeInMinutes > 0 && !result.outsidePlayWindow);
 
         result.shouldNotify = !result.shouldBlock &&
                               showRemainingTime &&

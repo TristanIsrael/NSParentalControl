@@ -685,80 +685,33 @@ namespace alefbet::pctrl::helpers {
         return false;
     }
 
+    /*! @brief Checks whether a title is blocked for a user.
+     *
+     * @param userId The user ID string.
+     * @param titleId The title ID to check.
+     * @return true if the title is in the user's blacklist, false otherwise.
+     */
+    bool isTitleBlacklistedForUser(const std::string& userId, u64 titleId) {
+        const auto& blacklist = getBlacklistedTitlesForUser(userId);
+        return std::find(blacklist.begin(), blacklist.end(), titleId) != blacklist.end();
+    }
+
     /*!
         \brief Returns the list of blacklisted titles for a user
     */
     std::vector<u64> getBlacklistedTitlesForUser(const std::string& userId) {
-        std::vector<u64> titles;
-
         auto& settings = loadSettings();
         if(!settings.contains(SETTING_BLACKLIST)) {
-            return titles;
+            return {};
         }
 
-        const auto& blacklistStr = settings[SETTING_BLACKLIST].string_value;
-        if(blacklistStr.empty()) {
-            logDebug("[Helpers] No title blacklisted for user %s\n", userId.c_str());
-            return titles;
+        const auto& blacklist = core::deserializeUserTitles(settings[SETTING_BLACKLIST].string_value);
+        const auto& userTitles = blacklist.find(userId);
+        if(userTitles == blacklist.end()) {
+            return {};
         }
 
-        std::istringstream stream(blacklistStr);
-        std::string line;
-        while(std::getline(stream, line, ';')) {
-            if(line.empty()) continue;
-            auto eqPos = line.find('=');
-            if(eqPos == std::string::npos) continue;
-            std::string lineUser = line.substr(0, eqPos);
-            std::string lineTitles = line.substr(eqPos + 1);
-            if(lineUser != userId) continue;
-            std::istringstream titleStream(lineTitles);
-            std::string titlePart;
-            while(std::getline(titleStream, titlePart, ',')) {
-                if(!titlePart.empty()) {
-                    titles.push_back(std::stoull(titlePart));
-                }
-            }
-        }
-
-        return titles;
-    }
-
-    static std::string serializeBlacklist(const std::map<std::string, std::vector<u64>>& blacklistMap) {
-        std::ostringstream oss;
-        bool firstUser = true;
-        for(const auto& [userId, titleIds] : blacklistMap) {
-            if(!firstUser) oss << ';';
-            firstUser = false;
-            oss << userId << '=';
-            bool firstTitle = true;
-            for(u64 titleId : titleIds) {
-                if(!firstTitle) oss << ',';
-                firstTitle = false;
-                oss << titleId;
-            }
-        }
-        return oss.str();
-    }
-
-    static std::map<std::string, std::vector<u64>> deserializeBlacklist(const std::string& data) {
-        std::map<std::string, std::vector<u64>> result;
-        std::istringstream stream(data);
-        std::string line;
-        while(std::getline(stream, line, ';')) {
-            if(line.empty()) continue;
-            auto eqPos = line.find('=');
-            if(eqPos == std::string::npos) continue;
-            std::string userId = line.substr(0, eqPos);
-            std::string titlesStr = line.substr(eqPos + 1);
-            std::istringstream titleStream(titlesStr);
-            std::string titlePart;
-            while(std::getline(titleStream, titlePart, ',')) {
-                if(!titlePart.empty()) {
-                    result[userId].push_back(std::stoull(titlePart));
-                }
-            }
-        }
-        return result;
+        return userTitles->second;
     }
 
     /*! @brief Adds a title to the blacklist for a specific user.
@@ -767,11 +720,11 @@ namespace alefbet::pctrl::helpers {
      * @param titleId The title ID to black list.
      */
     void addToBlacklist(const std::string& userId, u64 titleId) {
-        auto blacklistMap = deserializeBlacklist("");
+        std::map<std::string, std::vector<u64>> blacklistMap;
         
         auto& settings = loadSettings();
         if(settings.contains(SETTING_BLACKLIST)) {
-            blacklistMap = deserializeBlacklist(settings[SETTING_BLACKLIST].string_value);
+            blacklistMap = core::deserializeUserTitles(settings[SETTING_BLACKLIST].string_value);
         }
 
         auto& userTitles = blacklistMap[userId];
@@ -788,7 +741,7 @@ namespace alefbet::pctrl::helpers {
         Setting setting {
             .key = SETTING_BLACKLIST,
             .type = STRING,
-            .string_value = serializeBlacklist(blacklistMap)
+            .string_value = core::serializeUserTitles(blacklistMap)
         };
 
         saveSetting(setting);
@@ -800,11 +753,11 @@ namespace alefbet::pctrl::helpers {
      * @param titleId The title ID to remove from the blacklist.
      */
     void removeFromBlacklist(const std::string& userId, u64 titleId) {
-        auto blacklistMap = deserializeBlacklist("");
+        std::map<std::string, std::vector<u64>> blacklistMap;
         
         auto& settings = loadSettings();
         if(settings.contains(SETTING_BLACKLIST)) {
-            blacklistMap = deserializeBlacklist(settings[SETTING_BLACKLIST].string_value);
+            blacklistMap = core::deserializeUserTitles(settings[SETTING_BLACKLIST].string_value);
         }
 
         auto& userTitles = blacklistMap[userId];
@@ -826,7 +779,7 @@ namespace alefbet::pctrl::helpers {
         Setting setting {
             .key = SETTING_BLACKLIST,
             .type = STRING,
-            .string_value = serializeBlacklist(blacklistMap)
+            .string_value = core::serializeUserTitles(blacklistMap)
         };
 
         saveSetting(setting);

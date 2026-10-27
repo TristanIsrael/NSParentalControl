@@ -639,6 +639,107 @@ namespace alefbet::pctrl::srv {
         return Ipc::Result::Ok;
     }
 
+    /*! @brief Returns the number of titles blocked for a user.
+     *
+     * @param request IPC request containing the user ID string (80 bytes). Reply: u32 count.
+     * @return Ipc::Result::Ok on success.
+     */
+    Ipc::Result Service::getBlacklistedTitlesCount(Ipc::Request* request) {
+        char _userId[80] = {0};
+
+        Ipc::Result rc = request->readRequestValue(_userId);
+        if(rc != Ipc::Result::Ok) {
+            logError("[Service] Could not read request data (blocked titles count)\n");
+            return rc;
+        }
+
+        _userId[sizeof(_userId) - 1] = '\0';
+        const auto& titles = helpers::getBlacklistedTitlesForUser(std::string(_userId));
+        request->appendReplyValue(static_cast<u32>(titles.size()));
+
+        return Ipc::Result::Ok;
+    }
+
+    /*! @brief Returns a title blocked for a user, by index.
+     *
+     * @param request IPC request containing the index (u32) and the user ID string (80 bytes).
+     *        Reply: u64 title ID, 0 if the index is out of range.
+     * @return Ipc::Result::Ok on success.
+     */
+    Ipc::Result Service::getBlacklistedTitle(Ipc::Request* request) {
+        typedef struct __attribute__((packed)) {
+            u32 index;
+            char userId[80];
+        } Args;
+
+        Args args{0};
+
+        Ipc::Result rc = request->readRequestValue(args);
+        if(rc != Ipc::Result::Ok) {
+            logError("[Service] Could not read request data (blocked title)\n");
+            return rc;
+        }
+
+        args.userId[sizeof(args.userId) - 1] = '\0';
+        const auto& titles = helpers::getBlacklistedTitlesForUser(std::string(args.userId));
+        const u64 titleId = args.index < titles.size() ? titles[args.index] : 0;
+        request->appendReplyValue(titleId);
+
+        return Ipc::Result::Ok;
+    }
+
+    /*! @brief Blocks a title for a user.
+     *
+     * @param request IPC request containing the title ID (u64) and the user ID string (80 bytes).
+     * @return Ipc::Result::Ok on success.
+     */
+    Ipc::Result Service::addTitleToBlacklist(Ipc::Request* request) {
+        typedef struct __attribute__((packed)) {
+            u64 titleId;
+            char userId[80];
+        } Args;
+
+        Args args{0};
+
+        Ipc::Result rc = request->readRequestValue(args);
+        if(rc != Ipc::Result::Ok || args.titleId == 0) {
+            logError("[Service] Could not read request data (block title)\n");
+            return Ipc::Result::BadInput;
+        }
+
+        args.userId[sizeof(args.userId) - 1] = '\0';
+        logInfo("[Service] Block title %s for user %s\n", titleIdToString(args.titleId).c_str(), args.userId);
+        helpers::addToBlacklist(std::string(args.userId), args.titleId);
+
+        return Ipc::Result::Ok;
+    }
+
+    /*! @brief Unblocks a title for a user.
+     *
+     * @param request IPC request containing the title ID (u64) and the user ID string (80 bytes).
+     * @return Ipc::Result::Ok on success.
+     */
+    Ipc::Result Service::removeTitleFromBlacklist(Ipc::Request* request) {
+        typedef struct __attribute__((packed)) {
+            u64 titleId;
+            char userId[80];
+        } Args;
+
+        Args args{0};
+
+        Ipc::Result rc = request->readRequestValue(args);
+        if(rc != Ipc::Result::Ok || args.titleId == 0) {
+            logError("[Service] Could not read request data (unblock title)\n");
+            return Ipc::Result::BadInput;
+        }
+
+        args.userId[sizeof(args.userId) - 1] = '\0';
+        logInfo("[Service] Unblock title %s for user %s\n", titleIdToString(args.titleId).c_str(), args.userId);
+        helpers::removeFromBlacklist(std::string(args.userId), args.titleId);
+
+        return Ipc::Result::Ok;
+    }
+
     /*! @brief Sets the bed time for a user.
      *
      * @param request IPC request.
@@ -835,6 +936,18 @@ namespace alefbet::pctrl::srv {
             }
             case Ipc::Command::CancelScreenTimeout: {
                 return cancelScreenTimeout(request);
+            }
+            case Ipc::Command::GetBlacklistedTitlesCount: {
+                return getBlacklistedTitlesCount(request);
+            }
+            case Ipc::Command::GetBlacklistedTitle: {
+                return getBlacklistedTitle(request);
+            }
+            case Ipc::Command::AddTitleToBlacklist: {
+                return addTitleToBlacklist(request);
+            }
+            case Ipc::Command::RemoveTitleFromBlacklist: {
+                return removeTitleFromBlacklist(request);
             }
             case Ipc::Command::SetBedtime: {
                 return setBedtime(request);

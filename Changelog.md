@@ -12,6 +12,7 @@
 - The monitoring loop is scheduled on fixed deadlines (one counted minute is one real minute) and no longer spins without pausing when the usage cannot be recorded
 - The usage time request now always replies a value, even when there is no current user
 - Fixed an SD card file system handle leak when Ultrahand notifications are disabled
+- Fixed the notifications always being in English: the console language was read after the connection to the service manager had been closed, so the SET service could not be opened
 
 ### Tools
 

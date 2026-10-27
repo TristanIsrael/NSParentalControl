@@ -25,6 +25,7 @@
 #include "notifications_controller.h"
 #include <chrono>
 #include <list>
+#include <algorithm>
 //#include "pctrl_screen.hpp"
 
 using namespace alefbet::pctrl::logger;
@@ -34,9 +35,79 @@ using namespace alefbet::pctrl::database::history;
 using namespace std::chrono_literals;
 
 constexpr std::chrono::minutes MainLoopDelayInMinutes = 1min;
-constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(MainLoopDelayInMinutes); 
+constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(MainLoopDelayInMinutes);
+constexpr u64 EnforcementDelayInNanos = 5'000'000'000ULL; // Delay between two verifications of the rules while waiting
 
-namespace alefbet::pctrl::srv {   
+namespace {
+    u64 nowInNanos() {
+        return armTicksToNs(armGetSystemTick());
+    }
+}
+
+namespace alefbet::pctrl::srv {
+
+    /*! @brief Sleeps until the next iteration of the monitoring loop.
+     *
+     * The iterations are scheduled on fixed deadlines so that the processing time
+     * of an iteration does not delay the following ones: one counted minute is
+     * one real minute. After a long pause (console sleep) a new period starts.
+     *
+     * While waiting, the play rules are verified regularly so that a game
+     * launched while the user is not allowed to play is stopped within a few
+     * seconds instead of up to one minute.
+     *
+     * @param nextIterationNs Deadline of the current iteration (system tick in ns), updated in place.
+     */
+    void Monitor::waitForNextIteration(u64& nextIterationNs) {
+        const u64 period = MainLoopDelayInNanos.count();
+        nextIterationNs += period;
+
+        u64 now = nowInNanos();
+        if(now >= nextIterationNs) {
+            nextIterationNs = now + period;
+        }
+
+        while(now < nextIterationNs) {
+            svcSleepThread(std::min(nextIterationNs - now, EnforcementDelayInNanos));
+
+            if(running_) {
+                enforceRulesForRunningApplication();
+            }
+
+            now = nowInNanos();
+        }
+    }
+
+    /*! @brief Stops the running application if its user is not allowed to play.
+     *
+     * Uses the same tamper-protected decision as the monitoring loop
+     * (core::evaluatePlayRules) but does not record any usage.
+     */
+    void Monitor::enforceRulesForRunningApplication() {
+        const u64 pid = getRunningApplicationPid();
+        if(pid == 0) return;
+
+        const auto user = getCurrentUser();
+        if(!user.isValid()) return;
+
+        auto settings = loadSettings();
+        const bool isEnabled = !settings.contains(SETTING_ENABLED) ||
+                               settings[SETTING_ENABLED].int_value != 0;
+        if(!isEnabled) return;
+
+        const auto& userId = accountUidToString(user.uid);
+        const auto eval = core::evaluatePlayRules(getDailyLimitForUser(userId),
+                                                  getUserUsageTimeForToday(user.uid),
+                                                  getAdjustedCurrentTime(),
+                                                  getGameStartTime(userId),
+                                                  getBedtime(userId),
+                                                  false);
+
+        if(eval.shouldBlock) {
+            logInfo("[Monitor] Application used by %s while not allowed to play\n", user.nickname.c_str());
+            service_->showScreenTimeout(pid);
+        }
+    }
 
     /*! @brief Starts the monitoring loop if not already running.
      *
@@ -60,6 +131,7 @@ namespace alefbet::pctrl::srv {
         structs::UserData user;
         u64 pid = 0;
         bool wasEnabled = false;
+        u64 nextIterationNs = nowInNanos();
 
         while(true) {
             if(!running_) {
@@ -71,6 +143,7 @@ namespace alefbet::pctrl::srv {
                 }
                 resetTimeJumpState(); // A long idle period must not be mistaken for a clock manipulation
                 svcSleepThread(500'000'000); // Wait for 500ms
+                nextIterationNs = nowInNanos();
                 continue;
             }
 
@@ -91,6 +164,7 @@ namespace alefbet::pctrl::srv {
                 // automatically resumes when the service is enabled again
                 resetTimeJumpState();
                 svcSleepThread(MainLoopDelayInNanos.count());
+                nextIterationNs = nowInNanos();
                 continue;
             }
 
@@ -125,7 +199,9 @@ namespace alefbet::pctrl::srv {
                     const auto& entry = addToHistory(user.uid, title_id, MainLoopDelayInMinutes.count());
 
                     if(!entry.isValid()) {
-                        logError("[Monitor] The database entry is corrupted\n");
+                        logError("[Monitor] The usage could not be recorded\n");
+                        // Never skip the wait, otherwise the loop would spin without pausing
+                        waitForNextIteration(nextIterationNs);
                         continue;
                     }
 
@@ -171,7 +247,7 @@ namespace alefbet::pctrl::srv {
             }
 
             logDebug("[Monitoring] loop\n");
-            svcSleepThread(MainLoopDelayInNanos.count()); //Wait 1 minute
+            waitForNextIteration(nextIterationNs);
         }
     }
 

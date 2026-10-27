@@ -1,5 +1,23 @@
 # Changelog
 
+## Release 2.3.2
+
+### Sysmodule
+
+- Fixed the playtime restarting from zero after a reboot: the history is now loaded before the usage is recorded (previously the usage already recorded that day was ignored and the history file was overwritten with the new entry only)
+- Fixed concurrent accesses to the history between the monitor and the IPC service (the history is now loaded, read and updated under its mutex)
+- An unreadable history file is moved to `sessions.corrupted.bin` and a new history is started, instead of blocking the usage recording
+- The game is closed from the HOME menu with a virtual controller (HOME, X, A), so that the system no longer reports "The software was closed because an error occurred"; `ns:dev` then `pm:shell` are used as a fallback
+- A game launched again while the user is not allowed to play is detected within 5 seconds instead of up to one minute
+- The monitoring loop is scheduled on fixed deadlines (one counted minute is one real minute) and no longer spins without pausing when the usage cannot be recorded
+- The usage time request now always replies a value, even when there is no current user
+- Fixed an SD card file system handle leak when Ultrahand notifications are disabled
+- Fixed the notifications always being in English: the console language was read after the connection to the service manager had been closed, so the SET service could not be opened
+
+### Tools
+
+- Added `scripts/migrate_json_to_bin.py` to convert the 1.x data files (`settings.json`, `sessions.json`) into the binary files, so that upgrading from 1.x keeps the PIN, the limits and the history
+
 ## Release 2.3.1
 
 ### Sysmodule

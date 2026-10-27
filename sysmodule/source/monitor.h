@@ -55,6 +55,10 @@ namespace alefbet::pctrl::srv {
             }
 
         private:
+            void waitForNextIteration(u64& nextIterationNs);
+            void enforceRulesForRunningApplication();
+
+        private:
             alefbet::pctrl::srv::Service* service_ = nullptr;
             bool running_ = false;
             bool notified_ = false;

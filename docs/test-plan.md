@@ -97,6 +97,9 @@ Test result codes: **PASS / FAIL / BLOCKED / NEEDS-CONFIRMATION**.
 | E3 | Game blocked at 07:00 (window Start = 08:00) | Set the system clock forward by 3 hours (attempt to "wait for" the window) | Still blocked: adjusted time ≈ 07:00 |
 | E4 | Any test above | After the jump, read the log | Exactly one `System time jump detected` line per detected jump, with the correct sign and magnitude |
 | E5 | Window Start = 08:00 | Reboot the console at 09:00 (offset state reset), start a game | Allowed: `lastTime`/offset state is reset on start, the real time is used again |
+| E6 | Window End = 22:00, game allowed | Put the console to sleep for 30 minutes or more, wake it up | No `System time jump detected` line; the window decisions use the real time |
+| E7 | Any configuration | Let the sysmodule run across midnight | No `System time jump detected: -1439 minutes` line at midnight |
+| E8 | User A's daily limit used up, User B has time left | Launch a game that asks for the user after its launch, choose User B | No countdown, or the countdown is cancelled (`timeout cancelled` in the log); User B keeps playing |
 
 ### F. Per-user isolation
 

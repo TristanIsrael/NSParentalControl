@@ -39,18 +39,28 @@ namespace alefbet::pctrl::core {
       */
     std::string formatTimeInMinutes(u16 minutesSinceMidnight);
 
+    /*! @brief Value of elapsedMinutes when the real elapsed time is unknown (first observation). */
+    constexpr s64 kElapsedUnknown = -1;
+
     /*! @brief Computes the tamper-protected time.
       *
-      * When the difference between the current time and the last observed time is
-      * larger than kTimeJumpThreshold, a system time jump is assumed and the offset
-      * is updated so that the returned (adjusted) time keeps progressing normally.
+      * The time expected at this observation is the previous observed time plus
+      * the real time elapsed since then, measured with a clock that the user
+      * cannot change and that keeps running while the console sleeps (the
+      * steady clock). When the current time differs from the expected time by
+      * more than kTimeJumpThreshold, the system clock has been changed: the
+      * offset is updated so that the returned (adjusted) time keeps progressing
+      * normally. A console sleep, or the change of day at midnight, is therefore
+      * not mistaken for a clock change.
       *
       * @param currentTime The current time in minutes since midnight (0-1439).
-      * @param lastTime The time observed at the previous iteration (0 on the first iteration).
+      * @param lastTime The time observed at the previous observation (0-1439).
+      * @param elapsedMinutes Real minutes elapsed since the previous observation,
+      *        or kElapsedUnknown for the first observation (no detection).
       * @param offset Cumulative compensation offset, updated in place.
       * @return The adjusted time and the detected jump (0 if none).
       */
-    AdjustedTimeResult computeAdjustedTime(u16 currentTime, u16 lastTime, s32& offset);
+    AdjustedTimeResult computeAdjustedTime(u16 currentTime, u16 lastTime, s64 elapsedMinutes, s32& offset);
 
     /*! @brief Resets the adjusted-time state (e.g. when the sysmodule starts).
       *

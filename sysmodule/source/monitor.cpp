@@ -36,6 +36,7 @@ using namespace std::chrono_literals;
 
 constexpr std::chrono::minutes MainLoopDelayInMinutes = 1min;
 constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(MainLoopDelayInMinutes);
+constexpr u64 BlockConfirmationDelayInNanos = 10'000'000'000ULL; // Delay before confirming a block (user selected after the launch)
 constexpr u64 EnforcementDelayInNanos = 5'000'000'000ULL; // Delay between two verifications of the rules while waiting
 
 namespace {
@@ -78,22 +79,26 @@ namespace alefbet::pctrl::srv {
         }
     }
 
-    /*! @brief Stops the running application if its user is not allowed to play.
+    /*! @brief Checks whether the running application must be stopped for its current user.
      *
      * Uses the same tamper-protected decision as the monitoring loop
-     * (core::evaluatePlayRules) but does not record any usage.
+     * (core::evaluatePlayRules) but does not record any usage. The current user
+     * is read again at each call: it changes when a game asks for the user after
+     * its launch.
+     *
+     * @param pid Process ID of the application the decision is about.
+     * @return true if the application is still running and its user is not allowed to play.
      */
-    void Monitor::enforceRulesForRunningApplication() {
-        const u64 pid = getRunningApplicationPid();
-        if(pid == 0) return;
+    bool Monitor::isRunningApplicationBlocked(u64 pid) {
+        if(pid == 0 || getRunningApplicationPid() != pid) return false;
 
         const auto user = getCurrentUser();
-        if(!user.isValid()) return;
+        if(!user.isValid()) return false;
 
         auto settings = loadSettings();
         const bool isEnabled = !settings.contains(SETTING_ENABLED) ||
                                settings[SETTING_ENABLED].int_value != 0;
-        if(!isEnabled) return;
+        if(!isEnabled) return false;
 
         const auto& userId = accountUidToString(user.uid);
         const auto eval = core::evaluatePlayRules(getDailyLimitForUser(userId),
@@ -105,7 +110,39 @@ namespace alefbet::pctrl::srv {
 
         if(eval.shouldBlock) {
             logInfo("[Monitor] Application used by %s while not allowed to play\n", user.nickname.c_str());
-            service_->showScreenTimeout(pid);
+        }
+
+        return eval.shouldBlock;
+    }
+
+    /*! @brief Stops the running application after the timeout countdown.
+     *
+     * Many games are launched before the user is selected: until then, the
+     * current user is the previous one. The decision is therefore confirmed a few
+     * seconds later before the countdown starts, and evaluated again during the
+     * countdown, which is cancelled when the current user is allowed to play.
+     *
+     * @param pid Process ID of the running application.
+     */
+    void Monitor::stopApplication(u64 pid) {
+        svcSleepThread(BlockConfirmationDelayInNanos);
+
+        if(!isRunningApplicationBlocked(pid)) {
+            logInfo("[Monitor] The block is not confirmed, the application keeps running\n");
+            return;
+        }
+
+        service_->showScreenTimeout(pid, [this, pid]() {
+            return isRunningApplicationBlocked(pid);
+        });
+    }
+
+    /*! @brief Stops the running application if its user is not allowed to play. */
+    void Monitor::enforceRulesForRunningApplication() {
+        const u64 pid = getRunningApplicationPid();
+
+        if(isRunningApplicationBlocked(pid)) {
+            stopApplication(pid);
         }
     }
 
@@ -180,9 +217,7 @@ namespace alefbet::pctrl::srv {
 
             logDebug("[Monitor] Update usages\n");
             // Update time jump offset even when no game is running
-            const auto currentTimeMinutes = getCurrentTimeInMinutesSinceMidnight();
-            const auto adjustedTimeMinutes = getAdjustedTime(currentTimeMinutes, lastTime_, timeJumpOffset_);
-            lastTime_ = currentTimeMinutes;
+            const auto adjustedTimeMinutes = getAdjustedCurrentTime();
             
             // Query the active application and user
             // and update the database
@@ -231,7 +266,7 @@ namespace alefbet::pctrl::srv {
                         NotificationsController::notifyRemainingTime(eval.remainingTimeInMinutes);
                     } else if(eval.shouldBlock) {
                         logInfo("[Monitor] Timeout for the user %s\n", user.nickname.c_str());
-                        service_->showScreenTimeout(pid);
+                        stopApplication(pid);
                     }
                 } else {
                     logDebug("[Monitor] No user found\n");

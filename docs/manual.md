@@ -112,6 +112,8 @@ The screen is organized in two sections:
   - `Allow games from`: the earliest time of day at which the user is allowed to play.
   - `Stop games after`: the time of day at which the user must stop playing (bed time).
 
+Use ← and → to select a value, ↑ and ↓ to change it. Hold ↑ or ↓ to change the value continuously: the longer the key is held, the faster the value changes.
+
 Set a time to `0h 0mn` to disable the bound. When both times are set, the user can only play inside the window (for example 08:00 to 21:00). A window crossing midnight is also possible (for example 20:00 to 08:00).
 
 The game is stopped when the daily limit is used up **or** when the current time is outside the playtime window. The time used for these checks is protected against manipulations of the system clock.

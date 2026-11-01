@@ -52,6 +52,8 @@ private:
     void selectBeforeItem();
     void decreaseValue();
     void increaseValue();
+    void startAutoRepeat(u64 key);
+    bool handleAutoRepeat(u64 keysHeld);
     u16 valueRanged(int value, int diff, int min, int max, bool cycle = true);
 
 private:    
@@ -66,4 +68,7 @@ private:
     u16 bedtimeMinutes_ = 0;
     u16 gameStartHours_ = 0;
     u16 gameStartMinutes_ = 0;
+    u64 repeatKey_ = 0;          // Up or down key held for the auto-repeat, 0 if none
+    u32 heldFrames_ = 0;         // Number of frames the repeat key has been held
+    u32 framesUntilRepeat_ = 0;  // Frames left before the next repeated step
 };

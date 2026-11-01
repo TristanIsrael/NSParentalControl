@@ -169,7 +169,9 @@ void SetupLimitsUserPanel::update() {
  * @param joyStickPosRight Right analog stick position.
  * @return true if the input was handled, false otherwise. */
 bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) {
-    if (keysDown == 0) return false;    
+    if (keysDown == 0) return handleAutoRepeat(keysHeld);
+
+    repeatKey_ = 0;
 
     // B to cancel
     if(keysDown & HidNpadButton_B) {        
@@ -190,8 +192,10 @@ bool SetupLimitsUserPanel::handleInput(u64 keysDown, u64 keysHeld, const HidTouc
         return true;
     } else if(keysDown & HidNpadButton_AnyDown) {
         decreaseValue();
+        startAutoRepeat(HidNpadButton_AnyDown);
     } else if(keysDown & HidNpadButton_AnyUp) {
         increaseValue();
+        startAutoRepeat(HidNpadButton_AnyUp);
     } else if(keysDown & HidNpadButton_AnyLeft) {
         selectBeforeItem();
     } else if(keysDown & HidNpadButton_AnyRight) {
@@ -225,6 +229,53 @@ void SetupLimitsUserPanel::selectBeforeItem() {
         case DailyLimitHours: selectedItem_ = BedtimeMinutes; break;
         default: break;
     }
+}
+
+namespace {
+    constexpr u32 RepeatInitialDelayInFrames = 24; // ~0.4 s at 60 fps before the first repeated step
+
+    /*! @brief Returns the number of frames between two repeated steps.
+     *
+     * The longer the key is held, the faster the value changes.
+     *
+     * @param heldFrames Number of frames the key has been held.
+     * @return The interval in frames (8 frames ~7 steps/s, 4 ~15 steps/s, 2 ~30 steps/s).
+     */
+    u32 repeatIntervalInFrames(u32 heldFrames) {
+        if(heldFrames > 180) return 2; // held for more than ~3 s
+        if(heldFrames > 90) return 4;  // held for more than ~1.5 s
+        return 8;
+    }
+}
+
+/*! @brief Starts the auto-repeat of the up or down key that has just been pressed.
+ * @param key HidNpadButton_AnyUp or HidNpadButton_AnyDown. */
+void SetupLimitsUserPanel::startAutoRepeat(u64 key) {
+    repeatKey_ = key;
+    heldFrames_ = 0;
+    framesUntilRepeat_ = RepeatInitialDelayInFrames;
+}
+
+/*! @brief Repeats the value change while the up or down key is held, faster and faster.
+ * @param keysHeld Keys held this frame.
+ * @return false (the input is not captured). */
+bool SetupLimitsUserPanel::handleAutoRepeat(u64 keysHeld) {
+    if(repeatKey_ == 0 || (keysHeld & repeatKey_) == 0) {
+        repeatKey_ = 0;
+        return false;
+    }
+
+    heldFrames_++;
+    if(--framesUntilRepeat_ > 0) return false;
+
+    if(repeatKey_ == HidNpadButton_AnyUp) {
+        increaseValue();
+    } else {
+        decreaseValue();
+    }
+
+    framesUntilRepeat_ = repeatIntervalInFrames(heldFrames_);
+    return false;
 }
 
 /*! @brief Decreases the currently selected limit value by one unit. */

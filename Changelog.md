@@ -5,6 +5,7 @@
 ### Overlay
 
 - New `Blocked games` entry in the Admin menu: choose a user, then block or allow each game installed on the console
+- In the limits setup screen, holding up or down changes the value continuously, faster and faster (about 7, then 15, then 30 steps per second)
 
 ### Sysmodule
 

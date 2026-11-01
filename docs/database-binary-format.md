@@ -33,8 +33,9 @@ The binary format was chosen over JSON for the following reasons:
 
 - Cache: `History history_`
 - Sync flag: `data_synchronized_`
-- Mutex: `mutex_database_`
-- Trigger: `loadDatabase()` called by `getHistory()`
+- Mutex: `mutex_database_`, held by `getHistory()` and `addToHistory()` for the whole operation (load, read or update, save)
+- Trigger: `loadDatabase()` called by `getHistory()` and by `addToHistory()`. The history is always loaded before it is updated: otherwise, after a reboot, the usage already recorded that day would be ignored and the file would be overwritten with the new entry only. If the history cannot be loaded, the usage is not recorded.
+- Unreadable file: when `sessions.bin` cannot be parsed (bad magic, unsupported version, truncated entry), it is moved to `sessions.corrupted.bin` (kept for analysis) and a new history is started, so that the usage recording is not blocked.
 
 ### Uniqueness Rules
 
@@ -165,6 +166,23 @@ The keys ending in `_users` share a common serialization format: a single STRING
 - A value of `0` means the bound is not set (disabled).
 
 See `docs/playtime-window.md` for the rules applied to the playtime window bounds.
+
+---
+
+## Migration from the 1.x JSON files
+
+The versions prior to 2.0 stored the data in `settings.json` and `sessions.json`. The sysmodule does not read these files, so the settings (PIN, limits) and the history are reset when upgrading. The script `scripts/migrate_json_to_bin.py` converts them into `settings.bin` and `sessions.bin` on a computer:
+
+```
+python3 scripts/migrate_json_to_bin.py --settings-in settings.json --history-in sessions.json
+```
+
+- `admin_pin` is decoded from the 1.x obfuscation and stored as `b1,b2,b3,b4`.
+- `daily_limit_users` (a JSON object `{"uid": minutes}` in 1.3) is serialized as `uid=minutes;uid=minutes`.
+- `enabled`, `log_level`, `show_remaining_time`, `working_mode` and `authentication` are copied as integers.
+- `daily_limit_global` and `daily_limit_game` are not used since 2.0 and are dropped.
+
+Copy the generated files to `/config/parental_control/` while the sysmodule is not running the new version yet (before rebooting after the upgrade), then check them with `scripts/viewer.py --both`.
 
 ---
 

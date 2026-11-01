@@ -33,7 +33,7 @@ The reference for the expected behavior is [`docs/playtime-window.md`](playtime-
 1. Install the v2.2.0 sysmodule (`exefs.nsp` → `/atmosphere/contents/4200000000003103`) and the overlay (`parental_control.ovl` → `/switch/.overlays/`).
 2. Reboot. Open the overlay → Admin (default PIN `A A A A`) → `Log level` = `DEBUG`.
 3. For each test, reset User A's settings by setting: Daily = `0h 0mn` if "no daily limit" is not possible, otherwise use a high value (e.g. `12h 0mn`), and the window bounds as specified by the test.
-4. The monitor loop runs every minute: **any behavior change takes effect within ~1 minute** after a precondition is met. Wait 2 minutes before concluding a failure.
+4. The monitor loop runs every minute: **any behavior change takes effect within ~1 minute** after a precondition is met. Wait 2 minutes before concluding a failure. A game launched while the user is not allowed to play is detected within ~5 seconds (then the 60-second countdown starts).
 
 **Verification means:**
 - **Blocking**: the timeout screen is shown and the game is closed (working mode = `Blocking`).

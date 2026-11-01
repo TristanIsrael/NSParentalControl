@@ -55,7 +55,9 @@ The `S > B` case is mandatory: a window like 20:00 to 08:00 must allow play at 2
 
 ## Enforcement
 
-- The rules are evaluated in `Monitor::loop()` (`sysmodule/source/monitor.cpp`), once per minute while a game is running.
+- The rules are evaluated in `Monitor::loop()` (`sysmodule/source/monitor.cpp`), once per minute while a game is running. The iterations are scheduled on fixed deadlines (system tick), so that one counted minute is one real minute whatever the processing time.
+- Between two iterations, the monitor verifies the rules every 5 seconds without recording any usage (`Monitor::enforceRulesForRunningApplication()`), so that a game launched while the user is not allowed to play (limit used up, outside the window) is stopped within a few seconds instead of up to one minute.
+- A stopped game is closed after a 60-second countdown (a notification every 10 seconds). It is closed from the HOME menu with a virtual controller (HOME, X, A), so that the system does not report an error; if it is still running, it is terminated through `ns:dev`, then `pm:shell`.
 - The monitoring loop never exits. When the service is disabled (setting `enabled` = 0, or `Monitor::stop()`), the loop goes idle and automatically resumes when the service is enabled again; a reboot is not required. While idle, the tamper-protection state is reset so that the idle period is not mistaken for a system clock manipulation.
 - The pure decision logic (window membership, tamper-protected time, the block/notify decision, the notification cadence, per-user serialization) lives in `sysmodule/source/playtime_rules.{h,cpp}`, which has **no Switch dependency** so it can be unit-tested on the host (`make -C tests`, see `/tests`).
 - The final block/notify decision is consolidated in `core::evaluatePlayRules(...)` (`playtime_rules.cpp`), which `Monitor::loop` calls once per minute. `core::shouldSendNotification(...)` implements the "every 15 minutes and every minute in the last 5" cadence.

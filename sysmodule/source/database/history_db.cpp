@@ -31,6 +31,7 @@ using namespace alefbet::pctrl::helpers;
 
 static const char* DATA_DIR = "/config/parental_control";
 static const char* DB_FILENAME = "/config/parental_control/sessions.bin";
+static const char* DB_CORRUPTED_FILENAME = "/config/parental_control/sessions.corrupted.bin";
 
 namespace alefbet::pctrl::database::history {
 
@@ -157,12 +158,26 @@ namespace alefbet::pctrl::database::history {
         return true;
     }
 
-    /*! @brief Loads the history database from the SD card file. */
-    void loadDatabase()
+    /*! @brief Moves an unreadable database file aside so that a new history can be started.
+     *
+     * Without this, a corrupted file would block the usage recording forever. The
+     * file is kept for analysis. */
+    static void quarantineDatabase() {
+        fsFsDeleteFile(&sdmc_, DB_CORRUPTED_FILENAME);
+
+        if(R_FAILED(fsFsRenameFile(&sdmc_, DB_FILENAME, DB_CORRUPTED_FILENAME))) {
+            logError("[Database] Could not move the corrupted database file aside\n");
+        } else {
+            logInfo("[Database] The corrupted database file has been moved to %s\n", DB_CORRUPTED_FILENAME);
+        }
+    }
+
+    /*! @brief Loads the history database from the SD card file.
+     *
+     * The caller must hold mutex_database_. */
+    static void loadDatabase()
     {
         if(data_synchronized_) return;
-
-        std::lock_guard<std::mutex> lock(mutex_database_);
 
         logDebug("[Database] Loading database at %s\n", DB_FILENAME);
 
@@ -221,6 +236,11 @@ namespace alefbet::pctrl::database::history {
         if(!loadEntriesFromBinary(buffer.data(), fileSize)) {
             logError("[Database] Failed to parse database entries\n");
             isTampered_ = true;
+
+            // Start a new history instead of blocking the usage recording
+            history_ = History();
+            quarantineDatabase();
+            data_synchronized_ = true;
             return;
         }
 
@@ -229,10 +249,10 @@ namespace alefbet::pctrl::database::history {
         data_synchronized_ = true;
     }
 
-    /*! @brief Saves the history database to the SD card file. */
-    void saveDatabase() {
-        std::lock_guard<std::mutex> lock(mutex_database_);
-
+    /*! @brief Saves the history database to the SD card file.
+     *
+     * The caller must hold mutex_database_. */
+    static void saveDatabase() {
         if(!prepare()) return;
 
         const auto& entries = history_.entries();
@@ -304,6 +324,8 @@ namespace alefbet::pctrl::database::history {
      * @param date The date string to filter by.
      * @return Vector of history entries matching the criteria. */
     std::vector<HistoryEntry> getHistory(AccountUid uid, std::string date) {
+        std::lock_guard<std::mutex> lock(mutex_database_);
+
         loadDatabase();
         return history_.entries(uid, date);
     }
@@ -326,6 +348,17 @@ namespace alefbet::pctrl::database::history {
 
         const auto& date = today();
         if(date.empty()) {
+            return result;
+        }
+
+        std::lock_guard<std::mutex> lock(mutex_database_);
+
+        // The history must be loaded before it is updated. Otherwise, after a
+        // reboot, the usage already recorded today would be ignored and the
+        // file would be overwritten with the new entry only.
+        loadDatabase();
+        if(!data_synchronized_) {
+            logError("[Database] The history could not be loaded, the usage is not recorded\n");
             return result;
         }
 

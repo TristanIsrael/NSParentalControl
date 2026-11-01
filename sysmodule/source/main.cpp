@@ -185,10 +185,17 @@ int main(int argc, char **argv)
 
     //testMemory();
 
-    // Detect the console language for the notifications
-    setInitialize();
-    detectSystemLanguage();
-    setExit();
+    // Detect the console language for the notifications. The connection to the
+    // service manager has been closed at the end of __appInit(): it is needed to
+    // open the SET service, otherwise the detection falls back to English.
+    smInitialize();
+    if(R_SUCCEEDED(setInitialize())) {
+        detectSystemLanguage();
+        setExit();
+    } else {
+        logError("[Main] Could not initialize the SET service\n");
+    }
+    smExit();
     logInfo("[Main] Notification language: %s\n", current() == Language::French ? "French" : "English");
 
     ::Result rc = 0;

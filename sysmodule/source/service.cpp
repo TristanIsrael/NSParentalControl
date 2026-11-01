@@ -247,6 +247,8 @@ namespace alefbet::pctrl::srv {
             user = helpers::getCurrentUser();
             if(!user.isValid()) {
                 logDebug("[Service] There is no user\n");
+                // The client always reads a value
+                request->appendReplyValue((u16)0);
                 return Ipc::Result::Ok;
             }
         } else {

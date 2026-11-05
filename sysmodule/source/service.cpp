@@ -80,11 +80,13 @@ namespace alefbet::pctrl::srv {
 
     /*! @brief Sends countdown notifications every 10 seconds and terminates the app after 60 seconds.
      *
-     * The countdown can be cancelled if the parent application closes or if the game is no longer running.
-     * In that case the sysmodule returns to normal monitoring state.
+     * The countdown can be cancelled if the parent application closes, if the game is no longer running,
+     * or if the game is no longer blocked (stillBlocked returns false, e.g. when the user selected after
+     * the launch is allowed to play). In that case the sysmodule returns to normal monitoring state.
      *
-     * @param targetPid The PID of the game that triggered the timeout. */
-    void Service::showScreenTimeout(u64 targetPid) {        
+     * @param targetPid The PID of the game that triggered the timeout.
+     * @param stillBlocked Evaluates the decision again during the countdown (optional). */
+    void Service::showScreenTimeout(u64 targetPid, const std::function<bool()>& stillBlocked) {        
         logDebug("[Service] Starting 60s countdown with notifications for PID %llu\n", targetPid);
 
         timeout_target_pid_ = targetPid;
@@ -99,6 +101,12 @@ namespace alefbet::pctrl::srv {
 
             if(getRunningApplicationPid() != targetPid) {
                 logInfo("[Service] Game PID %llu is no longer running, abandoning timeout\n", targetPid);
+                return;
+            }
+
+            // The decision is evaluated again with the current user (e.g. selected after the launch)
+            if(seconds < totalSeconds && stillBlocked && !stillBlocked()) {
+                logInfo("[Service] The application is no longer blocked, timeout cancelled\n");
                 return;
             }
 

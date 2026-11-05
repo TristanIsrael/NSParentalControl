@@ -1,5 +1,14 @@
 # Changelog
 
+## Release 2.3.3
+
+### Sysmodule
+
+- Fixed the console sleep being detected as a system clock change: each wake-up shifted the tamper-protected time (by more than 15 hours after a few days), so the playtime window was evaluated on a wrong time. The real elapsed time is now measured with the steady clock, which keeps running while the console sleeps and cannot be changed by the user
+- Fixed the change of day at midnight being detected as a clock change (-1439 minutes)
+- Fixed a game being stopped because of the previous user: many games are launched before the user is selected. The block is now confirmed 10 seconds later with the current user, and the countdown is cancelled when the current user is allowed to play
+- The tamper-protected time state is protected by a mutex (it is also read by the `GetAdjustedCurrentTime` IPC command)
+
 ## Release 2.3.2
 
 ### Sysmodule

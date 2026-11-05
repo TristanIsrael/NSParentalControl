@@ -16,7 +16,13 @@ The three conditions are independent and combined with a logical OR.
 
 All time-based decisions must use the **adjusted time**, never the raw system time.
 
-- `core::computeAdjustedTime(currentTime, lastTime, offset)` (`sysmodule/source/playtime_rules.cpp`), exposed to the monitor through `helpers::getAdjustedTime` (`sysmodule/source/helpers.cpp`), detects jumps of the system clock larger than `core::kTimeJumpThreshold` (5 minutes) between two monitor iterations and compensates them with a cumulative offset.
+- `core::computeAdjustedTime(currentTime, lastTime, elapsedMinutes, offset)` (`sysmodule/source/playtime_rules.cpp`), exposed to the monitor through `helpers::getAdjustedTime` (`sysmodule/source/helpers.cpp`), detects jumps of the system clock larger than `core::kTimeJumpThreshold` (5 minutes) and compensates them with a cumulative offset.
+- A jump is the difference between the current time and the **expected** time: the previous observed time plus the real time elapsed since then (`elapsedMinutes`), modulo 24 hours. The real elapsed time is measured with the standard steady clock (`timeGetStandardSteadyClockTimePoint`, `helpers::getSteadyClockSeconds`), which keeps running while the console sleeps and cannot be changed by the user. Therefore:
+  - a console sleep is not a jump (the system and the steady clocks both advance),
+  - the change of day at midnight (23:59 -> 00:00) is not a jump,
+  - a clock change made while the console sleeps is still detected.
+- The first observation (no previous steady clock reading) never detects a jump. If the steady clock cannot be read, no jump is detected either.
+- The observation state (`lastTime`, steady clock reading, offset) is shared by the monitoring loop and the `GetAdjustedCurrentTime` IPC command, and protected by a mutex in `Monitor`.
 - The adjusted time is wrapped in the range `[0, 1440)` minutes.
 - Purpose: a user who changes the system clock to escape the limits cannot, because the offset follows the jump.
 
@@ -57,6 +63,7 @@ The `S > B` case is mandatory: a window like 20:00 to 08:00 must allow play at 2
 
 - The rules are evaluated in `Monitor::loop()` (`sysmodule/source/monitor.cpp`), once per minute while a game is running. The iterations are scheduled on fixed deadlines (system tick), so that one counted minute is one real minute whatever the processing time.
 - Between two iterations, the monitor verifies the rules every 5 seconds without recording any usage (`Monitor::enforceRulesForRunningApplication()`), so that a game launched while the user is not allowed to play (limit used up, outside the window) is stopped within a few seconds instead of up to one minute.
+- Many games are launched before the user is selected: until then, the current user is the previous one. Before the countdown starts, the decision is therefore confirmed 10 seconds later with the current user (`Monitor::stopApplication`), and it is evaluated again before each countdown notification: the countdown is cancelled when the current user is allowed to play.
 - A stopped game is closed after a 60-second countdown (a notification every 10 seconds). It is closed from the HOME menu with a virtual controller (HOME, X, A), so that the system does not report an error; if it is still running, it is terminated through `ns:dev`, then `pm:shell`.
 - The monitoring loop never exits. When the service is disabled (setting `enabled` = 0, or `Monitor::stop()`), the loop goes idle and automatically resumes when the service is enabled again; a reboot is not required. While idle, the tamper-protection state is reset so that the idle period is not mistaken for a system clock manipulation.
 - The pure decision logic (window membership, tamper-protected time, the block/notify decision, the notification cadence, per-user serialization) lives in `sysmodule/source/playtime_rules.{h,cpp}`, which has **no Switch dependency** so it can be unit-tested on the host (`make -C tests`, see `/tests`).

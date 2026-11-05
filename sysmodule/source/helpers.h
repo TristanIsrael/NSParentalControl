@@ -87,8 +87,9 @@ namespace alefbet::pctrl {
         std::string today();
         u16 getCurrentTimeInMinutesSinceMidnight();
         std::string formatTimeInMinutes(u16 minutesSinceMidnight);
-        u16 getAdjustedTime(u16 currTime, u16& lastTime, s32& offset);
-        void resetAdjustedTimeState(u16& lastTime, s32& offset);
+        s64 getSteadyClockSeconds();
+        u16 getAdjustedTime(u16 currTime, u16& lastTime, s64& lastSteadySeconds, s32& offset);
+        void resetAdjustedTimeState(u16& lastTime, s64& lastSteadySeconds, s32& offset);
 
         //bool shutdown();
         bool rebootToPayload();

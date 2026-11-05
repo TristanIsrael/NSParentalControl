@@ -33,30 +33,31 @@ namespace alefbet::pctrl::core {
         return std::string(buffer);
     }
 
-    AdjustedTimeResult computeAdjustedTime(u16 currentTime, u16 lastTime, s32& offset) {
+    AdjustedTimeResult computeAdjustedTime(u16 currentTime, u16 lastTime, s64 elapsedMinutes, s32& offset) {
+        constexpr s64 MinutesPerDay = 1440;
         s32 jump = 0;
 
-        if(lastTime != 0) {
-            const s32 apparentDiff = static_cast<s32>(currentTime) - static_cast<s32>(lastTime);
+        if(elapsedMinutes != kElapsedUnknown) {
+            const s64 expectedTime = (static_cast<s64>(lastTime) + elapsedMinutes) % MinutesPerDay;
 
-            if(std::abs(apparentDiff) > kTimeJumpThreshold) {
-                jump = apparentDiff;
-                offset -= apparentDiff;
+            // Difference between the current and the expected time, in (-720, 720]
+            s64 diff = (static_cast<s64>(currentTime) - expectedTime) % MinutesPerDay;
+            if(diff > MinutesPerDay / 2) diff -= MinutesPerDay;
+            if(diff <= -MinutesPerDay / 2) diff += MinutesPerDay;
+
+            if(std::abs(diff) > kTimeJumpThreshold) {
+                jump = static_cast<s32>(diff);
+                offset -= jump;
             }
         }
 
         const s32 adjusted = static_cast<s32>(currentTime) + offset;
 
-        u16 result;
-        if(adjusted < 0) {
-            result = static_cast<u16>(1440 + adjusted);
-        } else if(adjusted >= 1440) {
-            result = static_cast<u16>(adjusted - 1440);
-        } else {
-            result = static_cast<u16>(adjusted);
-        }
+        // Wrap in [0, 1440) whatever the accumulated offset
+        s32 result = adjusted % static_cast<s32>(MinutesPerDay);
+        if(result < 0) result += static_cast<s32>(MinutesPerDay);
 
-        return {result, jump};
+        return {static_cast<u16>(result), jump};
     }
 
     void resetAdjustedTimeState(u16& lastTime, s32& offset) {

@@ -18,6 +18,7 @@
 
 #pragma once
 #include <switch.h>
+#include <mutex>
 #include "database/history.h"
 #include "service.h"
 #include "helpers.h"
@@ -42,28 +43,32 @@ namespace alefbet::pctrl::srv {
                 service->setMonitor(this);
             }
 
+            // Called by the monitor and by the IPC service threads
             u16 getAdjustedCurrentTime() {
+                std::lock_guard<std::mutex> lock(timeMutex_);
                 const auto currentTime = getCurrentTimeInMinutesSinceMidnight();
-                u16 result = getAdjustedTime(currentTime, lastTime_, timeJumpOffset_);
-                lastTime_ = currentTime;
-                return result;
+                return getAdjustedTime(currentTime, lastTime_, lastSteadySeconds_, timeJumpOffset_);
             }
 
             void resetTimeJumpState() {
-                lastTime_ = 0;
-                timeJumpOffset_ = 0;
+                std::lock_guard<std::mutex> lock(timeMutex_);
+                resetAdjustedTimeState(lastTime_, lastSteadySeconds_, timeJumpOffset_);
             }
 
         private:
             void waitForNextIteration(u64& nextIterationNs);
             void enforceRulesForRunningApplication();
+            bool isRunningApplicationBlocked(u64 pid);
+            void stopApplication(u64 pid);
 
         private:
             alefbet::pctrl::srv::Service* service_ = nullptr;
             bool running_ = false;
             bool notified_ = false;
             u64 currentTitle_ = 0;
+            std::mutex timeMutex_;
             u16 lastTime_ = 0;
+            s64 lastSteadySeconds_ = -1; // Steady clock at the last time observation, -1 if none
             s32 timeJumpOffset_ = 0;
     };    
 

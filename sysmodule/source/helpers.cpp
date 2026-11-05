@@ -342,18 +342,63 @@ namespace alefbet::pctrl::helpers {
              return core::formatTimeInMinutes(minutesSinceMidnight);
          }
 
-         u16 getAdjustedTime(u16 currTime, u16& lastTime, s32& offset) {
-             const auto result = core::computeAdjustedTime(currTime, lastTime, offset);
+    /*! @brief Reads the standard steady clock.
+     *
+     * The steady clock keeps running while the console sleeps and cannot be
+     * changed by the user, unlike the system clock.
+     *
+     * @return The steady clock time point in seconds, or -1 on failure.
+     */
+    s64 getSteadyClockSeconds() {
+        if(R_FAILED(timeInitialize())) {
+            logError("[Helpers] Could not connect to time service\n");
+            return -1;
+        }
+
+        TimeSteadyClockTimePoint timePoint;
+        if(R_FAILED(timeGetStandardSteadyClockTimePoint(&timePoint))) {
+            logError("[Helpers] Could not read the steady clock\n");
+            return -1;
+        }
+
+        return timePoint.time_point;
+    }
+
+    /*! @brief Computes the tamper-protected time and updates the observation state.
+     *
+     * The real time elapsed since the previous observation is measured with the
+     * steady clock, so that a console sleep or the change of day at midnight is
+     * not mistaken for a system clock change (see core::computeAdjustedTime).
+     *
+     * @param currTime The current system time in minutes since midnight.
+     * @param lastTime The previous observed time, updated in place.
+     * @param lastSteadySeconds The steady clock at the previous observation (-1 if none), updated in place.
+     * @param offset Cumulative compensation offset, updated in place.
+     * @return The adjusted time in minutes since midnight.
+     */
+         u16 getAdjustedTime(u16 currTime, u16& lastTime, s64& lastSteadySeconds, s32& offset) {
+             const s64 steadySeconds = getSteadyClockSeconds();
+
+             s64 elapsedMinutes = core::kElapsedUnknown;
+             if(lastSteadySeconds >= 0 && steadySeconds >= lastSteadySeconds) {
+                 elapsedMinutes = (steadySeconds - lastSteadySeconds) / 60;
+             }
+
+             const auto result = core::computeAdjustedTime(currTime, lastTime, elapsedMinutes, offset);
 
              if(result.jump != 0) {
                  logInfo("[Helpers] System time jump detected: %+d minutes, adjusting offset to %d\n", result.jump, offset);
              }
 
+             lastTime = currTime;
+             lastSteadySeconds = steadySeconds;
+
              return result.time;
          }
 
-         void resetAdjustedTimeState(u16& lastTime, s32& offset) {
+         void resetAdjustedTimeState(u16& lastTime, s64& lastSteadySeconds, s32& offset) {
              core::resetAdjustedTimeState(lastTime, offset);
+             lastSteadySeconds = -1;
          }
 
     /*! @brief Reads the reboot payload file from the SD card.

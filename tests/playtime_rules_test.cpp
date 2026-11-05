@@ -50,7 +50,7 @@ TEST(format_single_digits_padded) {
 
 TEST(adjusted_first_iteration_no_jump) {
     s32 offset = 0;
-    auto r = computeAdjustedTime(540, 0, offset);
+    auto r = computeAdjustedTime(540, 0, kElapsedUnknown, offset);
     CHECK_EQ(r.time, 540);
     CHECK_EQ(r.jump, 0);
     CHECK_EQ(offset, 0);
@@ -58,7 +58,7 @@ TEST(adjusted_first_iteration_no_jump) {
 
 TEST(adjusted_normal_step) {
     s32 offset = 0;
-    auto r = computeAdjustedTime(541, 540, offset);
+    auto r = computeAdjustedTime(541, 540, 1, offset);
     CHECK_EQ(r.time, 541);
     CHECK_EQ(r.jump, 0);
     CHECK_EQ(offset, 0);
@@ -66,7 +66,7 @@ TEST(adjusted_normal_step) {
 
 TEST(adjusted_step_within_threshold_ignored) {
     s32 offset = 0;
-    auto r = computeAdjustedTime(545, 540, offset);
+    auto r = computeAdjustedTime(545, 540, 1, offset);
     CHECK_EQ(r.time, 545);
     CHECK_EQ(r.jump, 0);
     CHECK_EQ(offset, 0);
@@ -75,7 +75,7 @@ TEST(adjusted_step_within_threshold_ignored) {
 TEST(adjusted_forward_jump_compensated) {
     // 09:00 -> 12:00: the clock was pushed forward by 3h, the adjusted time must stay at 09:00
     s32 offset = 0;
-    auto r = computeAdjustedTime(720, 540, offset);
+    auto r = computeAdjustedTime(720, 540, 0, offset);
     CHECK_EQ(r.jump, 180);
     CHECK_EQ(offset, -180);
     CHECK_EQ(r.time, 540);
@@ -84,7 +84,7 @@ TEST(adjusted_forward_jump_compensated) {
 TEST(adjusted_backward_jump_compensated) {
     // 19:00 -> 10:00: the clock was pushed back by 9h, the adjusted time must stay at 19:00
     s32 offset = 0;
-    auto r = computeAdjustedTime(600, 1140, offset);
+    auto r = computeAdjustedTime(600, 1140, 0, offset);
     CHECK_EQ(r.jump, -540);
     CHECK_EQ(offset, 540);
     CHECK_EQ(r.time, 1140);
@@ -94,11 +94,11 @@ TEST(adjusted_jumps_accumulate_in_offset) {
     s32 offset = 0;
     u16 last = 540;
 
-    auto r1 = computeAdjustedTime(720, last, offset); // +180
+    auto r1 = computeAdjustedTime(720, last, 0, offset); // +180
     CHECK_EQ(r1.jump, 180);
 
     last = 720;
-    auto r2 = computeAdjustedTime(800, last, offset); // +80
+    auto r2 = computeAdjustedTime(800, last, 0, offset); // +80
     CHECK_EQ(r2.jump, 80);
     CHECK_EQ(offset, -260);
     CHECK_EQ(r2.time, 540); // 09:00 still
@@ -106,14 +106,63 @@ TEST(adjusted_jumps_accumulate_in_offset) {
 
 TEST(adjusted_wraps_below_zero) {
     s32 offset = -20;
-    auto r = computeAdjustedTime(10, 5, offset);
+    auto r = computeAdjustedTime(10, 5, 5, offset);
     CHECK_EQ(r.time, 1430);
 }
 
 TEST(adjusted_wraps_above_end_of_day) {
     s32 offset = 20;
-    auto r = computeAdjustedTime(1430, 1425, offset);
+    auto r = computeAdjustedTime(1430, 1425, 5, offset);
     CHECK_EQ(r.time, 10);
+}
+
+TEST(adjusted_console_sleep_is_not_a_jump) {
+    // 09:00 -> 09:40 after a 40-minute console sleep: real time elapsed, no clock change
+    s32 offset = 0;
+    auto r = computeAdjustedTime(580, 540, 40, offset);
+    CHECK_EQ(r.jump, 0);
+    CHECK_EQ(offset, 0);
+    CHECK_EQ(r.time, 580);
+}
+
+TEST(adjusted_midnight_is_not_a_jump) {
+    // 23:59 -> 00:00 one minute later: the change of day is not a clock change
+    s32 offset = 0;
+    auto r = computeAdjustedTime(0, 1439, 1, offset);
+    CHECK_EQ(r.jump, 0);
+    CHECK_EQ(offset, 0);
+    CHECK_EQ(r.time, 0);
+}
+
+TEST(adjusted_observation_at_midnight_is_a_valid_last_time) {
+    // 00:00 -> 00:01: a previous observation at midnight (0) must not be taken as "no observation"
+    s32 offset = 0;
+    auto r = computeAdjustedTime(181, 0, 1, offset);
+    CHECK_EQ(r.jump, 180);
+    CHECK_EQ(offset, -180);
+    CHECK_EQ(r.time, 1);
+}
+
+TEST(adjusted_clock_change_during_sleep_detected) {
+    // 09:00, 40-minute sleep, and the clock was pushed forward by 3h meanwhile: 12:40
+    s32 offset = 0;
+    auto r = computeAdjustedTime(760, 540, 40, offset);
+    CHECK_EQ(r.jump, 180);
+    CHECK_EQ(r.time, 580);
+}
+
+TEST(adjusted_long_sleep_across_midnight_is_not_a_jump) {
+    // 22:00, then a 10-hour sleep: 08:00 the next day
+    s32 offset = 0;
+    auto r = computeAdjustedTime(480, 1320, 600, offset);
+    CHECK_EQ(r.jump, 0);
+    CHECK_EQ(r.time, 480);
+}
+
+TEST(adjusted_wraps_large_offsets) {
+    s32 offset = -3000;
+    auto r = computeAdjustedTime(600, 600, 0, offset);
+    CHECK_EQ(r.time, 480); // (600 - 3000) mod 1440
 }
 
 TEST(adjusted_reset_state) {

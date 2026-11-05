@@ -19,6 +19,7 @@
 #include <switch.h>
 #include <vector>
 #include <atomic>
+#include <functional>
 #include "ipc/Server.hpp"
 //#include "gui_controller.h"
 //#include "pctrl_screen.hpp"
@@ -42,7 +43,7 @@ namespace alefbet::pctrl::srv {
                 monitor_ = monitor;
             }
 
-            void showScreenTimeout(u64 targetPid);
+            void showScreenTimeout(u64 targetPid, const std::function<bool()>& stillBlocked = nullptr);
 
         private:
             Ipc::Result commandThread(Ipc::Request*);

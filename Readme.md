@@ -23,8 +23,9 @@ The user manual can be found [here](docs/manual.md).
 | Firmware | Atmosphere | State |
 |--|--|--|
 | 20.3.0 | 1.9.4 | Working |
-| 21.2.0 | 1.10.2 | Test in progress |
-| 21.2.0 | 1.12.1 | Games randomly stop (Atmosphere?) |
+| 21.2.0 | 1.10.2 | Working |
+| 21.2.0 | 1.12.1 | Working |
+| 23.0.1 | 1.12.1 | Currently testing |
 
 Linked with:
 - libnx 4.10.0 

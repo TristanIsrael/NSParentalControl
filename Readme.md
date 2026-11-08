@@ -222,4 +222,5 @@ https://github.com/switchbrew/switch-examples/tree/master
 - Sean Barrett for STB Truetype library.
 - @WerWolv for [Tesla library](https://github.com/WerWolv/libtesla).
 - @ppkantorski for [Ultrahand Overlay](https://github.com/ppkantorski/Ultrahand-Overlay).
-- @tallbl0nde for IPC Server (from TriPlayer)
+- @tallbl0nde for IPC Server (from TriPlayer).
+- @[M3c4tr0x](https://github.com/M3c4tr0x) for bug fixes.

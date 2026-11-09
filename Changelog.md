@@ -1,5 +1,18 @@
 # Changelog
 
+## Release 2.4.0
+
+### Overlay
+
+- New `Blocked games` entry in the Admin menu: choose a user, then block or allow each game installed on the console
+- In the limits setup screen, holding up or down changes the value continuously, faster and faster (about 7, then 15, then 30 steps per second)
+
+### Sysmodule
+
+- A game blocked for the user is stopped: the user is notified that the game is not allowed, then the game is closed after the usual countdown (detected within 5 seconds of its launch, then confirmed 10 seconds later with the current user)
+- The blocked games commands of the IPC contract (`GetBlacklistedTitlesCount`, `GetBlacklistedTitle`, `AddTitleToBlacklist`, `RemoveTitleFromBlacklist`) are implemented
+- The blocked games setting is parsed without throwing: an invalid title ID is ignored instead of aborting the sysmodule
+
 ## Release 2.3.3
 
 ### Sysmodule

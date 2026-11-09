@@ -312,6 +312,54 @@ TEST(notify_every_minute_in_last_5) {
 }
 
 // ---------------------------------------------------------------------------
+// Per-user title lists serialization (blocked titles)
+// ---------------------------------------------------------------------------
+
+TEST(serialize_titles_empty) {
+    CHECK_EQ(serializeUserTitles({}), std::string(""));
+}
+
+TEST(serialize_titles_multiple_users_sorted_by_key) {
+    std::map<std::string, std::vector<u64>> m;
+    m["uidB"] = {72057594037993472ULL};
+    m["uidA"] = {1, 2};
+    CHECK_EQ(serializeUserTitles(m), std::string("uidA=1,2;uidB=72057594037993472"));
+}
+
+TEST(serialize_titles_omits_users_without_titles) {
+    std::map<std::string, std::vector<u64>> m;
+    m["uidA"] = {};
+    m["uidB"] = {5};
+    CHECK_EQ(serializeUserTitles(m), std::string("uidB=5"));
+}
+
+TEST(deserialize_titles_multiple_users) {
+    auto m = deserializeUserTitles("uidA=1,2;uidB=72057594037993472");
+    CHECK_EQ(m.size(), 2u);
+    CHECK_EQ(m.at("uidA").size(), 2u);
+    CHECK_EQ(m.at("uidA")[1], 2u);
+    CHECK_EQ(m.at("uidB")[0], 72057594037993472ULL);
+}
+
+TEST(deserialize_titles_skips_invalid_title_ids) {
+    // Must not throw (exceptions are disabled on the Switch)
+    auto m = deserializeUserTitles("uidA=1,abc,,0,99999999999999999999999,3;garbage;;uidB=");
+    CHECK_EQ(m.size(), 1u);
+    CHECK_EQ(m.at("uidA").size(), 2u);
+    CHECK_EQ(m.at("uidA")[0], 1u);
+    CHECK_EQ(m.at("uidA")[1], 3u);
+}
+
+TEST(serialize_deserialize_titles_roundtrip) {
+    std::map<std::string, std::vector<u64>> m;
+    m["1152921562811385007:12653803565102216861"] = {72057594037993472ULL, 72239426036301824ULL};
+    m["1152936262879922641:12653803565102216861"] = {72094084716249088ULL};
+
+    auto back = deserializeUserTitles(serializeUserTitles(m));
+    CHECK_TRUE(back == m);
+}
+
+// ---------------------------------------------------------------------------
 // evaluatePlayRules (enforcement decision)
 // ---------------------------------------------------------------------------
 
@@ -385,6 +433,22 @@ TEST(eval_no_notification_when_cadence_not_reached) {
     CHECK_EQ(r.remainingTimeInMinutes, 91);
     CHECK_TRUE(!r.shouldBlock);
     CHECK_TRUE(!r.shouldNotify);
+}
+
+TEST(eval_blocked_title_blocks_even_with_time_left) {
+    // plenty of time left, inside the window, but the title is blocked for the user -> block
+    auto r = evaluatePlayRules(600, 0, 720, 480, 1200, true, true);
+    CHECK_EQ(r.remainingTimeInMinutes, 600);
+    CHECK_TRUE(!r.outsidePlayWindow);
+    CHECK_TRUE(r.titleBlocked);
+    CHECK_TRUE(r.shouldBlock);
+    CHECK_TRUE(!r.shouldNotify);
+}
+
+TEST(eval_title_not_blocked_by_default) {
+    auto r = evaluatePlayRules(600, 0, 720, 480, 1200, true);
+    CHECK_TRUE(!r.titleBlocked);
+    CHECK_TRUE(!r.shouldBlock);
 }
 
 TEST(eval_blocked_never_notifies) {

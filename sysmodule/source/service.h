@@ -68,6 +68,10 @@ namespace alefbet::pctrl::srv {
             Ipc::Result setShowRemainingTime(Ipc::Request*);
             Ipc::Result getShowRemainingTime(Ipc::Request*);
 
+            Ipc::Result getBlacklistedTitlesCount(Ipc::Request*);
+            Ipc::Result getBlacklistedTitle(Ipc::Request*);
+            Ipc::Result addTitleToBlacklist(Ipc::Request*);
+            Ipc::Result removeTitleFromBlacklist(Ipc::Request*);
             Ipc::Result setBedtime(Ipc::Request*);
             Ipc::Result getBedtime(Ipc::Request*);
 

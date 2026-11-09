@@ -33,7 +33,7 @@ The reference for the expected behavior is [`docs/playtime-window.md`](playtime-
 1. Install the v2.2.0 sysmodule (`exefs.nsp` → `/atmosphere/contents/4200000000003103`) and the overlay (`parental_control.ovl` → `/switch/.overlays/`).
 2. Reboot. Open the overlay → Admin (default PIN `A A A A`) → `Log level` = `DEBUG`.
 3. For each test, reset User A's settings by setting: Daily = `0h 0mn` if "no daily limit" is not possible, otherwise use a high value (e.g. `12h 0mn`), and the window bounds as specified by the test.
-4. The monitor loop runs every minute: **any behavior change takes effect within ~1 minute** after a precondition is met. Wait 2 minutes before concluding a failure. A game launched while the user is not allowed to play is detected within ~5 seconds (then the 60-second countdown starts).
+4. The monitor loop runs every minute: **any behavior change takes effect within ~1 minute** after a precondition is met. Wait 2 minutes before concluding a failure. A game launched while the user is not allowed to play is detected within ~5 seconds, the block is confirmed ~10 seconds later, then the 60-second countdown starts.
 
 **Verification means:**
 - **Blocking**: the timeout screen is shown and the game is closed (working mode = `Blocking`).
@@ -142,6 +142,16 @@ Test result codes: **PASS / FAIL / BLOCKED / NEEDS-CONFIRMATION**.
 | R4 | Admin PIN: wrong PIN rejected, correct PIN accepted | No change |
 | R5 | Main menu without a game running | Shows "No user / app started", warnings still displayed on top |
 | R6 | Working mode / log level / show-remaining-time settings | No change, values persist |
+
+### J. Blocked games
+
+| ID | Steps | Expected |
+|---|---|---|
+| J1 | Admin → `Blocked games` → User A | Every installed game is listed by name, sorted, with its current state (`Blocked` / `Allowed`) |
+| J2 | Block game X for User A, launch X with User A (time left, inside the window) | Notification "This game is not allowed" within ~15 s, then the countdown, then the game is closed. Log: `The title is blocked for the user` |
+| J3 | Same game X launched with User B (X not blocked for B) | No block |
+| J4 | Unblock X for User A, launch X with User A | No block |
+| J5 | Block X for User A, reboot, reopen the panel | X is still `Blocked` for User A |
 
 ## 4. Acceptance criteria
 

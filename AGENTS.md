@@ -36,6 +36,7 @@ A running game is stopped when **any** of the following is true:
 1. The user's daily playtime is used up (remaining minutes == 0).
 2. The adjusted current time is before the playtime window (`game_start_users`).
 3. The adjusted current time is after the playtime window (`bedtime_users`).
+4. The running game is blocked for the user (`blacklist`).
 
 Time comparisons must always use the tamper-protected time (`helpers::getAdjustedTime`, which compensates system clock jumps), never the raw system clock. The playtime window must keep supporting windows that cross midnight (start > end). The authoritative description of these rules is `docs/playtime-window.md` — keep it in sync when changing the logic.
 

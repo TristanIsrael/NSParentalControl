@@ -7,7 +7,7 @@ This document describes the translation mechanism of the two components and how 
 Only the strings that reach the user are translated:
 
 - **Overlay**: every string rendered on screen (frame titles and subtitles, list items, category headers, toggles, drawn hints and error messages).
-- **Sysmodule**: every string sent in Ultrahand notifications (the attention title, the "monitoring started" message, the remaining-time messages and their time units).
+- **Sysmodule**: every string sent in Ultrahand notifications (the attention title, the "monitoring started" message, the remaining-time messages and their time units, the "game not allowed" message).
 
 What is **not** translated: log messages, debug/error sentinels (`Err#...`, `ERR#...`), IPC names, setting keys, and file names.
 

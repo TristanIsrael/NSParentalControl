@@ -67,6 +67,11 @@ const StringMap& chineseSimplified() {
         {"Current title: ", "当前游戏："},
         // Usage history
         {"Choose a user", "选择用户"},
+        {"Blocked games", "已屏蔽的游戏"},
+        {"Blocked games for ", "已屏蔽的游戏："},
+        {"Blocked", "已屏蔽"},
+        {"Allowed", "允许"},
+        {"No game installed", "未安装游戏"},
         {"Today", "今天"},
         {"Usage", "已使用"},
         {"Remaining", "剩余"},

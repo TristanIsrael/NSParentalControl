@@ -58,7 +58,7 @@ namespace alefbet::pctrl::srv {
         private:
             void waitForNextIteration(u64& nextIterationNs);
             void enforceRulesForRunningApplication();
-            bool isRunningApplicationBlocked(u64 pid);
+            bool isRunningApplicationBlocked(u64 pid, bool* titleBlocked = nullptr);
             void stopApplication(u64 pid);
 
         private:

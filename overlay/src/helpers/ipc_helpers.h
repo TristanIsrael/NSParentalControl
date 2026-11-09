@@ -69,6 +69,9 @@ namespace alefbet::pctrl::ipc {
     u16 getGameStartTime(const UserData& user);
     bool setGameStartTime(const UserData& user, u16 gameStartTime);
 
+    std::vector<u64> getBlockedTitles(const UserData& user);
+    bool setTitleBlocked(const UserData& user, u64 titleId, bool blocked);
+
     bool isDebugLogEnabled();
     bool enableDebugLog(bool enable);
 

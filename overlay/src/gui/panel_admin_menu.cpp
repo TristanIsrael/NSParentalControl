@@ -26,6 +26,7 @@
 #include "panel_setuppin.h"
 #include "panel_main_menu.h"
 #include "panel_setup_limits_main.h"
+#include "panel_blocked_titles.h"
 #include "i18n/i18n.h"
 
 using namespace alefbet::pctrl;
@@ -123,7 +124,19 @@ void AdminMenuPanel::rebuildUI() {
             tsl::changeTo<SetupLimitsPanel>();
             return true;
         }
-        
+
+        return false;
+    });
+
+    // Blocked games
+    auto entryBlockedTitles = new tsl::elm::ListItem(tr("Blocked games"));
+    rootList_->addItem(entryBlockedTitles);
+    entryBlockedTitles->setClickListener([](u64 keys) -> bool {
+        if(keys & HidNpadButton_A) {
+            tsl::changeTo<BlockedTitlesUsersPanel>();
+            return true;
+        }
+
         return false;
     });
 

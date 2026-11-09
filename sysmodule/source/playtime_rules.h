@@ -20,6 +20,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include <switch/types.h>
 
 namespace alefbet::pctrl::core {
@@ -109,6 +110,19 @@ namespace alefbet::pctrl::core {
       */
     std::map<std::string, u16> deserializeUserValues(const std::string& data);
 
+    /*! @brief Serializes per-user title lists as a "uid=title,title;uid=title" string.
+      * @param titles Map of user ID to title IDs (decimal).
+      * @return The serialized string (empty if the map is empty). Users without titles are omitted.
+      */
+    std::string serializeUserTitles(const std::map<std::string, std::vector<u64>>& titles);
+
+    /*! @brief Deserializes a "uid=title,title;uid=title" string into per-user title lists.
+      * Empty segments, segments without an '=' separator and invalid title IDs are ignored.
+      * @param data The serialized string.
+      * @return The deserialized map.
+      */
+    std::map<std::string, std::vector<u64>> deserializeUserTitles(const std::string& data);
+
     /*! @brief Determines whether a remaining-time notification should be sent.
       *
       * Notifications are sent every 15 minutes and every minute during the
@@ -124,14 +138,16 @@ namespace alefbet::pctrl::core {
         bool outsidePlayWindow = false; ///< true if the adjusted time is outside the playtime window.
         bool shouldBlock = false;       ///< true if the running game must be stopped.
         bool shouldNotify = false;      ///< true if a remaining-time notification must be sent.
+        bool titleBlocked = false;      ///< true if the running title is blocked for the user.
     };
 
     /*! @brief Evaluates the play rules and decides whether to block and/or notify.
       *
       * This is the pure, tamper-protected enforcement decision used by the
       * monitoring loop. A game is blocked when the daily limit is exhausted
-      * (remaining minutes == 0) or when the adjusted time is outside the
-      * playtime window. A remaining-time notification is sent only when the
+      * (remaining minutes == 0), when the adjusted time is outside the
+      * playtime window, or when the title is blocked for the user. A
+      * remaining-time notification is sent only when the
       * game is not blocked, the remaining-time panel is enabled, and the
       * notification cadence (see shouldSendNotification) is reached.
       *
@@ -141,6 +157,7 @@ namespace alefbet::pctrl::core {
       * @param gameStartTime Earliest allowed play time in minutes (0 = disabled).
       * @param bedtime Bed time in minutes (0 = disabled).
       * @param showRemainingTime Whether the remaining-time panel is enabled.
+      * @param titleBlocked Whether the running title is blocked for the user.
       * @return The evaluation result (remaining time, window state, block/notify decisions).
       */
     PlayRuleEvaluation evaluatePlayRules(u16 dailyLimit,
@@ -148,6 +165,7 @@ namespace alefbet::pctrl::core {
                                          u16 adjustedTimeMinutes,
                                          u16 gameStartTime,
                                          u16 bedtime,
-                                         bool showRemainingTime);
+                                         bool showRemainingTime,
+                                         bool titleBlocked = false);
 
 }

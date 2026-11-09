@@ -87,9 +87,11 @@ namespace alefbet::pctrl::srv {
      * its launch.
      *
      * @param pid Process ID of the application the decision is about.
+     * @param titleBlocked Set to true if the application is blocked because the title is blocked for the user (optional).
      * @return true if the application is still running and its user is not allowed to play.
      */
-    bool Monitor::isRunningApplicationBlocked(u64 pid) {
+    bool Monitor::isRunningApplicationBlocked(u64 pid, bool* titleBlocked) {
+        if(titleBlocked != nullptr) *titleBlocked = false;
         if(pid == 0 || getRunningApplicationPid() != pid) return false;
 
         const auto user = getCurrentUser();
@@ -101,17 +103,20 @@ namespace alefbet::pctrl::srv {
         if(!isEnabled) return false;
 
         const auto& userId = accountUidToString(user.uid);
+        const auto titleId = getRunningApplicationTitleId(pid);
         const auto eval = core::evaluatePlayRules(getDailyLimitForUser(userId),
                                                   getUserUsageTimeForToday(user.uid),
                                                   getAdjustedCurrentTime(),
                                                   getGameStartTime(userId),
                                                   getBedtime(userId),
-                                                  false);
+                                                  false,
+                                                  isTitleBlacklistedForUser(userId, titleId));
 
         if(eval.shouldBlock) {
             logInfo("[Monitor] Application used by %s while not allowed to play\n", user.nickname.c_str());
         }
 
+        if(titleBlocked != nullptr) *titleBlocked = eval.titleBlocked;
         return eval.shouldBlock;
     }
 
@@ -121,15 +126,23 @@ namespace alefbet::pctrl::srv {
      * current user is the previous one. The decision is therefore confirmed a few
      * seconds later before the countdown starts, and evaluated again during the
      * countdown, which is cancelled when the current user is allowed to play.
+     * When the title is blocked for the user, the user is told why before the
+     * countdown starts.
      *
      * @param pid Process ID of the running application.
      */
     void Monitor::stopApplication(u64 pid) {
         svcSleepThread(BlockConfirmationDelayInNanos);
 
-        if(!isRunningApplicationBlocked(pid)) {
+        bool titleBlocked = false;
+        if(!isRunningApplicationBlocked(pid, &titleBlocked)) {
             logInfo("[Monitor] The block is not confirmed, the application keeps running\n");
             return;
+        }
+
+        if(titleBlocked) {
+            logInfo("[Monitor] The title is blocked for the user\n");
+            NotificationsController::notifyTitleNotAllowed();
         }
 
         service_->showScreenTimeout(pid, [this, pid]() {
@@ -253,8 +266,9 @@ namespace alefbet::pctrl::srv {
                         showRemainingTime = settings[SETTING_SHOW_REMAINING_TIME].int_value > 0;
                     }
 
-                    // Pure enforcement decision (tamper-protected time + play window + daily limit)
-                    const auto eval = core::evaluatePlayRules(daily_limit, totalDuration, adjustedTimeMinutes, gameStartTime, bedtime, showRemainingTime);
+                    // Pure enforcement decision (tamper-protected time + play window + daily limit + blocked titles)
+                    const auto eval = core::evaluatePlayRules(daily_limit, totalDuration, adjustedTimeMinutes, gameStartTime, bedtime, showRemainingTime,
+                                                              isTitleBlacklistedForUser(userId, title_id));
 
                     logDebug("[Monitor] Remaining time for user %s is %i minutes. Daily limit=%i\n", user.nickname.c_str(), eval.remainingTimeInMinutes, daily_limit);
 

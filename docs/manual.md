@@ -73,6 +73,7 @@ Notify remaining time   Activate
 Log level               INFO
 Set PIN
 Set limits
+Blocked games
 
 Versions
   Overlay               v1.2
@@ -85,10 +86,19 @@ Versions
 - `Log level` lets you define the log level to DEBUG or INFO in the sysmodule and the overlay. Use DEBUG only when needed because it can generates big files.
 - `Set PIN` opens a new menu for setting the Admin PIN (see [Admin PIN setup](#admin-pin-setup)).
 - `Set limits` lets you define the play time limits (See [Setup limits](#setup-limits)).
+- `Blocked games` lets you block some games per user (See [Blocked games](#blocked-games)).
 
 #### Admin PIN setup
 
 This screen lets you define a PIN for the Administrator of the Parental Control. The PIN can be defined with any pad button or combination.
+
+#### Blocked games
+
+This screen lets you choose a user, then lists the games installed on the console with a switch for each game: `Blocked` or `Allowed`. The change is applied immediately.
+
+When a user launches a game blocked for them, the notification "This game is not allowed" is shown within a few seconds, then the game is closed after the usual countdown, as when the play time is over.
+
+ⓘ Switch user profiles have no password: a child can launch a blocked game with another user profile. Set restrictions on every profile the child can use.
 
 #### Setup limits
 
@@ -101,6 +111,8 @@ The screen is organized in two sections:
 - **Playtime window**
   - `Allow games from`: the earliest time of day at which the user is allowed to play.
   - `Stop games after`: the time of day at which the user must stop playing (bed time).
+
+Use ← and → to select a value, ↑ and ↓ to change it. Hold ↑ or ↓ to change the value continuously: the longer the key is held, the faster the value changes.
 
 Set a time to `0h 0mn` to disable the bound. When both times are set, the user can only play inside the window (for example 08:00 to 21:00). A window crossing midnight is also possible (for example 20:00 to 08:00).
 

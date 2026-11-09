@@ -41,6 +41,13 @@ void NotificationsController::notifyRemainingTime(int remainingTimeInMinutes)
     UltraHandInterface::writeNotification(message);
 }
 
+/*! @brief Sends an attention notification telling that the running game is blocked for the user. */
+void NotificationsController::notifyTitleNotAllowed()
+{
+    UltraHandInterface::drawAttention();
+    UltraHandInterface::writeNotification(tr("This game is not allowed"));
+}
+
 /*! @brief Sends an attention notification with the remaining seconds.
  * @param remainingSeconds The remaining time in seconds. */
 void NotificationsController::notifyRemainingSeconds(int remainingSeconds)

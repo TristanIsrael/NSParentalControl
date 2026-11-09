@@ -98,6 +98,7 @@ namespace alefbet::pctrl {
 
         // Blacklist management
         bool isCurrentTitleBlacklisted();
+        bool isTitleBlacklistedForUser(const std::string& userId, u64 titleId);
         std::vector<u64> getBlacklistedTitlesForUser(const std::string& userId);
         void addToBlacklist(const std::string& userId, u64 titleId);
         void removeFromBlacklist(const std::string& userId, u64 titleId);

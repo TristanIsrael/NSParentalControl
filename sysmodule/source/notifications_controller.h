@@ -25,4 +25,5 @@ public:
     static void notifyMonitoringStarted();
     static void notifyRemainingTime(int remainingTimeInMinutes);
     static void notifyRemainingSeconds(int remainingSeconds);
+    static void notifyTitleNotAllowed();
 };

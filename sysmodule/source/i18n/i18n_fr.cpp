@@ -26,6 +26,7 @@ const StringMap& french() {
         {"Parental Control", "Contrôle parental"},
         {"Parental control enabled", "Contrôle parental activé"},
         {"%s left", "Il reste %s"},
+        {"This game is not allowed", "Ce jeu n'est pas autorisé"},
         {"h", "h"},
         {"mn", " min"}
     };

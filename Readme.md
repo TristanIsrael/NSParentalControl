@@ -225,4 +225,4 @@ https://github.com/switchbrew/switch-examples/tree/master
 - @WerWolv for [Tesla library](https://github.com/WerWolv/libtesla).
 - @ppkantorski for [Ultrahand Overlay](https://github.com/ppkantorski/Ultrahand-Overlay).
 - @tallbl0nde for IPC Server (from TriPlayer).
-- @[M3c4tr0x](https://github.com/M3c4tr0x) for bug fixes.
+- @[M3c4tr0x](https://github.com/M3c4tr0x) for bug fixes and improvements.

@@ -37,6 +37,9 @@ using namespace std::chrono_literals;
 constexpr std::chrono::minutes MainLoopDelayInMinutes = 1min;
 constexpr std::chrono::nanoseconds MainLoopDelayInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(MainLoopDelayInMinutes);
 constexpr u64 BlockConfirmationDelayInNanos = 10'000'000'000ULL; // Delay before confirming a block (user selected after the launch)
+constexpr u64 UserSelectionPollDelayInNanos = 1'000'000'000ULL;  // Verification delay while the user is being selected
+constexpr u64 UserSelectionMaxWaitInNanos = 120'000'000'000ULL;  // Maximum wait for the end of the user selection
+constexpr u64 UserSelectionGracePeriodInNanos = 30'000'000'000ULL; // Maximum wait for a game to ask for the user after its launch
 constexpr u64 EnforcementDelayInNanos = 5'000'000'000ULL; // Delay between two verifications of the rules while waiting
 
 namespace {
@@ -79,6 +82,41 @@ namespace alefbet::pctrl::srv {
         }
     }
 
+    /*! @brief Checks whether the current user of the running application is known.
+     *
+     * Until the user is selected, the account service still returns the
+     * previous user, so no decision can be taken:
+     * - while the user selection ("Who is playing?") is displayed;
+     * - for a title that does not have its user selected by the HOME menu
+     *   before its launch, during the first seconds after the launch, until the
+     *   user selection has been displayed and closed (a game may ask for the
+     *   user after its loading screens). After UserSelectionGracePeriodInNanos
+     *   the current user is used, for the games that never ask for the user.
+     *
+     * @param pid Process ID of the running application.
+     * @return true if the current user can be used for the decisions.
+     */
+    bool Monitor::isUserContextSettled(u64 pid) {
+        if(pid == 0) return false;
+
+        if(pid != launchPid_) {
+            // A new application has been launched
+            launchPid_ = pid;
+            launchTimeNs_ = nowInNanos();
+            userSelectionSeen_ = false;
+            userSelectedBeforeLaunch_ = isUserSelectedBeforeLaunch(getRunningApplicationTitleId(pid));
+            logDebug("[Monitor] New application, user selected before launch: %s\n", userSelectedBeforeLaunch_ ? "yes" : "no");
+        }
+
+        if(isUserSelectionInProgress()) {
+            userSelectionSeen_ = true;
+            return false;
+        }
+
+        return userSelectedBeforeLaunch_ || userSelectionSeen_ ||
+               nowInNanos() - launchTimeNs_ >= UserSelectionGracePeriodInNanos;
+    }
+
     /*! @brief Checks whether the running application must be stopped for its current user.
      *
      * Uses the same tamper-protected decision as the monitoring loop
@@ -93,6 +131,9 @@ namespace alefbet::pctrl::srv {
     bool Monitor::isRunningApplicationBlocked(u64 pid, bool* titleBlocked) {
         if(titleBlocked != nullptr) *titleBlocked = false;
         if(pid == 0 || getRunningApplicationPid() != pid) return false;
+
+        // Until the user is selected, the current user is still the previous one
+        if(!isUserContextSettled(pid)) return false;
 
         const auto user = getCurrentUser();
         if(!user.isValid()) return false;
@@ -133,6 +174,11 @@ namespace alefbet::pctrl::srv {
      */
     void Monitor::stopApplication(u64 pid) {
         svcSleepThread(BlockConfirmationDelayInNanos);
+
+        // Wait for the end of the user selection: the decision must be taken on the selected user
+        for(u64 waited = 0 ; waited < UserSelectionMaxWaitInNanos && !isUserContextSettled(pid) ; waited += UserSelectionPollDelayInNanos) {
+            svcSleepThread(UserSelectionPollDelayInNanos);
+        }
 
         bool titleBlocked = false;
         if(!isRunningApplicationBlocked(pid, &titleBlocked)) {
@@ -241,7 +287,10 @@ namespace alefbet::pctrl::srv {
                 const auto title_id = getRunningApplicationTitleId(pid);
                 user = getCurrentUser();
 
-                if(user.isValid()) {
+                if(!isUserContextSettled(pid)) {
+                    // The current user is still the previous one: neither record nor evaluate this minute
+                    logDebug("[Monitor] The user is being selected\n");
+                } else if(user.isValid()) {
                     logDebug("[Monitor] Title %i is currently in used by %s. Updating history.\n", title_id, user.nickname.c_str());                    
 
                     const auto& entry = addToHistory(user.uid, title_id, MainLoopDelayInMinutes.count());

@@ -28,6 +28,7 @@
 #include <codecvt>
 #include <switch.h>
 #include <algorithm>
+#include <memory>
 #include "logger.h"
 #include "database/history_db.h"
 #include "database/settings_db.h"
@@ -222,6 +223,45 @@ namespace alefbet::pctrl::helpers {
         //logToFile("[Helpers] process ID=%i\n", process_id);
 
         return process_id;
+    }
+
+    /*! @brief Checks whether the user selection ("Who is playing?") is displayed.
+     *
+     * Many games ask for the user after their launch, with the player select
+     * library applet. While it is displayed, the current user returned by the
+     * account service is still the previous one: no decision can be taken on it.
+     *
+     * @return true if the player select applet is running, false otherwise.
+     */
+    bool isUserSelectionInProgress() {
+        constexpr u64 PlayerSelectAppletProgramId = 0x0100000000001007; // psel
+
+        u64 process_id = 0;
+        return R_SUCCEEDED(pmdmntGetProcessId(&process_id, PlayerSelectAppletProgramId)) && process_id != 0;
+    }
+
+    /*! @brief Checks whether the user of a title is selected before its launch.
+     *
+     * Reads the StartupUserAccount field of the title control data (NACP): when
+     * it is set, the HOME menu asks for the user before launching the game, so
+     * the current user is known as soon as the game runs. Otherwise the game
+     * may ask for the user itself after its launch, or never.
+     *
+     * @param titleId The title ID.
+     * @return true if the user is selected before the launch, false if not or unknown.
+     */
+    bool isUserSelectedBeforeLaunch(u64 titleId) {
+        // The control data includes the icon (~145 KB): allocate it on the heap, not on the thread stack
+        auto control = std::make_unique<NsApplicationControlData>();
+        u64 actual_size = 0;
+
+        ::Result rc = nsGetApplicationControlData(NsApplicationControlSource_Storage, titleId, control.get(), sizeof(NsApplicationControlData), &actual_size);
+        if(R_FAILED(rc)) {
+            logError("[Helpers] Could not get application control data for title %s\n", titleIdToString(titleId).c_str());
+            return false;
+        }
+
+        return control->nacp.startup_user_account != 0;
     }
 
     /*! @brief Retrieves the title ID for a given process ID.

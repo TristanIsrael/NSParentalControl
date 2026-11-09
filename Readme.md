@@ -22,14 +22,14 @@ The user manual can be found [here](docs/manual.md).
 
 | Firmware | Atmosphere | State |
 |--|--|--|
-| 20.3.0 | 1.9.4 | Working |
-| 21.2.0 | 1.10.2 | Working |
-| 21.2.0 | 1.12.1 | Working |
-| 23.0.1 | 1.12.1 | Currently testing |
+| 20.3.0 | 1.9.4 | ✅ Working |
+| 21.2.0 | 1.10.2 | ✅ Working |
+| 21.2.0 | 1.12.1 | ✅ Working |
+| 23.0.1 | 1.12.1 | ✅ Working |
 
 Linked with:
-- libnx 4.10.0 
-- libultrahand 2.2.0
+- libnx 4.12.0-1 
+- libultrahand 2.5.4
 
 ## Table of Contents
 
@@ -63,6 +63,7 @@ Parental control has the following features:
 - Define a PIN to protect setup access - *default PIN is A A A A* (since 1.0)
 - Enable or disable the parental control (since 1.0)
 - Enable or disable the notifications (since 1.2)
+- Block some games per user (since 2.4)
 - Choose the log level between Debug and Information (since 1.2)
 - Define individual limits (since 1.3)
 - Define bed time (since 2.1)

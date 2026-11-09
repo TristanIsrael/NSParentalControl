@@ -100,6 +100,7 @@ Test result codes: **PASS / FAIL / BLOCKED / NEEDS-CONFIRMATION**.
 | E6 | Window End = 22:00, game allowed | Put the console to sleep for 30 minutes or more, wake it up | No `System time jump detected` line; the window decisions use the real time |
 | E7 | Any configuration | Let the sysmodule run across midnight | No `System time jump detected: -1439 minutes` line at midnight |
 | E8 | User A's daily limit used up, User B has time left | Launch a game that asks for the user after its launch, choose User B | No countdown, or the countdown is cancelled (`timeout cancelled` in the log); User B keeps playing |
+| E9 | Game X blocked for User A, User A played last | Launch X (a game that asks for the user after its launch), wait more than 30 seconds on "Who is playing?", then choose User B | No "This game is not allowed" warning and no countdown during the loading screens nor while the user is being selected; User B keeps playing |
 
 ### F. Per-user isolation
 

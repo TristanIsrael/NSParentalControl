@@ -219,9 +219,7 @@ https://github.com/switchbrew/switch-examples/tree/master
 
 ## Credits
 
-- Niels Lohmann <https://nlohmann.me> for JSON C++ library.
 - @SciresM for Atmosphère.
-- Sean Barrett for STB Truetype library.
 - @WerWolv for [Tesla library](https://github.com/WerWolv/libtesla).
 - @ppkantorski for [Ultrahand Overlay](https://github.com/ppkantorski/Ultrahand-Overlay).
 - @tallbl0nde for IPC Server (from TriPlayer).

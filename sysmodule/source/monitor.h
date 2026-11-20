@@ -60,6 +60,7 @@ namespace alefbet::pctrl::srv {
             void enforceRulesForRunningApplication();
             bool isRunningApplicationBlocked(u64 pid, bool* titleBlocked = nullptr);
             void stopApplication(u64 pid);
+            bool isUserContextSettled(u64 pid);
 
         private:
             alefbet::pctrl::srv::Service* service_ = nullptr;
@@ -70,6 +71,12 @@ namespace alefbet::pctrl::srv {
             u16 lastTime_ = 0;
             s64 lastSteadySeconds_ = -1; // Steady clock at the last time observation, -1 if none
             s32 timeJumpOffset_ = 0;
+
+            // Launch of the running application (used only by the monitor thread)
+            u64 launchPid_ = 0;
+            u64 launchTimeNs_ = 0;
+            bool userSelectionSeen_ = false;
+            bool userSelectedBeforeLaunch_ = false;
     };    
 
 };

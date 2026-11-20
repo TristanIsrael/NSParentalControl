@@ -1,5 +1,12 @@
 # Changelog
 
+## Release 2.4.1
+
+### Sysmodule
+
+- Fixed the "This game is not allowed" warning (or the countdown) shown when a game asks "Who is playing?" after its launch: until the user is selected, the current user is still the previous one. No decision is taken while the user selection is displayed, nor during the first 30 seconds after the launch of a game whose user is not selected by the HOME menu (its loading screens come before the user selection). The wait ends as soon as the user is selected
+- The minute spent on the user selection is no longer recorded for the previous user
+
 ## Release 2.4.0
 
 ### Overlay

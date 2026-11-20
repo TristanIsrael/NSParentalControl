@@ -80,6 +80,8 @@ namespace alefbet::pctrl {
         structs::UserData getCurrentUser();
         structs::UserData getUserFromAccountUid(AccountUid uid);
         u64 getRunningApplicationPid();
+        bool isUserSelectionInProgress();
+        bool isUserSelectedBeforeLaunch(u64 titleId);
         u64 getRunningApplicationTitleId(u64 process_id);
         std::string getApplicationName(u64 title_id);
         u16 getUserUsageTimeForToday(const AccountUid& uid);
